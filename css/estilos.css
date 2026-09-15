@@ -239,10 +239,12 @@ body {
   background: var(--dato-color); opacity: .9;
 }
 .dato .etiqueta {
-  text-transform: uppercase; letter-spacing: .1em; font-size: 13px;
+  display: block; text-transform: uppercase; letter-spacing: .1em; font-size: 13px;
   color: var(--texto-2); font-weight: 700; margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .dato .valor {
+  display: block;
   font-family: var(--fuente-numeros); font-size: 30px; font-weight: 800;
   line-height: 1; color: var(--dato-color);
 }

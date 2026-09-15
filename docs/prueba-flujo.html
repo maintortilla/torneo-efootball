@@ -209,6 +209,19 @@ document.getElementById('marco').onload = async () => {
        valoresResumen[0] === 'rgb(16, 185, 129)' && valoresResumen[1] === 'rgb(245, 158, 11)',
        valoresResumen.slice(0, 2).join('  '));
 
+    // 15b. Los recuadros: etiqueta en su propia línea y números alineados entre sí
+    const etiquetaDato = d.defaultView.getComputedStyle(
+      d.querySelector('#resumen-partidos .dato .etiqueta'));
+    ok('la etiqueta del recuadro va en su línea (display: block)',
+       etiquetaDato.display === 'block', etiquetaDato.display);
+
+    const alturas = Array.from(d.querySelectorAll('#resumen-partidos .dato .valor'))
+      .map(n => Math.round(n.getBoundingClientRect().top));
+    const desnivel = Math.max(...alturas) - Math.min(...alturas);
+    ok('los números del resumen están alineados (el número no baila)',
+       alturas.length >= 2 && desnivel <= 2,
+       'alturas: ' + alturas.join(', ') + ' · desnivel ' + desnivel + 'px');
+
     const colorNav = c => colorTexto(d.querySelector('.nav-item.' + c));
     ok('el menú lateral pone su color a cada sección',
        colorNav('nav-clasificacion') === 'rgb(245, 158, 11)' &&
