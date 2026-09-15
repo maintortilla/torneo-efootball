@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torneo eFootball · Clasificación</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="marca">
+      <span class="balon">⚽</span>
+      <h1>Torneo <span>eFootball</span></h1>
+    </div>
+
+    <div class="topbar-centro">
+      <select class="selector-torneo" id="selector-torneo" title="Elegir torneo"></select>
+      <span class="badge-jornada" id="badge-jornada">—</span>
+    </div>
+
+    <div class="topbar-derecha">
+      <a class="btn-volver" href="acta.html">✍️ Apuntar partido</a>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Navegación lateral -->
+    <aside class="sidebar">
+      <nav>
+        <a class="nav-item activo" href="index.html">🏆 <span class="texto">Clasificación</span></a>
+        <a class="nav-item" href="index.html#partidos">📅 <span class="texto">Partidos</span></a>
+        <a class="nav-item" href="index.html#goleadores">🥇 <span class="texto">Goleadores</span></a>
+        <a class="nav-item" href="acta.html">✍️ <span class="texto">Apuntar partido</span></a>
+        <span class="nav-item proximo" title="Próximamente">🏟️ <span class="texto">Eliminatorias · pronto</span></span>
+        <span class="nav-item proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
+        <span class="nav-item proximo" title="Próximamente">⚙️ <span class="texto">Ajustes · pronto</span></span>
+      </nav>
+      <div class="sidebar-pie">
+        <b>Fase 1</b><br>Datos de prueba guardados en tu navegador. En la Fase 2 pasan a la nube.
+      </div>
+    </aside>
+
+    <!-- Contenido -->
+    <main class="contenido">
+
+      <div class="resumen" id="resumen"></div>
+
+      <div class="rejilla-3">
+
+        <!-- Clasificación -->
+        <section class="panel" id="clasificacion">
+          <p class="panel-titulo">Clasificación <b id="aviso-clasificados"></b></p>
+          <table class="tabla" id="tabla-clasificacion"></table>
+        </section>
+
+        <!-- Partidos -->
+        <section class="panel" id="partidos">
+          <p class="panel-titulo">Partidos <b id="contador-partidos"></b></p>
+          <div class="tabs">
+            <div class="tab activo" data-filtro="todos">Todos</div>
+            <div class="tab" data-filtro="pendientes">Pendientes</div>
+            <div class="tab" data-filtro="jugados">Jugados</div>
+          </div>
+          <div id="lista-partidos"></div>
+        </section>
+
+        <!-- Goleadores -->
+        <div class="columna">
+          <section class="panel" id="goleadores">
+            <p class="panel-titulo">Pichichi <b>futbolistas</b></p>
+            <div id="lista-goleadores"></div>
+          </section>
+
+          <section class="panel">
+            <p class="panel-titulo">Goles por tipo</p>
+            <div id="lista-tipos"></div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/modelo.js"></script>
+  <script src="js/datos-prueba.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

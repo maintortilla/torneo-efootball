@@ -1,0 +1,6 @@
+# Archivos que no se suben al repositorio
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
