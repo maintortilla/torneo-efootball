@@ -45,66 +45,90 @@
 
       <!-- ============ CREAR UN TORNEO NUEVO ============ -->
       <section class="panel" id="zona-crear" hidden>
-        <p class="panel-titulo">Crear un torneo nuevo <b>paso a paso</b></p>
 
-        <div class="form-rejilla">
-          <div class="campo-form">
-            <label>Nombre del torneo</label>
-            <input type="text" id="nuevo-nombre" placeholder="Ej. Torneo Otoño 2026" autocomplete="off">
+        <header class="panel-cabecera">
+          <h2>Crear <em>torneo</em></h2>
+          <p>Rellena los tres pasos y la web te genera el calendario completo sola.</p>
+        </header>
+
+        <div class="bloque-form">
+          <div class="bloque-titulo">
+            <span class="num">1</span>
+            <h3>Nombre y formato</h3>
           </div>
-          <div class="campo-form">
-            <label>¿Cuántas vueltas? (enfrentamientos entre cada pareja)</label>
-            <select id="nuevo-vueltas">
-              <option value="1">Una vuelta</option>
-              <option value="2" selected>Ida y vuelta</option>
-            </select>
-            <p class="pista" id="pista-partidos-nuevo"></p>
+
+          <div class="form-rejilla">
+            <div class="campo-form">
+              <label>Nombre del torneo</label>
+              <input type="text" id="nuevo-nombre" placeholder="Ej. Torneo Otoño 2026" autocomplete="off">
+            </div>
+            <div class="campo-form">
+              <label>Enfrentamientos entre cada pareja</label>
+              <select id="nuevo-vueltas">
+                <option value="1">Una vuelta</option>
+                <option value="2" selected>Ida y vuelta</option>
+              </select>
+              <p class="pista" id="pista-partidos-nuevo"></p>
+            </div>
           </div>
         </div>
 
-        <div class="campo-form" style="margin-top:16px">
-          <label>Jugadores</label>
+        <div class="bloque-form">
+          <div class="bloque-titulo">
+            <span class="num">2</span>
+            <h3>Jugadores</h3>
+          </div>
+
           <div id="lista-jugadores-nuevo"></div>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-add-jugador-nuevo">+ Añadir jugador</button>
-            <button class="btn btn-ghost" id="btn-autocompletar">🎲 Emojis y colores automáticos</button>
+            <button class="btn btn-ghost" id="btn-add-jugador-nuevo">Añadir jugador</button>
+            <button class="btn btn-ghost" id="btn-autocompletar">Asignar colores y emojis</button>
           </div>
         </div>
 
-        <div class="form-rejilla" style="margin-top:16px">
-          <div class="campo-form">
-            <label>Puntos por victoria / empate / derrota</label>
-            <div class="fila-2">
-              <input type="number" id="nuevo-pts-v" value="3" min="0" max="99" title="Victoria">
-              <input type="number" id="nuevo-pts-e" value="1" min="0" max="99" title="Empate">
-            </div>
-            <div style="margin-top:8px">
-              <input type="number" id="nuevo-pts-d" value="0" min="0" max="99" title="Derrota">
-            </div>
-            <p class="pista">Victoria · Empate · Derrota</p>
+        <div class="bloque-form">
+          <div class="bloque-titulo">
+            <span class="num">3</span>
+            <h3>Puntuación y eliminatorias</h3>
           </div>
-          <div class="campo-form">
-            <label>Eliminatorias</label>
+
+          <div class="form-rejilla">
             <div class="campo-form">
-              <label>Cuántos pasan</label>
+              <label>Puntos por victoria · empate · derrota</label>
+              <div class="fila-3">
+                <input type="number" id="nuevo-pts-v" value="3" min="0" max="99" title="Puntos por victoria">
+                <input type="number" id="nuevo-pts-e" value="1" min="0" max="99" title="Puntos por empate">
+                <input type="number" id="nuevo-pts-d" value="0" min="0" max="99" title="Puntos por derrota">
+              </div>
+            </div>
+            <div class="campo-form">
+              <label>Cuántos jugadores pasan a eliminatorias</label>
               <select id="nuevo-clasificados">
                 <option value="2">2 (solo la final)</option>
                 <option value="4" selected>4 (semifinales)</option>
                 <option value="8">8 (cuartos de final)</option>
               </select>
             </div>
-            <label class="casilla"><input type="checkbox" id="nuevo-tercero"> Partido por el 3º y 4º puesto</label>
+            <div class="campo-form">
+              <label>Partidos finales</label>
+              <label class="casilla"><input type="checkbox" id="nuevo-tercero"> Partido por el 3º y 4º puesto</label>
+            </div>
           </div>
         </div>
 
-        <div class="zona-acciones">
-          <button class="btn btn-gol" id="btn-crear">Crear torneo y generar calendario 🗓️</button>
+        <div class="zona-acciones" style="margin-top:22px">
+          <button class="btn btn-gol" id="btn-crear">Crear torneo y generar calendario</button>
           <button class="btn btn-ghost" id="btn-cancelar-crear">Cancelar</button>
         </div>
       </section>
 
       <!-- ============ AJUSTES DEL TORNEO ELEGIDO ============ -->
       <div id="zona-editar" hidden>
+
+        <header class="panel-cabecera">
+          <h2>Ajustes <em>del torneo</em></h2>
+          <p>Todo lo que se puede cambiar del torneo elegido. Los cambios se guardan con el botón de abajo.</p>
+        </header>
 
         <section class="panel">
           <p class="panel-titulo">Datos del torneo <b id="resumen-torneo"></b></p>
