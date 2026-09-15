@@ -146,25 +146,34 @@ document.getElementById('marco').onload = async () => {
        final && antes && final.jugados === antes.jugados,
        (despues ? despues.jugados : '?') + ' → ' + (final ? final.jugados : '?') + ' jugados');
 
-    // 13. La barra de arriba: cuántos jugadores hay y el menú plegable ☰
+    // 13. La barra de arriba: cuántos jugadores hay y el menú lateral plegable
     ok('la barra de arriba dice cuántos jugadores hay',
        /jugadores/.test(d.getElementById('progreso').textContent),
        d.getElementById('progreso').textContent.trim());
 
-    const panel = d.getElementById('menu-panel');
-    ok('el menú de arriba empieza plegado', panel.hidden === true);
+    const sidebar = d.getElementById('sidebar');
+    const botonPlegar = d.getElementById('btn-plegar');
+    ok('el menú lateral existe y tiene el botón de plegar', !!sidebar && !!botonPlegar);
+    ok('el menú lateral trae "Cambiar de torneo"',
+       !!Array.from(sidebar.querySelectorAll('a')).find(a =>
+         /cambiar de torneo/i.test(a.textContent) && /index\.html/.test(a.getAttribute('href') || '')),
+       Array.from(sidebar.querySelectorAll('a')).map(a => a.textContent.trim()).join(' | '));
 
-    d.getElementById('btn-menu').click();
-    await esperar(150);
-    const tieneCambiar = !!panel.querySelector('a[href^="index.html"]');
-    ok('al pulsar ☰ se despliega el menú y sale "Cambiar de torneo"',
-       panel.hidden === false && tieneCambiar,
-       panel.hidden ? 'sigue plegado' : (tieneCambiar ? 'abierto con el enlace' : 'abierto sin el enlace'));
+    const anchoAntes = sidebar.getBoundingClientRect().width;
+    botonPlegar.click();
+    await esperar(500);
+    // El estado se comprueba por la clase (el ancho depende de la animación)
+    ok('al plegarlo, el menú se queda solo con los iconos',
+       sidebar.classList.contains('plegado') && d.querySelector('.layout').classList.contains('plegado'),
+       Math.round(anchoAntes) + 'px → ' + Math.round(sidebar.getBoundingClientRect().width) + 'px');
 
-    d.body.click();
-    await esperar(150);
-    ok('el menú se vuelve a plegar al pulsar fuera', panel.hidden === true);
+    botonPlegar.click();
+    await esperar(500);
+    ok('al volver a pulsar se despliega otra vez',
+       !sidebar.classList.contains('plegado') && !d.querySelector('.layout').classList.contains('plegado'),
+       'clase "plegado" quitada');
 
+    ok('el menú de arriba a la derecha ya no existe', !d.getElementById('btn-menu'));
     ok('el botón de refrescar ya no está en la barra', !d.getElementById('btn-refrescar'));
 
   } catch (e) {

@@ -237,34 +237,32 @@ function avisar(texto, esError, duracionMs) {
   temporizadorAviso = setTimeout(() => t.remove(), duracionMs || (esError ? 5200 : 2400));
 }
 
-/* -------------------------------------------------- menú plegable de arriba */
-/* El botón ☰ de la esquina: al pulsarlo se despliega el panel con "Cambiar de
-   torneo" y el estado de los datos. Se cierra al pulsar fuera o con Escape. */
-function engancharMenuPlegable() {
-  const boton = $('#btn-menu');
-  const panel = $('#menu-panel');
-  if (!boton || !panel) return null;
+/* -------------------------------------------------- menú lateral plegable */
+/* El menú de la izquierda se puede plegar: queda una franja con los iconos y
+   se despliega al volver a pulsar. Cada navegador recuerda cómo lo dejaste. */
+function engancharMenuLateral() {
+  const sidebar = $('#sidebar');
+  const boton = $('#btn-plegar');
+  if (!sidebar || !boton) return;
 
-  const cerrar = () => {
-    panel.hidden = true;
-    boton.classList.remove('abierto');
-    boton.setAttribute('aria-expanded', 'false');
+  const aplicar = (plegado) => {
+    sidebar.classList.toggle('plegado', plegado);
+    const layout = sidebar.closest('.layout');
+    if (layout) layout.classList.toggle('plegado', plegado);
+    boton.textContent = plegado ? '»' : '«';
+    boton.title = plegado ? 'Desplegar el menú' : 'Plegar el menú';
+    boton.setAttribute('aria-expanded', String(!plegado));
+    try { localStorage.setItem('menu-plegado', plegado ? '1' : '0'); } catch (e) {}
   };
-  const abrir = () => {
-    panel.hidden = false;
-    boton.classList.add('abierto');
-    boton.setAttribute('aria-expanded', 'true');
-  };
 
-  boton.onclick = (e) => { e.stopPropagation(); if (panel.hidden) abrir(); else cerrar(); };
-  panel.onclick = (e) => e.stopPropagation();          // los clics de dentro no lo cierran
-  document.addEventListener('click', cerrar);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+  let plegado = false;
+  try { plegado = localStorage.getItem('menu-plegado') === '1'; } catch (e) {}
+  aplicar(plegado);
 
-  return { abrir, cerrar };
+  boton.onclick = () => aplicar(!sidebar.classList.contains('plegado'));
 }
 
-document.addEventListener('DOMContentLoaded', engancharMenuPlegable);
+document.addEventListener('DOMContentLoaded', engancharMenuLateral);
 
 /* -------------------------------------------------- botón de refrescar */
 function engancharRefrescar(alRefrescar) {

@@ -26,6 +26,9 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
   segundo es el rival. La ruleta **no repite cruces** ya apuntados (hay una casilla para
   permitirlo) y el partido se apunta en la jornada que elijas. Las jornadas se van montando
   **poco a poco**; también puedes poner los cruces a mano con *+ Añadir partido*
+- **Menú lateral plegable**: el botón **«** de arriba del menú lo deja en una franja solo
+  con los iconos (y cada navegador recuerda cómo lo dejaste). Dentro está
+  **🗂️ Cambiar de torneo**, para volver a la lista y elegir otro
 - **Mis torneos** (página de inicio): la lista de todos los torneos en tarjetas. Desde ahí
   se entra a la clasificación, a los partidos o a los ajustes de cada uno, y se crean
   torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así
