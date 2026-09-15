@@ -173,8 +173,8 @@ body {
   background: rgba(var(--nav-rgb, var(--acento-rgb)), .13);
   border-color: var(--nav-color, var(--neon));
 }
-.nav-item.proximo { opacity: .4; cursor: default; }
-.nav-item.proximo:hover { opacity: .4; background: none; }
+.nav-item.proximo { opacity: .62; cursor: default; }
+.nav-item.proximo:hover { opacity: .62; background: none; }
 
 /* Cada sección con su color (igual que los filtros): se identifica de un vistazo */
 .nav-item.nav-clasificacion { --nav-color: var(--pendiente); --nav-rgb: var(--pendiente-rgb); }
@@ -187,7 +187,7 @@ body {
 .sidebar-pie {
   margin-top: 22px; padding: 13px; border-radius: 12px;
   background: var(--panel); border: 1px solid var(--linea);
-  font-size: 13.5px; color: var(--muted); line-height: 1.45;
+  font-size: 13.5px; color: var(--texto-2); line-height: 1.45;
 }
 .sidebar-pie b { color: var(--texto); }
 
@@ -239,15 +239,15 @@ body {
   background: var(--dato-color); opacity: .9;
 }
 .dato .etiqueta {
-  display: block; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 5px;
+  text-transform: uppercase; letter-spacing: .1em; font-size: 13px;
+  color: var(--texto-2); font-weight: 700; margin-bottom: 5px;
 }
 .dato .valor {
   font-family: var(--fuente-numeros); font-size: 30px; font-weight: 800;
   line-height: 1; color: var(--dato-color);
 }
 .dato small {
-  color: var(--muted); font-size: 13px; display: block;
+  color: var(--texto-2); font-size: 13.5px; display: block;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* Un color por dato, con el mismo sistema que los filtros del menú */
@@ -259,8 +259,8 @@ body {
 /* ---------- Tabla de clasificación ---------- */
 .tabla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; table-layout: auto; }
 .tabla th {
-  text-align: center; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--muted); font-weight: 700; padding: 8px 3px;
+  text-align: center; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--texto-2); font-weight: 700; padding: 8px 3px;
   border-bottom: 1px solid var(--linea); white-space: nowrap;
 }
 .tabla th.nombre, .tabla td.nombre { text-align: left; }
@@ -272,7 +272,7 @@ body {
 .tabla tbody tr:hover { background: rgba(var(--acento-rgb),.05); }
 .tabla td.pos {
   font-family: var(--fuente-numeros); font-size: 18px; font-weight: 800;
-  color: var(--muted); width: 26px; padding-left: 0;
+  color: var(--texto-2); width: 26px; padding-left: 0;
 }
 .tabla td.pts { font-family: var(--fuente-numeros); font-size: 20px; font-weight: 800; color: var(--neon); }
 /* Ojo: la celda del jugador NO usa flex (rompería la alineación de la fila
@@ -299,7 +299,7 @@ body {
   width: 18px; height: 18px; border-radius: 5px;
   display: grid; place-items: center;
   font-size: 11px; font-weight: 800;
-  background: var(--panel); border: 1px solid var(--linea); color: var(--muted);
+  background: var(--panel); border: 1px solid var(--linea); color: var(--texto-2);
 }
 .forma span.g { background: var(--neon-suave); border-color: var(--neon); color: var(--neon); }
 .forma span.p { background: rgba(255,77,94,.15); border-color: rgba(255,77,94,.5); color: var(--peligro); }
@@ -329,7 +329,7 @@ body {
   background: var(--panel-2); border: 1px solid var(--linea);
   border-radius: 9px; padding: 3px 10px; min-width: 62px; text-align: center;
 }
-.partido-fila .marcador-mini.pend { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.partido-fila .marcador-mini.pend { color: var(--texto-2); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
 /* Sin botón (eliminatorias y últimos resultados), la fila respira mejor */
 .partido-fila:has(.quien + .marcador-mini + .quien:last-child) { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
 .btn-mini-ir {
@@ -348,8 +348,8 @@ body {
   color: var(--neon); line-height: .9;
 }
 .cabecera-jornada .etiqueta {
-  text-transform: uppercase; letter-spacing: .14em; font-size: 12.5px;
-  color: var(--muted); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em; font-size: 13px;
+  color: var(--texto-2); font-weight: 700;
 }
 .cabecera-jornada .estado {
   margin-left: auto; font-size: 11.5px; font-weight: 800; letter-spacing: .08em;
@@ -358,7 +358,7 @@ body {
   white-space: nowrap;
 }
 .cabecera-jornada .estado.hecho {
-  color: var(--muted); background: var(--panel); border-color: var(--linea);
+  color: var(--texto-2); background: var(--panel); border-color: var(--linea);
 }
 
 /* Cada jornada es un bloque con su recuadro, para distinguirlas de un vistazo */
@@ -375,8 +375,8 @@ body {
   box-shadow: 0 0 20px rgba(var(--acento-rgb), .10);
   background: rgba(var(--acento-rgb), .07);
 }
-.jornada.completa { opacity: .78; }
-.jornada.completa .cabecera-jornada .num { color: var(--muted); }
+.jornada.completa { opacity: .82; }
+.jornada.completa .cabecera-jornada .num { color: var(--texto-2); }
 .jornada .partido-fila { background: var(--panel); }
 .jornada .partido-fila:last-child { margin-bottom: 4px; }
 
@@ -405,7 +405,7 @@ body {
 }
 .btn-paso:hover { background: var(--neon-suave); }
 .btn-paso:active { transform: scale(.92); }
-.vs { font-family: var(--fuente-numeros); font-size: 22px; color: var(--muted); padding: 0 8px; }
+.vs { font-family: var(--fuente-numeros); font-size: 22px; color: var(--texto-2); padding: 0 8px; }
 
 /* ---------- Botones ---------- */
 .btn {
@@ -430,8 +430,8 @@ body {
   flex: 1; cursor: pointer; padding: 10px; border-radius: 11px; text-align: center;
   background: var(--panel); border: 1px solid var(--linea);
   font-family: var(--fuente-numeros); font-size: 15px; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--tab-color, var(--muted)); font-weight: 700;
-  opacity: .62;
+  text-transform: uppercase; color: var(--tab-color, var(--texto-2)); font-weight: 700;
+  opacity: .74;
   transition: opacity .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
 .tab:hover { opacity: 1; border-color: var(--tab-color, var(--linea)); }
@@ -455,7 +455,7 @@ body {
   color: var(--aviso); border-radius: 12px; padding: 11px 13px;
   font-size: 15px; margin-bottom: 12px;
 }
-.nota { color: var(--muted); font-size: 13.5px; margin: 8px 0 0; line-height: 1.45; }
+.nota { color: var(--texto-2); font-size: 13.5px; margin: 8px 0 0; line-height: 1.45; }
 .vacio {
   text-align: center; color: var(--muted); font-size: 15.5px;
   padding: 20px 12px; border: 1px dashed var(--linea); border-radius: 12px;
@@ -487,7 +487,7 @@ body {
   font-family: var(--fuente-numeros); font-size: 24px; font-weight: 800;
   letter-spacing: .03em; text-transform: uppercase; margin: 0 0 2px; color: #fff;
 }
-.tarjeta-torneo .datos { color: var(--muted); font-size: 15px; display: block; margin-bottom: 12px; }
+.tarjeta-torneo .datos { color: var(--texto-2); font-size: 15px; display: block; margin-bottom: 12px; }
 .tarjeta-torneo .datos b { color: var(--texto); font-weight: 700; }
 .tarjeta-torneo .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 
@@ -507,7 +507,7 @@ body {
 }
 .sidebar-titulo {
   font-family: var(--fuente-numeros); font-size: 13px; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--texto-2);
 }
 .btn-plegar {
   background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
@@ -682,7 +682,7 @@ body {
   letter-spacing: .03em; text-transform: uppercase; margin: 0; color: #fff; line-height: 1;
 }
 .panel-cabecera h2 em { color: var(--neon); font-style: normal; }
-.panel-cabecera p { margin: 8px 0 0; color: var(--muted); font-size: 15.5px; }
+.panel-cabecera p { margin: 8px 0 0; color: var(--texto-2); font-size: 15.5px; }
 
 /* ---------- Título de sección destacado (en verde) ---------- */
 .panel-titulo.verde {
@@ -745,9 +745,9 @@ select option { background: var(--panel-2); color: var(--texto); }
 .campo-form { min-width: 0; }
 .campo-form label {
   display: block; font-size: 12.5px; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  text-transform: uppercase; color: var(--texto-2); margin-bottom: 6px;
 }
-.campo-form .pista { font-size: 12.5px; color: var(--muted); margin-top: 5px; line-height: 1.35; }
+.campo-form .pista { font-size: 12.5px; color: var(--texto-2); margin-top: 5px; line-height: 1.35; }
 
 .casilla { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; padding: 6px 0; }
 .casilla input { width: 18px; height: 18px; accent-color: var(--neon); cursor: pointer; }
