@@ -33,6 +33,10 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 - **Menú lateral plegable**: el botón **«** de arriba del menú lo deja en una franja solo
   con los iconos (y cada navegador recuerda cómo lo dejaste). Dentro está
   **🗂️ Cambiar de torneo**, para volver a la lista y elegir otro
+- **🎨 Dos paletas de color**: en Ajustes → *Aspecto de la web* se cambia entre
+  **Verde neón** (el de siempre) y **Morado** (violeta sobre gris oscuro, estilo plataforma).
+  Se guarda en el navegador, así que cada uno puede tener la suya. La clasificación lleva
+  **insignias 🥇🥈🥉** en el podio (en las dos paletas)
 - **Mis torneos** (página de inicio): la lista de todos los torneos en tarjetas. Desde ahí
   se entra a la clasificación, a los partidos o a los ajustes de cada uno, y se crean
   torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así
@@ -68,6 +72,7 @@ Torneo-Efootball/
 │   ├── comun.js          Piezas compartidas: torneo activo, ventanita, avisos, filas
 │   ├── datos-prueba.js   Datos de mentira por si no hay conexión
 │   ├── torneos.js        Lógica de la lista de torneos
+│   ├── tema.js           Las paletas de color (verde neón / morado)
 │   ├── clasificacion.js  Lógica de la clasificación
 │   ├── partidos.js       Lógica de la página de partidos
 │   ├── ruleta.js         La ruleta que sortea los emparejamientos
@@ -87,7 +92,8 @@ solos (`enlacesConTorneo()` en `js/comun.js`).
 | Test | Cómo | Qué comprueba |
 |---|---|---|
 | Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores y la lógica de la ruleta |
-| Ruleta | abrir `docs/prueba-ruleta.html` | Que la ruleta sortea, no repite cruces y apunta el partido en su jornada (monta un torneo de prueba y lo borra) |
+| Ruleta | abrir `docs/prueba-ruleta.html` | Que la ruleta sortea, no repite cruces ni jugadores en la misma jornada, apunta el partido y deja eliminar uno |
+| Temas | abrir `docs/prueba-tema.html` | Que las dos paletas se aplican, se recuerdan al cambiar de página y que la verde queda intacta |
 | Navegación | abrir `docs/prueba-navegacion.html` | Que al cambiar de página NO se cambia de torneo solo |
 | Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita apunta un resultado, el progreso sube y el borrado deja el partido pendiente |
 | Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo (sin partidos), se configura y se borra |

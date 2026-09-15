@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: las dos paletas de color</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  h1 { font-size:20px; color:#00E676; }
+  iframe { border:1px solid #223; background:#0A1017; width:1400px; height:600px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba de temas: verde neón y morado 🎨</h1>
+<p>Cambia la paleta desde Ajustes y comprueba que se aplica a toda la web, que se recuerda
+   y que la paleta de siempre sigue intacta. Al terminar deja el tema como estaba.</p>
+<iframe id="marco" src="../ajustes.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK   ] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos = 200) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(250); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+/* Color de fondo real que se está viendo */
+function fondoDe(d) {
+  return d.defaultView.getComputedStyle(d.body).backgroundColor;
+}
+function acentoDe(d) {
+  return d.defaultView.getComputedStyle(d.documentElement).getPropertyValue('--neon').trim();
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+  let temaAntes = null;
+
+  try {
+    await esperarListo(marco);
+    let w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    temaAntes = w.temaActual();
+
+    // 1. El selector está en Ajustes
+    const opciones = d.querySelectorAll('#selector-tema .tema-opcion');
+    ok('Ajustes tiene el selector de aspecto', opciones.length === 2, opciones.length + ' opciones');
+    ok('las dos paletas se llaman Verde neón y Morado',
+       d.getElementById('selector-tema').textContent.includes('Verde neón') &&
+       d.getElementById('selector-tema').textContent.includes('Morado'),
+       d.getElementById('selector-tema').textContent.replace(/\s+/g, ' ').trim().slice(0, 80));
+
+    // 2. Estado de partida: el tema que hubiera (por defecto, verde)
+    ok('el tema activo está marcado en el selector',
+       !!d.querySelector('#selector-tema .tema-opcion.activo'),
+       'tema actual: ' + temaAntes);
+
+    const acentoVerde = acentoDe(d);
+
+    // 3. Cambiar a MORADO
+    const botonMorado = Array.from(opciones).find(b => /morado/i.test(b.textContent));
+    botonMorado.click();
+    await esperar(400);
+
+    ok('al elegir Morado se aplica el tema en el <html>',
+       w.document.documentElement.getAttribute('data-tema') === 'morado',
+       'data-tema=' + w.document.documentElement.getAttribute('data-tema'));
+
+    const acentoMorado = acentoDe(d);
+    ok('el acento pasa a violeta (#7C3AED)',
+       acentoMorado.toLowerCase() === '#7c3aed', acentoMorado);
+
+    const fondoMorado = fondoDe(d);
+    ok('el fondo pasa al gris oscuro de la paleta', !!fondoMorado, 'fondo: ' + fondoMorado);
+
+    ok('la opción Morado queda marcada como activa',
+       /morado/i.test(d.querySelector('#selector-tema .tema-opcion.activo').textContent));
+
+    // 4. Se recuerda en el navegador y aguanta al cambiar de página
+    ok('el tema se guarda en el navegador',
+       w.localStorage.getItem('tema-web') === 'morado',
+       'tema-web=' + w.localStorage.getItem('tema-web'));
+
+    await navegar(marco, '../partidos.html');
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+    ok('al cambiar de página el tema sigue puesto (sin parpadeo)',
+       w.document.documentElement.getAttribute('data-tema') === 'morado' &&
+       acentoDe(d).toLowerCase() === '#7c3aed',
+       'acento en Partidos: ' + acentoDe(d));
+
+    // 5. Las insignias del podio salen en la clasificación
+    await navegar(marco, '../clasificacion.html');
+    d = marco.contentDocument;
+    const medallas = d.querySelectorAll('#tabla-clasificacion .pos .medalla');
+    ok('la clasificación enseña las insignias 🥇🥈🥉', medallas.length === 3,
+       Array.from(medallas).map(m => m.textContent).join(' ') || 'ninguna');
+
+    // 6. Volver al tema de siempre: la paleta verde sigue intacta
+    await navegar(marco, '../ajustes.html');
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+    const botonVerde = Array.from(d.querySelectorAll('#selector-tema .tema-opcion'))
+      .find(b => /verde/i.test(b.textContent));
+    botonVerde.click();
+    await esperar(400);
+
+    ok('se puede volver al tema verde neón',
+       !w.document.documentElement.hasAttribute('data-tema'), 'sin data-tema (tema por defecto)');
+    ok('la paleta verde sigue siendo la de siempre (#00E676)',
+       acentoDe(d).toLowerCase() === '#00e676', acentoDe(d));
+    ok('el fondo vuelve al azul noche',
+       fondoDe(d) !== fondoMorado, 'fondo: ' + fondoDe(d));
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  // Se deja el tema como estaba antes de la prueba
+  try {
+    marco.contentWindow.aplicarTema(temaAntes || 'verde');
+  } catch (e) {}
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

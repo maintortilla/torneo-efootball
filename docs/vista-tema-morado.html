@@ -2,32 +2,28 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Vista previa: menú lateral plegado</title>
+<title>Vista previa: paleta morada</title>
 <style>
   body { background:#0A1017; margin:0; padding:10px; }
-  iframe { width:1500px; height:700px; border:1px solid #223; }
+  iframe { width:1520px; height:720px; border:1px solid #223; }
 </style>
 </head>
 <body>
-<!-- Solo para la captura: carga los partidos y pliega el menú lateral. -->
-<iframe id="marco" src="../partidos.html?torneo=t-mu368zeqaawp"></iframe>
+<!-- Solo para la captura: carga la clasificación y aplica la paleta morada -->
+<iframe id="marco" src="../clasificacion.html"></iframe>
 <script>
 const marco = document.getElementById('marco');
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
 marco.onload = async () => {
-  marco.onload = null;   // que no se repita (lección aprendida a base de sustos)
-
+  marco.onload = null;   // que no se repita
   const t0 = Date.now();
   while (Date.now() - t0 < 25000) {
     await esperar(300);
     if (marco.contentWindow && marco.contentWindow.__listo) break;
   }
-
-  const d = marco.contentDocument;
-  const boton = d.getElementById('btn-plegar');
-  if (boton) boton.click();
-  await esperar(900);
+  marco.contentWindow.aplicarTema('morado');
+  await esperar(700);
   document.title = 'vista-ok';
 };
 </script>

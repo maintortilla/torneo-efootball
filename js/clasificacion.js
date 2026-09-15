@@ -122,12 +122,18 @@ function pintarClasificacion() {
     <tbody></tbody>`;
 
   const cuerpo = t.querySelector('tbody');
+  const MEDALLAS = ['🥇', '🥈', '🥉'];      // insignias del podio (1º, 2º y 3º)
 
   tabla.forEach((f, i) => {
     const clasifica = i < nClasifican;
-    const tr = el('tr', clasifica ? 'clasifica' : 'fuera');
+    const medalla = MEDALLAS[i];
+
+    const clases = [clasifica ? 'clasifica' : 'fuera'];
+    if (medalla) clases.push('podio', 'podio-' + (i + 1));
+
+    const tr = el('tr', clases.join(' '));
     tr.innerHTML = `
-      <td class="pos">${i + 1}</td>
+      <td class="pos">${medalla ? `<span class="medalla" title="${i + 1}º puesto">${medalla}</span>` : ''}${i + 1}</td>
       <td class="nombre jugador"><span class="emoji">${f.emoji}</span>${f.nombre}</td>
       <td>${f.pj}</td>
       <td>${f.pg}</td>

@@ -9,11 +9,9 @@
 
 :root {
   /* Colores del tema (cambiando estos valores cambia toda la web).
-     TEMAS: como todo el estilo usa estas variables, más adelante se pueden crear
-     estilos alternativos (azul, retro, claro...) añadiendo bloques así:
-         body[data-tema="azul"] { --neon: #4DA3FF; --neon-suave: #0D2942; }
-     y un selector en la web que cambie el atributo data-tema del <body>.
-     Idea aparcada por Leo (secundaria): el CSS ya está preparado para ello. */
+     TEMAS: todo el estilo usa estas variables, así que una paleta nueva es un
+     bloque como el "morado" de abajo. El tema se pone con
+     <html data-tema="morado"> y lo cambia js/tema.js desde Ajustes. */
   --bg:        #070B12;
   --panel:     #0E1621;
   --panel-2:   #14202F;
@@ -22,15 +20,49 @@
   --neon-suave:#0B3D2A;
   --azul:      #4DA3FF;
   --texto:     #E8F2FF;
+  --texto-2:   #9FB3C8;
   --muted:     #7E93A8;
   --aviso:     #FFB020;
   --peligro:   #FF4D5E;
 
+  /* El acento también en "canales RGB": así las sombras se calculan solas
+     (rgba(var(--acento-rgb), .25)) y cambian de color con el tema. */
+  --acento-rgb:   0, 230, 118;
+  --acento-hover: #00C853;
+  --acento-texto: #7CFFB2;
+  --exito:        #00E676;
+
   --radio: 14px;
-  --sombra-neon: 0 0 18px rgba(0, 230, 118, .25);
+  --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .25);
 
   --fuente: 'Rajdhani', system-ui, sans-serif;
   --fuente-numeros: 'Saira Condensed', 'Rajdhani', system-ui, sans-serif;
+}
+
+/* ==========================================================================
+   TEMA "MORADO" — paleta de plataforma: violeta sobre gris oscuro neutro
+   (tokens tomados de la guía de estilo de Leo)
+   ========================================================================== */
+[data-tema="morado"] {
+  --bg:        #0B0B0C;   /* fondo base */
+  --panel:     #161618;   /* tarjetas y paneles */
+  --panel-2:   #1F1F23;   /* superficies elevadas: modales, hover */
+  --linea:     #2C2C2E;   /* bordes y divisores */
+  --neon:      #7C3AED;   /* acento principal */
+  --neon-suave:#2A1B4D;
+  --azul:      #A78BFA;
+  --texto:     #FFFFFF;
+  --texto-2:   #9CA3AF;   /* texto secundario */
+  --muted:     #6B7280;   /* etiquetas y meta */
+  --aviso:     #F59E0B;   /* pendiente / próximo */
+  --peligro:   #EF4444;   /* cerrado / error */
+
+  --acento-rgb:   124, 58, 237;
+  --acento-hover: #6D28D9;
+  --acento-texto: #A78BFA;
+  --exito:        #10B981;   /* en vivo / confirmado */
+
+  --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .35);
 }
 
 * { box-sizing: border-box; }
@@ -173,7 +205,7 @@ body {
   font-size: 15.5px;
 }
 .tabla tr:last-child td { border-bottom: none; }
-.tabla tbody tr:hover { background: rgba(0,230,118,.05); }
+.tabla tbody tr:hover { background: rgba(var(--acento-rgb),.05); }
 .tabla td.pos {
   font-family: var(--fuente-numeros); font-size: 18px; font-weight: 800;
   color: var(--muted); width: 26px; padding-left: 0;
@@ -183,7 +215,7 @@ body {
    al sacar el td del modo tabla). El emoji va en línea, con su margen. */
 .tabla td.jugador { font-weight: 600; white-space: nowrap; }
 .tabla td.jugador .emoji { margin-right: 7px; font-size: 17px; vertical-align: -1px; }
-.tabla .clasifica td { background: rgba(0,230,118,.06); }
+.tabla .clasifica td { background: rgba(var(--acento-rgb),.06); }
 .tabla .clasifica td.pos { color: var(--neon); }
 .tabla .fuera { opacity: .72; }
 .dg-pos { color: var(--neon); }
@@ -267,9 +299,9 @@ body {
   break-inside: avoid;
 }
 .jornada.en-curso {
-  border-color: rgba(0, 230, 118, .55);
-  box-shadow: 0 0 20px rgba(0, 230, 118, .10);
-  background: rgba(11, 61, 42, .18);
+  border-color: rgba(var(--acento-rgb), .55);
+  box-shadow: 0 0 20px rgba(var(--acento-rgb), .10);
+  background: rgba(var(--acento-rgb), .07);
 }
 .jornada.completa { opacity: .78; }
 .jornada.completa .cabecera-jornada .num { color: var(--muted); }
@@ -280,7 +312,7 @@ body {
 .marcador { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 6px 0; }
 .marcador, .contador, .equipo { min-width: 0; }
 .equipo { text-align: center; }
-.equipo .avatar { font-size: 38px; display: block; line-height: 1; filter: drop-shadow(0 0 10px rgba(0,230,118,.35)); }
+.equipo .avatar { font-size: 38px; display: block; line-height: 1; filter: drop-shadow(0 0 10px rgba(var(--acento-rgb),.35)); }
 .equipo .nombre {
   font-family: var(--fuente-numeros); font-size: 21px; text-transform: uppercase;
   letter-spacing: .04em; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -290,7 +322,7 @@ body {
 .contador .cifra {
   font-family: var(--fuente-numeros); font-size: 60px; font-weight: 800;
   min-width: 78px; text-align: center; line-height: 1;
-  color: #fff; text-shadow: 0 0 22px rgba(0,230,118,.45);
+  color: #fff; text-shadow: 0 0 22px rgba(var(--acento-rgb),.45);
 }
 .btn-paso {
   width: 48px; height: 48px; border-radius: 12px; cursor: pointer;
@@ -364,7 +396,7 @@ body {
   display: flex; flex-direction: column; gap: 4px;
   transition: border-color .15s ease, transform .1s ease;
 }
-.tarjeta-torneo:hover { border-color: rgba(0,230,118,.5); transform: translateY(-2px); }
+.tarjeta-torneo:hover { border-color: rgba(var(--acento-rgb),.5); transform: translateY(-2px); }
 .tarjeta-torneo.finalizado { opacity: .8; }
 .tarjeta-torneo h3 {
   font-family: var(--fuente-numeros); font-size: 24px; font-weight: 800;
@@ -416,11 +448,11 @@ body {
 .ruleta-flecha {
   position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
   font-size: 24px; line-height: 1; color: var(--neon); z-index: 3;
-  text-shadow: 0 0 12px rgba(0,230,118,.85);
+  text-shadow: 0 0 12px rgba(var(--acento-rgb),.85);
 }
 .ruleta-rueda {
   position: absolute; inset: 0; border-radius: 50%;
-  border: 4px solid rgba(0,230,118,.45);
+  border: 4px solid rgba(var(--acento-rgb),.45);
   box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5);
   transition: transform 3.6s cubic-bezier(.15,.72,.2,1);
 }
@@ -431,9 +463,9 @@ body {
 .ruleta-centro {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
   width: 62px; height: 62px; border-radius: 50%; z-index: 2;
-  background: #0E1621; border: 3px solid var(--neon);
+  background: var(--panel-2); border: 3px solid var(--neon);
   display: flex; align-items: center; justify-content: center; font-size: 26px;
-  box-shadow: 0 0 18px rgba(0,230,118,.35);
+  box-shadow: 0 0 18px rgba(var(--acento-rgb),.35);
 }
 .ruleta-elegidos {
   display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px;
@@ -451,6 +483,35 @@ body {
 .ruleta-elegido.vacio { color: var(--muted); font-style: italic; }
 .ruleta-elegido .nombre.vacio { color: var(--muted); font-weight: 500; font-style: italic; }
 
+/* ---------- Aspecto: selector de temas (Ajustes) ---------- */
+.temas-rejilla { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.tema-opcion {
+  display: flex; align-items: center; gap: 11px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
+  padding: 12px 16px; border-radius: 12px; font-family: inherit; font-size: 16px; font-weight: 600;
+  transition: border-color .15s ease, transform .1s ease;
+}
+.tema-opcion:hover { border-color: var(--neon); transform: translateY(-1px); }
+.tema-opcion.activo { border-color: var(--neon); box-shadow: var(--sombra-neon); }
+.tema-bola {
+  width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
+  border: 2px solid rgba(255,255,255,.22);
+}
+.tema-bola.verde  { background: linear-gradient(135deg, #00E676, #00794A); }
+.tema-bola.morado { background: linear-gradient(135deg, #7C3AED, #6D28D9); }
+.tema-opcion .tema-info { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.tema-opcion .tema-desc { font-size: 13px; font-weight: 500; color: var(--texto-2); }
+.tema-opcion .tema-check { color: var(--neon); font-weight: 800; opacity: 0; }
+.tema-opcion.activo .tema-check { opacity: 1; }
+
+/* ---------- Insignias del podio en la clasificación (los dos temas) ---------- */
+.tabla td.pos .medalla {
+  display: inline-block; margin-right: 5px; font-size: 15px; line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+}
+.tabla tr.podio td.pos { color: var(--texto); }
+.tabla tr.podio-1 td, .tabla tr.podio-2 td, .tabla tr.podio-3 td { font-weight: 600; }
+
 /* ---------- Sonido y efectos de la ruleta ---------- */
 .btn-sonido {
   background: transparent; border: 1px solid var(--linea); color: var(--texto);
@@ -463,8 +524,8 @@ body {
 /* La rueda late mientras gira */
 .ruleta-caja.girando .ruleta-rueda { animation: latido-ruleta 1s ease-in-out infinite; }
 @keyframes latido-ruleta {
-  0%, 100% { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 18px rgba(0,230,118,.2); }
-  50%      { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 44px rgba(0,230,118,.6); }
+  0%, 100% { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 18px rgba(var(--acento-rgb),.2); }
+  50%      { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 44px rgba(var(--acento-rgb),.6); }
 }
 
 /* Onda que sale del centro al elegirse un jugador */
@@ -483,7 +544,7 @@ body {
 .ruleta-emoji.elegido .emoji-int { animation: pop-emoji .75s ease-out; }
 @keyframes pop-emoji {
   0%   { transform: scale(1); }
-  35%  { transform: scale(2); filter: drop-shadow(0 0 12px rgba(0,230,118,1)); }
+  35%  { transform: scale(2); filter: drop-shadow(0 0 12px rgba(var(--acento-rgb),1)); }
   70%  { transform: scale(1.35); }
   100% { transform: scale(1); }
 }
@@ -516,7 +577,7 @@ body {
   border: 1px solid var(--neon);
   border-radius: 18px;
   padding: 22px 24px 20px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 34px rgba(0,230,118,.12);
+  box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 34px rgba(var(--acento-rgb),.12);
   animation: sube .18s ease-out;
 }
 @keyframes sube { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
