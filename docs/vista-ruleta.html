@@ -2,25 +2,22 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Vista previa: la ruleta girando</title>
+<title>Vista previa: efecto al elegir jugador</title>
 <style>
   body { background:#0A1017; margin:0; padding:10px; }
   iframe { width:1380px; height:990px; border:1px solid #223; }
 </style>
 </head>
 <body>
-<!-- Solo para la captura: abre la ruleta del torneo real, marca "permitir
-     repetir" (ese torneo ya tiene todos los cruces) y gira dos veces.
-     NO apunta ningún partido ni crea nada. -->
+<!-- Solo para la captura: sortea dos jugadores en el torneo real (sin apuntar
+     nada) y repite el efecto para que la foto pille el brillo y la onda. -->
 <iframe id="marco" src="../partidos.html?torneo=t-mu368zeqaawp"></iframe>
 <script>
 const marco = document.getElementById('marco');
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
 marco.onload = async () => {
-  // ¡Ojo! Sin esto el handler se vuelve a ejecutar cada vez que el iframe
-  // navega y se monta un bucle (llegó a crear 30 torneos de basura).
-  marco.onload = null;
+  marco.onload = null;   // que no se repita (lección aprendida a base de sustos)
 
   const t0 = Date.now();
   while (Date.now() - t0 < 25000) {
@@ -28,17 +25,29 @@ marco.onload = async () => {
     if (marco.contentWindow && marco.contentWindow.__listo) break;
   }
 
+  const w = marco.contentWindow;
   const d = marco.contentDocument;
+
   d.getElementById('btn-ruleta').click();
   await esperar(500);
-
-  // Este torneo trae el calendario completo: todos los cruces ya existen
-  d.getElementById('ruleta-repetir').checked = true;
+  d.getElementById('ruleta-repetir').checked = true;   // el torneo ya tiene todos los cruces
 
   d.getElementById('ruleta-girar').click();
   await esperar(4400);
   d.getElementById('ruleta-girar').click();
   await esperar(4400);
+
+  // El efecto dura menos de un segundo: se repite para que la captura lo pille
+  const torneo = w.Store.torneo('t-mu368zeqaawp');
+  const porNombre = n => torneo.jugadores.find(j => j.nombre === n);
+  for (let k = 0; k < 6; k++) {
+    const l = porNombre(d.getElementById('ruleta-nom-local').textContent.trim());
+    if (l) w.efectoElegido(torneo, l, 'local');
+    await esperar(250);
+    const v = porNombre(d.getElementById('ruleta-nom-visit').textContent.trim());
+    if (v) w.efectoElegido(torneo, v, 'visit');
+    await esperar(450);
+  }
   document.title = 'vista-ok';
 };
 </script>

@@ -148,21 +148,24 @@
   <!-- Ventanita de la ruleta: sortear quién juega contra quién -->
   <div class="modal-fondo" id="modal-ruleta" hidden>
     <div class="modal modal-ancho">
-      <p class="panel-titulo">🎰 Ruleta de emparejamientos</p>
+      <p class="panel-titulo">🎰 Ruleta de emparejamientos
+        <button class="btn-sonido" id="ruleta-sonido" title="Silenciar la ruleta">🔊</button>
+      </p>
 
-      <div class="ruleta-caja">
+      <div class="ruleta-caja" id="ruleta-caja">
         <span class="ruleta-flecha">▼</span>
+        <span class="ruleta-onda" id="ruleta-onda"></span>
         <div class="ruleta-rueda" id="ruleta-rueda"></div>
         <span class="ruleta-centro" id="ruleta-centro">🎰</span>
       </div>
 
       <div class="ruleta-elegidos">
-        <div class="ruleta-elegido local">
+        <div class="ruleta-elegido local" id="ruleta-caja-local">
           <span class="avatar" id="ruleta-av-local">·</span>
           <span class="nombre vacio" id="ruleta-nom-local">sin sortear</span>
         </div>
         <span class="vs">vs</span>
-        <div class="ruleta-elegido visitante">
+        <div class="ruleta-elegido visitante" id="ruleta-caja-visit">
           <span class="nombre vacio" id="ruleta-nom-visit">sin sortear</span>
           <span class="avatar" id="ruleta-av-visit">·</span>
         </div>

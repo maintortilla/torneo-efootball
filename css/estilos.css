@@ -451,6 +451,56 @@ body {
 .ruleta-elegido.vacio { color: var(--muted); font-style: italic; }
 .ruleta-elegido .nombre.vacio { color: var(--muted); font-weight: 500; font-style: italic; }
 
+/* ---------- Sonido y efectos de la ruleta ---------- */
+.btn-sonido {
+  background: transparent; border: 1px solid var(--linea); color: var(--texto);
+  border-radius: 8px; padding: 2px 9px; margin-left: 10px; cursor: pointer; font-size: 14px;
+  transition: border-color .15s ease, opacity .15s ease; vertical-align: middle;
+}
+.btn-sonido:hover { border-color: var(--neon); }
+.btn-sonido.apagado { opacity: .5; }
+
+/* La rueda late mientras gira */
+.ruleta-caja.girando .ruleta-rueda { animation: latido-ruleta 1s ease-in-out infinite; }
+@keyframes latido-ruleta {
+  0%, 100% { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 18px rgba(0,230,118,.2); }
+  50%      { box-shadow: inset 0 0 30px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5), 0 0 44px rgba(0,230,118,.6); }
+}
+
+/* Onda que sale del centro al elegirse un jugador */
+.ruleta-onda {
+  position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+  border-radius: 50%; border: 3px solid var(--neon); opacity: 0; pointer-events: none; z-index: 4;
+}
+.ruleta-onda.sale { animation: onda-ruleta .8s ease-out; }
+@keyframes onda-ruleta {
+  0%   { transform: scale(.35); opacity: .95; }
+  100% { transform: scale(7); opacity: 0; }
+}
+
+/* El emoji elegido da un salto y brilla */
+.ruleta-emoji .emoji-int { display: inline-block; }
+.ruleta-emoji.elegido .emoji-int { animation: pop-emoji .75s ease-out; }
+@keyframes pop-emoji {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(2); filter: drop-shadow(0 0 12px rgba(0,230,118,1)); }
+  70%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Rebote de la rueda al parar */
+.ruleta-caja.parada { animation: rebote-ruleta .55s ease-out; }
+@keyframes rebote-ruleta {
+  0% { transform: scale(1); } 40% { transform: scale(1.035); } 100% { transform: scale(1); }
+}
+
+/* El recuadro del jugador que acaba de salir entra con fuerza */
+.ruleta-elegido.nuevo { animation: entra-elegido .5s cubic-bezier(.2,1.5,.4,1); border-color: var(--neon); }
+@keyframes entra-elegido {
+  0%   { transform: scale(.72); opacity: .15; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* ---------- Ventanita de apuntar el resultado ---------- */
 .modal-fondo {
   position: fixed; inset: 0; z-index: 100;

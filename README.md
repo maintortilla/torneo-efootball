@@ -26,6 +26,9 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
   segundo es el rival. La ruleta **no repite cruces** ya apuntados (hay una casilla para
   permitirlo) y el partido se apunta en la jornada que elijas. Las jornadas se van montando
   **poco a poco**; también puedes poner los cruces a mano con *+ Añadir partido*
+- **Sonido y efectos en la ruleta**: suena un **tic por cada sector** que pasa (desacelerando
+  como una ruleta de verdad) y una **fanfarria** cuando sale el jugador, con efecto de onda,
+  brillo del emoji y rebote de la rueda. Botón **🔊/🔇** para silenciarla (se recuerda)
 - **Menú lateral plegable**: el botón **«** de arriba del menú lo deja en una franja solo
   con los iconos (y cada navegador recuerda cómo lo dejaste). Dentro está
   **🗂️ Cambiar de torneo**, para volver a la lista y elegir otro

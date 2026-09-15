@@ -110,6 +110,31 @@ marcoEl.onload = async function ejecutarPrueba() {
     ok('el rival es distinto del local', visit !== local, local + ' vs ' + visit);
     ok('ya se puede apuntar el partido', d.getElementById('ruleta-guardar').disabled === false);
 
+    // Efectos: el emoji del elegido y su recuadro se marcan para animarse
+    const emojisMarcados = d.querySelectorAll('#ruleta-rueda .ruleta-emoji.elegido');
+    ok('el emoji del jugador elegido se marca para brillar', emojisMarcados.length === 1,
+       emojisMarcados.length + ' emoji marcado');
+    ok('los recuadros de los sorteados hacen su efecto de entrada',
+       d.getElementById('ruleta-caja-local').classList.contains('nuevo') &&
+       d.getElementById('ruleta-caja-visit').classList.contains('nuevo'),
+       'local y visitante con la animación');
+
+    // Sonido: existe el botón y se puede silenciar
+    const botonSonido = d.getElementById('ruleta-sonido');
+    ok('la ruleta tiene botón de sonido', !!botonSonido);
+    ok('las funciones de sonido están listas',
+       typeof w.sonarTic === 'function' && typeof w.sonarElegido === 'function',
+       'sonarTic + sonarElegido');
+
+    const iconoAntes = botonSonido.textContent.trim();
+    botonSonido.click();
+    await esperar(200);
+    ok('el botón de sonido cambia al pulsarlo (🔊 / 🔇)',
+       botonSonido.textContent.trim() !== iconoAntes,
+       iconoAntes + ' → ' + botonSonido.textContent.trim());
+    botonSonido.click();          // se deja como estaba
+    await esperar(150);
+
     const jornadaElegida = Number(d.getElementById('ruleta-jornada').value);
 
     // 6. Apuntar el partido

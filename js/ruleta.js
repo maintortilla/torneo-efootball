@@ -54,14 +54,20 @@ function pintarRueda(torneo) {
     `${colorSuave(j.color)} ${(i * paso).toFixed(2)}deg ${((i + 1) * paso).toFixed(2)}deg`);
   rueda.style.background = `conic-gradient(from 0deg, ${trozos.join(', ')})`;
 
-  // Los emojis, cada uno en el centro de su sector
+  // Los emojis, cada uno en el centro de su sector (con una envoltura dentro
+  // para poder animar el emoji sin perder su sitio en la rueda)
   rueda.innerHTML = '';
   torneo.jugadores.forEach((j, i) => {
     const angulo = i * paso + paso / 2;
     const span = document.createElement('span');
     span.className = 'ruleta-emoji';
-    span.textContent = j.emoji || '⚪';
     span.title = j.nombre;
+
+    const dentro = document.createElement('span');
+    dentro.className = 'emoji-int';
+    dentro.textContent = j.emoji || '⚪';
+    span.appendChild(dentro);
+
     span.style.transform =
       `rotate(${angulo}deg) translateY(-${RULETA_RADIO_EMOJI}px) rotate(${-angulo}deg)`;
     rueda.appendChild(span);
@@ -184,17 +190,25 @@ async function girarRuleta() {
   }
 
   const elegido = elegirAlAzar(candidatos);
+  const lado = ruletaEstado.elegidos.length === 0 ? 'local' : 'visit';
 
   ruletaEstado.girando = true;
   $('#ruleta-girar').disabled = true;
   $('#ruleta-nota').textContent = 'Girando… 🎡';
+
+  $('#ruleta-caja').classList.add('girando');
   girarRuedaA(torneo, elegido);
+  seguirTics(torneo);                    // el sonido va pegado a lo que se ve
 
   await esperarMs(RULETA_GIRO_MS + 140);
 
+  $('#ruleta-caja').classList.remove('girando');
   ruletaEstado.girando = false;
   ruletaEstado.elegidos.push(elegido.id);
+
+  sonarElegido();
   pintarElegidosRuleta();
+  efectoElegido(torneo, elegido, lado);
 }
 
 /* ------------------------------------------------------------------ guardar */
@@ -227,10 +241,173 @@ async function guardarPartidoRuleta() {
   }
 }
 
+/* ==========================================================================
+   SONIDO (Web Audio: no hace falta ningún archivo de audio)
+   --------------------------------------------------------------------------
+   - Tics mientras gira: se calculan mirando el ángulo REAL de la rueda en cada
+     fotograma, así suenan clavados con lo que se ve y desaceleran solos.
+   - Fanfarria corta (do·mi·sol·do) cuando sale el jugador.
+   El navegador solo deja sonar después de que toques algo: el primer sonido
+   siempre va detrás del botón GIRAR, así que no hay problema.
+   ========================================================================== */
+let ctxAudio = null;
+let silencioRuleta = false;
+try { silencioRuleta = localStorage.getItem('ruleta-silencio') === '1'; } catch (e) {}
+
+function contextoAudio() {
+  if (silencioRuleta) return null;
+  try {
+    if (!ctxAudio) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctxAudio = new AC();
+    }
+    if (ctxAudio.state === 'suspended') ctxAudio.resume();
+    return ctxAudio;
+  } catch (e) { return null; }
+}
+
+/* Un "tac" cortito, como el de una ruleta de feria */
+function sonarTic(intensidad) {
+  const ctx = contextoAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const vol = Math.max(0.05, Math.min(0.28, 0.3 * (intensidad || 1)));
+
+  const osc = ctx.createOscillator();
+  const filtro = ctx.createBiquadFilter();
+  const gana = ctx.createGain();
+
+  filtro.type = 'bandpass';
+  filtro.frequency.value = 2300;
+  filtro.Q.value = 1.1;
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(2500, t);
+  osc.frequency.exponentialRampToValueAtTime(1000, t + 0.045);
+
+  gana.gain.setValueAtTime(0.0001, t);
+  gana.gain.exponentialRampToValueAtTime(vol, t + 0.003);
+  gana.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+
+  osc.connect(filtro).connect(gana).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.075);
+}
+
+/* Fanfarria de cuatro notas al salir un jugador */
+function sonarElegido() {
+  const ctx = contextoAudio();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + 0.02;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {     // do · mi · sol · do
+    const t = t0 + i * 0.075;
+    const ultima = i === 3;
+    const osc = ctx.createOscillator();
+    const gana = ctx.createGain();
+    osc.type = ultima ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(f, t);
+    gana.gain.setValueAtTime(0.0001, t);
+    gana.gain.exponentialRampToValueAtTime(ultima ? 0.26 : 0.18, t + 0.02);
+    gana.gain.exponentialRampToValueAtTime(0.0001, t + (ultima ? 0.55 : 0.28));
+    osc.connect(gana).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.6);
+  });
+}
+
+/* Los tics: se mira el ángulo real de la rueda en cada fotograma */
+function seguirTics(torneo) {
+  const rueda = $('#ruleta-rueda');
+  if (!rueda) return;
+
+  const paso = 360 / torneo.jugadores.length;
+  const inicio = performance.now();
+  let anguloPrevio = null, anguloTotal = 0, sectorPrevio = 0, ultimoTic = 0;
+
+  function fotograma(ahora) {
+    let ang = 0;
+    try {
+      const m = new DOMMatrixReadOnly(getComputedStyle(rueda).transform);
+      ang = Math.atan2(m.b, m.a) * 180 / Math.PI;
+    } catch (e) { ang = 0; }
+
+    if (anguloPrevio === null) anguloPrevio = ang;
+    let d = ang - anguloPrevio;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    anguloTotal += d;
+    anguloPrevio = ang;
+
+    if (Math.floor(anguloTotal / paso) !== sectorPrevio) {
+      const cuando = performance.now();
+      if (cuando - ultimoTic > 22) {
+        sonarTic(Math.min(1, Math.abs(d) / 6));    // los últimos tics suenan más flojos
+        ultimoTic = cuando;
+      }
+      sectorPrevio = Math.floor(anguloTotal / paso);
+    }
+
+    if (ahora - inicio < RULETA_GIRO_MS - 40) requestAnimationFrame(fotograma);
+  }
+  requestAnimationFrame(fotograma);
+}
+
+/* ==========================================================================
+   EFECTOS: rebote de la rueda, onda, salto del emoji y el recuadro que entra
+   ========================================================================== */
+function animarOtraVez(nodo, clase) {
+  if (!nodo) return;
+  nodo.classList.remove(clase);
+  void nodo.offsetWidth;              // así la animación se reinicia de verdad
+  nodo.classList.add(clase);
+}
+
+function efectoElegido(torneo, elegido, lado) {
+  animarOtraVez($('#ruleta-caja'), 'parada');
+  animarOtraVez($('#ruleta-onda'), 'sale');
+  animarOtraVez(lado === 'local' ? $('#ruleta-caja-local') : $('#ruleta-caja-visit'), 'nuevo');
+
+  // El emoji elegido pega un salto
+  const emojis = $('#ruleta-rueda').querySelectorAll('.ruleta-emoji');
+  emojis.forEach(e => e.classList.remove('elegido'));
+  const i = torneo.jugadores.findIndex(j => j.id === elegido.id);
+  if (emojis[i]) animarOtraVez(emojis[i], 'elegido');
+
+  // Y el centro de la rueda lo canta un momento
+  const centro = $('#ruleta-centro');
+  if (centro) {
+    centro.textContent = elegido.emoji || '⚪';
+    clearTimeout(centro.volverAlCentro);
+    centro.volverAlCentro = setTimeout(() => { centro.textContent = '🎰'; }, 1500);
+  }
+}
+
+/* ----------------------------------------------------------- botón de sonido */
+function engancharSonidoRuleta() {
+  const boton = $('#ruleta-sonido');
+  if (!boton) return;
+
+  const pintar = () => {
+    boton.textContent = silencioRuleta ? '🔇' : '🔊';
+    boton.classList.toggle('apagado', silencioRuleta);
+    boton.title = silencioRuleta ? 'Activar el sonido' : 'Silenciar la ruleta';
+  };
+  pintar();
+
+  boton.onclick = () => {
+    silencioRuleta = !silencioRuleta;
+    try { localStorage.setItem('ruleta-silencio', silencioRuleta ? '1' : '0'); } catch (e) {}
+    pintar();
+    if (!silencioRuleta) sonarTic(1);      // un tic para confirmar
+  };
+}
+
 /* ------------------------------------------------------------------ eventos */
 function engancharRuleta() {
   if (!$('#btn-ruleta')) return;
 
+  engancharSonidoRuleta();
   $('#btn-ruleta').onclick = abrirRuleta;
   $('#ruleta-girar').onclick = girarRuleta;
   $('#ruleta-otra').onclick = () => { ruletaEstado.elegidos = []; pintarElegidosRuleta(); girarRuleta(); };
