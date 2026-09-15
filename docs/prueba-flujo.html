@@ -45,6 +45,8 @@ document.getElementById('marco').onload = () => {
 
     // 4. La ventanita se abre
     ok('la ventanita se abre', d.getElementById('modal-fondo').hidden === false);
+    const displayAbierto = d.defaultView.getComputedStyle(d.getElementById('modal-fondo')).display;
+    ok('la ventanita se ve de verdad (no está oculta por CSS)', displayAbierto !== 'none', 'display: ' + displayAbierto);
 
     // 5. Poner un 3-1 con los botones
     const masLocal = d.querySelector('[data-modal-paso="local"][data-delta="1"]');
@@ -57,6 +59,9 @@ document.getElementById('marco').onload = () => {
     // 6. Guardar
     d.getElementById('modal-guardar').click();
     ok('la ventanita se cierra al guardar', d.getElementById('modal-fondo').hidden === true);
+    // Lo que de verdad importa: que NO se vea (el atributo hidden vs el CSS)
+    const displayCerrado = d.defaultView.getComputedStyle(d.getElementById('modal-fondo')).display;
+    ok('la ventanita queda invisible de verdad', displayCerrado === 'none', 'display: ' + displayCerrado);
 
     // 7. El resumen ya cuenta 5 partidos
     const resumenDespues = d.getElementById('resumen').textContent;

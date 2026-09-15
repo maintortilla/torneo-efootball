@@ -31,6 +31,10 @@
 * { box-sizing: border-box; }
 html, body { overflow-x: hidden; }
 
+/* IMPORTANTE: el atributo hidden manda siempre, aunque la clase defina un display.
+   Sin esto, un modal con display:grid se queda visible al "cerrarlo" con hidden. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background:
