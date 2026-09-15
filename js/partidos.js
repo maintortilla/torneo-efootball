@@ -118,15 +118,27 @@ function pintarLista() {
   liga.forEach(p => { (porJornada[p.jornada] = porJornada[p.jornada] || []).push(p); });
 
   Object.keys(porJornada).sort((a, b) => a - b).forEach(j => {
+    const partidos = porJornada[j];
     const esActual = Number(j) === jornadaEnCurso;
-    caja.appendChild(el('div', 'cabecera-jornada',
-      `Jornada ${j}${esActual ? ' · en curso' : ''}${porJornada[j].every(p => p.jugado) ? ' ✅' : ''}`));
-    porJornada[j].forEach(p => caja.appendChild(filaDePartido(p)));
+    const completa = partidos.every(p => p.jugado);
+
+    const bloque = el('div', 'jornada' + (esActual ? ' en-curso' : '') + (completa ? ' completa' : ''));
+    bloque.appendChild(el('div', 'cabecera-jornada',
+      `<span class="num">${j}</span>
+       <span class="etiqueta">Jornada</span>
+       ${esActual ? '<span class="estado">en curso</span>' : ''}
+       ${completa ? '<span class="estado hecho">completa ✅</span>' : ''}`));
+
+    partidos.forEach(p => bloque.appendChild(filaDePartido(p)));
+    caja.appendChild(bloque);
   });
 
   if (eliminatorias.length) {
-    caja.appendChild(el('div', 'cabecera-jornada', 'Eliminatorias'));
-    eliminatorias.forEach(p => caja.appendChild(filaDePartido(p)));
+    const bloque = el('div', 'jornada');
+    bloque.appendChild(el('div', 'cabecera-jornada',
+      `<span class="num">🏟️</span><span class="etiqueta">Eliminatorias</span>`));
+    eliminatorias.forEach(p => bloque.appendChild(filaDePartido(p)));
+    caja.appendChild(bloque);
   }
 }
 

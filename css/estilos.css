@@ -200,8 +200,7 @@ body {
 
 /* ---------- Lista de partidos ---------- */
 .lista-doble { column-count: 2; column-gap: 18px; }
-.lista-doble .partido-fila,
-.lista-doble .cabecera-jornada,
+.lista-doble .jornada,
 .lista-doble .vacio { break-inside: avoid; }
 @media (max-width: 1100px) { .lista-doble { column-count: 1; } }
 
@@ -234,11 +233,46 @@ body {
 }
 .btn-mini-ir:hover { background: var(--neon-suave); }
 .cabecera-jornada {
-  display: flex; align-items: center; gap: 10px;
-  margin: 16px 0 8px; font-family: var(--fuente-numeros);
-  font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: baseline; gap: 9px;
+  margin: 0 0 10px; padding-bottom: 9px;
+  border-bottom: 1px solid var(--linea);
 }
-.cabecera-jornada::after { content: ''; flex: 1; height: 1px; background: var(--linea); }
+.cabecera-jornada .num {
+  font-family: var(--fuente-numeros); font-size: 27px; font-weight: 800;
+  color: var(--neon); line-height: .9;
+}
+.cabecera-jornada .etiqueta {
+  text-transform: uppercase; letter-spacing: .14em; font-size: 12.5px;
+  color: var(--muted); font-weight: 700;
+}
+.cabecera-jornada .estado {
+  margin-left: auto; font-size: 11.5px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 999px;
+  color: var(--neon); background: var(--neon-suave); border: 1px solid var(--neon);
+  white-space: nowrap;
+}
+.cabecera-jornada .estado.hecho {
+  color: var(--muted); background: var(--panel); border-color: var(--linea);
+}
+
+/* Cada jornada es un bloque con su recuadro, para distinguirlas de un vistazo */
+.jornada {
+  background: rgba(20, 32, 47, .55);
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  padding: 11px 12px 7px;
+  margin-bottom: 14px;
+  break-inside: avoid;
+}
+.jornada.en-curso {
+  border-color: rgba(0, 230, 118, .55);
+  box-shadow: 0 0 20px rgba(0, 230, 118, .10);
+  background: rgba(11, 61, 42, .18);
+}
+.jornada.completa { opacity: .78; }
+.jornada.completa .cabecera-jornada .num { color: var(--muted); }
+.jornada .partido-fila { background: var(--panel); }
+.jornada .partido-fila:last-child { margin-bottom: 4px; }
 
 /* ---------- Marcador (se usa en la ventanita) ---------- */
 .marcador { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 6px 0; }
