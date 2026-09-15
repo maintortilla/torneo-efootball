@@ -47,7 +47,7 @@ torneos nuevos cuando queramos.
 | Goles detallados / pichichi | **Aparcado a la Fase 6** (se leerán de la captura). El modelo ya los soporta |
 | Stats finas (posesión, tiros...) | Aparcadas junto con lo anterior |
 | Cuaderno de datos | Supabase (Fase 2) — hoy localStorage para poder trabajar |
-| Visual | Oscuro tipo estadio + verde neón + tipografía de marcador (Rajdhani / Saira) |
+| Visual | Oscuro tipo estadio + verde neón + tipografía de marcador (Rajdhani / Saira). **Temas alternativos**: aparcado, ver Fase 7 |
 | Dónde se ve | Web publicada gratis (Netlify o GitHub Pages) + Supabase |
 
 ## 4. Modelo de datos
@@ -116,6 +116,7 @@ torneos nuevos cuando queramos.
 | **4** | Publicar + login Google + permisos | ⏳ |
 | **5** | Historial de torneos, gráficas, MVP | ⏳ |
 | **6** | **Extra:** leer las estadísticas de la captura del partido (OCR/visión) | ⏳ |
+| **7** | **Temas visuales alternativos** (azul, retro, claro...) — idea de Leo, secundaria | ⏳ |
 
 ### Nota sobre la Fase 6 (idea de Leo)
 

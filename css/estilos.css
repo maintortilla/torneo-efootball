@@ -8,7 +8,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  /* Colores del tema (cambiando estos valores cambia toda la web) */
+  /* Colores del tema (cambiando estos valores cambia toda la web).
+     TEMAS: como todo el estilo usa estas variables, más adelante se pueden crear
+     estilos alternativos (azul, retro, claro...) añadiendo bloques así:
+         body[data-tema="azul"] { --neon: #4DA3FF; --neon-suave: #0D2942; }
+     y un selector en la web que cambie el atributo data-tema del <body>.
+     Idea aparcada por Leo (secundaria): el CSS ya está preparado para ello. */
   --bg:        #070B12;
   --panel:     #0E1621;
   --panel-2:   #14202F;
@@ -172,8 +177,10 @@ body {
   color: var(--muted); width: 26px; padding-left: 0;
 }
 .tabla td.pts { font-family: var(--fuente-numeros); font-size: 20px; font-weight: 800; color: var(--neon); }
-.tabla td.jugador { display: flex; align-items: center; gap: 7px; font-weight: 600; min-width: 0; }
-.tabla td.jugador .emoji { font-size: 17px; }
+/* Ojo: la celda del jugador NO usa flex (rompería la alineación de la fila
+   al sacar el td del modo tabla). El emoji va en línea, con su margen. */
+.tabla td.jugador { font-weight: 600; white-space: nowrap; }
+.tabla td.jugador .emoji { margin-right: 7px; font-size: 17px; vertical-align: -1px; }
 .tabla .clasifica td { background: rgba(0,230,118,.06); }
 .tabla .clasifica td.pos { color: var(--neon); }
 .tabla .fuera { opacity: .72; }
