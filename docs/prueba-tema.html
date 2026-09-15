@@ -116,6 +116,14 @@ marcoEl.onload = async function ejecutarPrueba() {
        acentoDe(d).toLowerCase() === '#7c3aed',
        'acento en Partidos: ' + acentoDe(d));
 
+    // Los filtros usan los tonos apagados de esta paleta
+    const colorFiltro = f => d.defaultView.getComputedStyle(d.querySelector('.tab[data-filtro="' + f + '"]')).color;
+    ok('en la paleta morada los filtros van con tonos más apagados',
+       colorFiltro('pendientes') === 'rgb(217, 119, 6)' &&
+       colorFiltro('jugados') === 'rgb(5, 150, 105)' &&
+       colorFiltro('proximos') === 'rgb(96, 165, 250)',
+       'pendientes ' + colorFiltro('pendientes') + ' · jugados ' + colorFiltro('jugados') + ' · curso ' + colorFiltro('proximos'));
+
     // 5. Las insignias del podio salen en la clasificación
     await navegar(marco, '../clasificacion.html');
     d = marco.contentDocument;

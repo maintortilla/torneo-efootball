@@ -179,6 +179,23 @@ document.getElementById('marco').onload = async () => {
     ok('el menú de arriba a la derecha ya no existe', !d.getElementById('btn-menu'));
     ok('el botón de refrescar ya no está en la barra', !d.getElementById('btn-refrescar'));
 
+    // 14. Los filtros de partidos: cada uno con su color
+    const colorFiltro = f => d.defaultView.getComputedStyle(d.querySelector('.tab[data-filtro="' + f + '"]')).color;
+    const coloresFiltros = {
+      todos: colorFiltro('todos'),
+      pendientes: colorFiltro('pendientes'),
+      jugados: colorFiltro('jugados'),
+      proximos: colorFiltro('proximos')
+    };
+    ok('los cuatro filtros tienen colores distintos entre sí',
+       new Set(Object.values(coloresFiltros)).size === 4,
+       Object.entries(coloresFiltros).map(([k, v]) => k + '=' + v).join('  '));
+    ok('pendientes va en ámbar y jugados en verde',
+       coloresFiltros.pendientes === 'rgb(245, 158, 11)' && coloresFiltros.jugados === 'rgb(16, 185, 129)',
+       'pendientes ' + coloresFiltros.pendientes + ' · jugados ' + coloresFiltros.jugados);
+    ok('la jornada en curso va en azul',
+       coloresFiltros.proximos === 'rgb(77, 163, 255)', coloresFiltros.proximos);
+
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   }

@@ -32,6 +32,12 @@
   --acento-texto: #7CFFB2;
   --exito:        #00E676;
 
+  /* Colores de estado: cada situación tiene el suyo (y se lee de un vistazo).
+     Van en canales RGB para poder hacer fondos suaves con rgba(...) */
+  --pendiente:     #F59E0B;   --pendiente-rgb: 245, 158, 11;
+  --jugado:        #10B981;   --jugado-rgb:    16, 185, 129;
+  --en-curso:      #4DA3FF;   --en-curso-rgb:  77, 163, 255;
+
   --radio: 14px;
   --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .25);
 
@@ -61,6 +67,11 @@
   --acento-hover: #6D28D9;
   --acento-texto: #A78BFA;
   --exito:        #10B981;   /* en vivo / confirmado */
+
+  /* Estados un poco más apagados, para que peguen con el gris de esta paleta */
+  --pendiente:     #D97706;   --pendiente-rgb: 217, 119, 6;
+  --jugado:        #059669;   --jugado-rgb:    5, 150, 105;
+  --en-curso:      #60A5FA;   --en-curso-rgb:  96, 165, 250;
 
   --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .35);
 }
@@ -352,16 +363,29 @@ body {
 }
 .btn-ghost:hover { color: var(--texto); border-color: var(--neon); }
 
-/* ---------- Filtros ---------- */
+/* ---------- Filtros (cada uno con su color) ---------- */
 .tabs { display: flex; gap: 6px; margin-bottom: 13px; }
 .tab {
   flex: 1; cursor: pointer; padding: 10px; border-radius: 11px; text-align: center;
   background: var(--panel); border: 1px solid var(--linea);
   font-family: var(--fuente-numeros); font-size: 15px; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--muted); font-weight: 700;
+  text-transform: uppercase; color: var(--tab-color, var(--muted)); font-weight: 700;
+  opacity: .62;
+  transition: opacity .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
-.tab:hover { color: var(--texto); }
-.tab.activo { color: var(--neon); border-color: var(--neon); background: var(--neon-suave); }
+.tab:hover { opacity: 1; border-color: var(--tab-color, var(--linea)); }
+.tab.activo {
+  opacity: 1;
+  color: var(--tab-color, var(--neon));
+  border-color: var(--tab-color, var(--neon));
+  background: rgba(var(--tab-rgb, var(--acento-rgb)), .13);
+  box-shadow: 0 0 16px rgba(var(--tab-rgb, var(--acento-rgb)), .28);
+}
+/* Un color por filtro: verde lo jugado, ámbar lo pendiente, azul lo de ahora */
+.tab[data-filtro="todos"]      { --tab-color: var(--neon);      --tab-rgb: var(--acento-rgb); }
+.tab[data-filtro="pendientes"] { --tab-color: var(--pendiente); --tab-rgb: var(--pendiente-rgb); }
+.tab[data-filtro="jugados"]    { --tab-color: var(--jugado);    --tab-rgb: var(--jugado-rgb); }
+.tab[data-filtro="proximos"]   { --tab-color: var(--en-curso);  --tab-rgb: var(--en-curso-rgb); }
 
 /* ---------- Avisos, notas y huecos vacíos ---------- */
 .aviso {
