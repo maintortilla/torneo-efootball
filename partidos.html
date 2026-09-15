@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torneo eFootball · Clasificación</title>
+  <title>Partidos · Torneo eFootball</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
 </head>
@@ -17,7 +17,7 @@
 
     <div class="topbar-centro">
       <select class="selector-torneo" id="selector-torneo" title="Elegir torneo"></select>
-      <span class="badge-jornada" id="badge-jornada">—</span>
+      <span class="badge-jornada" id="progreso">—</span>
     </div>
 
     <div class="topbar-derecha">
@@ -28,51 +28,40 @@
 
   <div class="layout">
 
-    <!-- Navegación lateral -->
     <aside class="sidebar">
       <nav>
-        <a class="nav-item activo" href="index.html">🏆 <span class="texto">Clasificación</span></a>
-        <a class="nav-item" href="partidos.html">📅 <span class="texto">Partidos</span></a>
+        <a class="nav-item" href="index.html">🏆 <span class="texto">Clasificación</span></a>
+        <a class="nav-item activo" href="partidos.html">📅 <span class="texto">Partidos</span></a>
         <span class="nav-item proximo" title="Próximamente">🏟️ <span class="texto">Eliminatorias · pronto</span></span>
         <span class="nav-item proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
         <a class="nav-item" href="ajustes.html">⚙️ <span class="texto">Ajustes</span></a>
       </nav>
       <div class="sidebar-pie">
-        <b>Apuntar resultados</b><br>En la página <b>Partidos</b>: pulsa <b>Apuntar</b> en cualquier partido y sale la ventanita con los dos marcadores.
+        <b>Apuntar resultados</b><br>Pulsa <b>Apuntar</b> en cualquier partido: se abre la ventanita con los dos marcadores. Los jugados se pueden editar.
       </div>
     </aside>
 
-    <!-- Contenido -->
     <main class="contenido">
 
-      <div class="resumen" id="resumen"></div>
+      <div class="resumen" id="resumen-partidos"></div>
 
-      <div class="rejilla-2">
+      <section class="panel">
+        <p class="panel-titulo">Todos los partidos <b id="contador-partidos"></b></p>
 
-        <!-- Clasificación -->
-        <section class="panel" id="clasificacion">
-          <p class="panel-titulo">Clasificación <b id="aviso-clasificados"></b></p>
-          <table class="tabla" id="tabla-clasificacion"></table>
-        </section>
-
-        <!-- Eliminatorias y últimos resultados -->
-        <div class="columna">
-          <section class="panel">
-            <p class="panel-titulo">Eliminatorias <b id="etiqueta-eliminatorias">si acabara hoy</b></p>
-            <div id="lista-eliminatorias"></div>
-          </section>
-
-          <section class="panel">
-            <p class="panel-titulo">Últimos resultados <b>se pueden corregir</b></p>
-            <div id="lista-ultimos"></div>
-          </section>
+        <div class="tabs">
+          <div class="tab activo" data-filtro="todos">Todos</div>
+          <div class="tab" data-filtro="pendientes">Pendientes</div>
+          <div class="tab" data-filtro="jugados">Jugados</div>
+          <div class="tab" data-filtro="proximos">Solo la jornada en curso</div>
         </div>
 
-      </div>
+        <div id="lista-partidos" class="lista-doble"></div>
+      </section>
+
     </main>
   </div>
 
-  <!-- Ventanita para apuntar el resultado -->
+  <!-- Ventanita para apuntar el resultado (igual que en la clasificación) -->
   <div class="modal-fondo" id="modal-fondo" hidden>
     <div class="modal">
       <p class="panel-titulo">Apuntar resultado</p>
@@ -113,15 +102,13 @@
     </div>
   </div>
 
-  <!-- Librería de Supabase (solo en modo nube; si no carga, la web sigue en local) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script src="js/config.js"></script>
   <script src="js/config-nube.js"></script>
   <script src="js/modelo.js"></script>
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
   <script src="js/comun.js"></script>
-  <script src="js/index.js"></script>
+  <script src="js/partidos.js"></script>
 </body>
 </html>

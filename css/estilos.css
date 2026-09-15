@@ -199,6 +199,12 @@ body {
 .forma span.p { background: rgba(255,77,94,.15); border-color: rgba(255,77,94,.5); color: var(--peligro); }
 
 /* ---------- Lista de partidos ---------- */
+.lista-doble { column-count: 2; column-gap: 18px; }
+.lista-doble .partido-fila,
+.lista-doble .cabecera-jornada,
+.lista-doble .vacio { break-inside: avoid; }
+@media (max-width: 1100px) { .lista-doble { column-count: 1; } }
+
 .partido-fila {
   display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
   align-items: center; gap: 9px;

@@ -1,0 +1,208 @@
+/* ==========================================================================
+   COMÚN — piezas que comparten la clasificación y la página de partidos
+   --------------------------------------------------------------------------
+   Aquí viven: los avisos flotantes (toast), la ventanita de apuntar resultado
+   y las filas de partido. Así el mismo código sirve en las dos pantallas sin
+   duplicarlo.
+   ========================================================================== */
+
+let torneoComun = null;      // el torneo con el que trabaja la pantalla
+let alCambiarComun = null;   // función a llamar cuando se guarda algo
+let partidoEnEdicion = null;
+let marcadorEdit = { local: 0, visitante: 0 };
+
+/* Cada pantalla llama a esto al arrancar */
+function configurarComun(torneo, alCambiar) {
+  torneoComun = torneo;
+  alCambiarComun = alCambiar || (() => {});
+}
+
+/* ------------------------------------------------- ventanita de resultado */
+function abrirModal(idPartido) {
+  partidoEnEdicion = torneoComun.partidos.find(p => p.id === idPartido);
+  if (!partidoEnEdicion) return;
+
+  marcadorEdit = {
+    local: Number(partidoEnEdicion.golesLocal) || 0,
+    visitante: Number(partidoEnEdicion.golesVisitante) || 0
+  };
+
+  const local = jugador(torneoComun, partidoEnEdicion.localId);
+  const visit = jugador(torneoComun, partidoEnEdicion.visitanteId);
+
+  $('#modal-av-local').textContent = local.emoji;
+  $('#modal-nom-local').textContent = local.nombre;
+  $('#modal-av-visit').textContent = visit.emoji;
+  $('#modal-nom-visit').textContent = visit.nombre;
+
+  const nombresFase = { semifinal: 'la semifinal', final: 'la final', tercer_puesto: 'el 3º y 4º puesto' };
+  if (partidoEnEdicion.fase && partidoEnEdicion.fase !== 'liga') {
+    const etiqueta = nombresFase[partidoEnEdicion.fase] || 'la eliminatoria';
+    $('#modal-nota').innerHTML = partidoEnEdicion.jugado
+      ? `Partido de <b>${etiqueta}</b> ya jugado: puedes cambiar el resultado y volver a guardar.`
+      : `Partido de <b>${etiqueta}</b>. Si acaba en empate, pasa el que mejor quedó en la liguilla 🎯`;
+  } else {
+    $('#modal-nota').textContent = partidoEnEdicion.jugado
+      ? 'Este partido ya tiene resultado: puedes cambiarlo y volver a guardar.'
+      : `Jornada ${partidoEnEdicion.jornada} · pon el resultado con los botones.`;
+  }
+
+  pintarModal();
+  $('#modal-fondo').hidden = false;
+}
+
+function pintarModal() {
+  $('#modal-cifra-local').textContent = marcadorEdit.local;
+  $('#modal-cifra-visit').textContent = marcadorEdit.visitante;
+  $('#modal-borrar').hidden = !partidoEnEdicion.jugado;
+}
+
+function cerrarModal() {
+  $('#modal-fondo').hidden = true;
+  partidoEnEdicion = null;
+}
+
+async function guardarModal() {
+  if (!partidoEnEdicion) return;
+
+  const i = torneoComun.partidos.findIndex(p => p.id === partidoEnEdicion.id);
+  torneoComun.partidos[i].golesLocal = marcadorEdit.local;
+  torneoComun.partidos[i].golesVisitante = marcadorEdit.visitante;
+  torneoComun.partidos[i].jugado = true;
+  torneoComun.partidos[i].fecha = new Date().toISOString().slice(0, 10);
+
+  const boton = $('#modal-guardar');
+  boton.disabled = true;
+  boton.textContent = 'Guardando...';
+  try {
+    await Store.guardarTorneo(torneoComun);
+    cerrarModal();
+    alCambiarComun();
+    avisar('Resultado guardado ✅');
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo guardar: ' + e.message, true);
+  } finally {
+    boton.disabled = false;
+    boton.textContent = 'Guardar ✅';
+  }
+}
+
+async function borrarResultado() {
+  if (!partidoEnEdicion) return;
+
+  const i = torneoComun.partidos.findIndex(p => p.id === partidoEnEdicion.id);
+  torneoComun.partidos[i].jugado = false;
+  torneoComun.partidos[i].golesLocal = 0;
+  torneoComun.partidos[i].golesVisitante = 0;
+  torneoComun.partidos[i].fecha = null;
+
+  try {
+    await Store.guardarTorneo(torneoComun);
+    cerrarModal();
+    alCambiarComun();
+    avisar('Resultado borrado: el partido vuelve a estar pendiente 🧹');
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo borrar: ' + e.message, true);
+  }
+}
+
+/* Engancha los botones de la ventanita (se llama una vez al arrancar) */
+function engancharModal() {
+  $$('[data-modal-paso]').forEach(b => {
+    b.onclick = () => {
+      const lado = b.dataset.modalPaso;
+      const delta = Number(b.dataset.delta);
+      marcadorEdit[lado] = Math.max(0, marcadorEdit[lado] + delta);
+      pintarModal();
+    };
+  });
+
+  $('#modal-guardar').onclick = guardarModal;
+  $('#modal-cancelar').onclick = cerrarModal;
+  $('#modal-borrar').onclick = borrarResultado;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#modal-fondo').hidden) cerrarModal();
+  });
+  $('#modal-fondo').onclick = (e) => {
+    if (e.target.id === 'modal-fondo') cerrarModal();
+  };
+}
+
+/* --------------------------------------------------- filas de partido */
+const NOMBRES_FASE = { semifinal: 'Semifinal', final: 'Final', tercer_puesto: '3º y 4º' };
+
+/* Devuelve una fila lista para meter en una lista de partidos.
+   conCabecera = true → muestra el nombre de la fase en vez de "vs" cuando está pendiente */
+function filaDePartido(p) {
+  const local = jugador(torneoComun, p.localId);
+  const visit = jugador(torneoComun, p.visitanteId);
+  const ganaLocal = p.jugado && p.golesLocal > p.golesVisitante;
+  const ganaVisit = p.jugado && p.golesVisitante > p.golesLocal;
+
+  const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
+  fila.innerHTML = `
+    <span class="quien ${ganaLocal ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
+    <span class="marcador-mini ${p.jugado ? '' : 'pend'}">
+      ${p.jugado ? p.golesLocal + ' - ' + p.golesVisitante : (NOMBRES_FASE[p.fase] || 'vs')}
+    </span>
+    <span class="quien der ${ganaVisit ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
+
+  const boton = el('button', 'btn-mini-ir', p.jugado ? 'Editar' : 'Apuntar');
+  boton.onclick = () => abrirModal(p.id);
+  fila.appendChild(boton);
+
+  return fila;
+}
+
+/* ------------------------------------------- pastilla del modo de datos */
+function pintarModoDatos() {
+  const caja = $('#nota-guardado');
+  if (!caja) return;
+  const nube = Store.modo() === 'nube';
+  caja.innerHTML = nube
+    ? '<span class="pastilla nube">☁️ Datos en la nube</span>'
+    : '<span class="pastilla local">💾 Modo local</span>';
+}
+
+/* ---------------------------------------------------- aviso flotante (toast) */
+let temporizadorAviso = null;
+function avisar(texto, esError) {
+  let t = $('#toast');
+  if (!t) {
+    t = el('div', null, '');
+    t.id = 'toast';
+    t.style.cssText = `position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
+      background:#0E1621;padding:12px 20px;border-radius:12px;font-weight:700;z-index:200;
+      max-width:80vw;text-align:center;box-shadow:0 0 22px rgba(0,0,0,.55);font-family:var(--fuente)`;
+    document.body.appendChild(t);
+  }
+  t.textContent = texto;
+  t.style.border = '1px solid ' + (esError ? '#FF4D5E' : '#00E676');
+  t.style.color = esError ? '#FF4D5E' : '#00E676';
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(() => t.remove(), esError ? 5200 : 2400);
+}
+
+/* -------------------------------------------------- botón de refrescar */
+function engancharRefrescar(alRefrescar) {
+  const boton = $('#btn-refrescar');
+  if (!boton) return;
+  boton.onclick = async () => {
+    boton.disabled = true;
+    boton.textContent = '⏳';
+    try {
+      await Store.recargar();
+      alRefrescar();
+      avisar('Datos puestos al día 🔄');
+    } catch (e) {
+      console.error(e);
+      avisar('No se pudo refrescar: ' + e.message, true);
+    } finally {
+      boton.disabled = false;
+      boton.textContent = '🔄 Refrescar';
+    }
+  };
+}

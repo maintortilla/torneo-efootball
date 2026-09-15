@@ -35,7 +35,8 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
 ```
 Torneo-Efootball/
-├── index.html            Portada: resumen, clasificación, partidos, eliminatorias
+├── index.html            Clasificación: resumen, tabla, eliminatorias, últimos resultados
+├── partidos.html         Todos los partidos: filtros, por jornadas, apuntar/editar
 ├── ajustes.html          Crear torneos y configurarlo todo
 ├── css/estilos.css       Todo el estilo (tema oscuro + verde neón)
 ├── js/
@@ -43,8 +44,10 @@ Torneo-Efootball/
 │   ├── config-nube.js    URL y clave pública de Supabase (son públicas a propósito)
 │   ├── modelo.js         Las reglas: calendario, clasificación, eliminatorias, fases
 │   ├── store.js          Única puerta de los datos (nube o navegador)
+│   ├── comun.js          Piezas compartidas: ventanita de resultado, avisos, filas
 │   ├── datos-prueba.js   Datos de mentira por si no hay conexión
-│   ├── index.js          Lógica de la portada y de la ventanita
+│   ├── index.js          Lógica de la clasificación
+│   ├── partidos.js       Lógica de la página de partidos
 │   └── ajustes.js        Lógica de la pantalla de ajustes
 ├── docs/                 Diseño + tests + el SQL de la base de datos
 ├── tools/                Scripts de apoyo (creación del proyecto de Supabase)
@@ -56,13 +59,11 @@ Torneo-Efootball/
 | Test | Cómo | Qué comprueba |
 |---|---|---|
 | Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores |
-| Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita guarda y la web recalcula (en local o en la nube) |
+| Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita apunta un resultado, el progreso sube y el borrado deja el partido pendiente |
 | Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo con su calendario, se configura y se borra |
 
-Los tres deben terminar en **✅ TODO CORRECTO**.
-
-⚠️ El test de flujo **apunta un resultado de verdad**. En modo nube eso queda guardado
-(se limpia a mano si molesta).
+Los tres deben terminar en **✅ TODO CORRECTO**. Las dos pruebas de navegador **se limpian
+solas**: dejan el torneo como estaba al terminar.
 
 ## Estado por fases
 
