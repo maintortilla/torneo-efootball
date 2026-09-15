@@ -172,6 +172,45 @@ marcoEl.onload = async function ejecutarPrueba() {
     ok('la ruleta no vuelve a ofrecer el cruce ya apuntado', !repetido,
        repetido ? 'volvió a salir el mismo cruce' : 'salió un cruce nuevo');
 
+    // 7b. En una misma jornada no se repiten jugadores
+    const candJornada = w.candidatosRuleta(w.Store.torneo(idTorneo), { jornada: jornadaElegida });
+    ok('en la jornada del partido ya solo quedan libres los que no juegan',
+       candJornada.length === 2 && !candJornada.some(j => j.nombre === local || j.nombre === visit),
+       candJornada.map(j => j.nombre).join(', '));
+
+    d.getElementById('ruleta-jornada').value = String(jornadaElegida);
+    d.getElementById('ruleta-jornada').dispatchEvent(new Event('change'));
+    await esperar(200);
+
+    d.getElementById('ruleta-girar').click();
+    await esperar(ESPERA_GIRO);
+    d.getElementById('ruleta-girar').click();
+    await esperar(ESPERA_GIRO);
+    const l2 = d.getElementById('ruleta-nom-local').textContent.trim();
+    const v2 = d.getElementById('ruleta-nom-visit').textContent.trim();
+    ok('girando en la misma jornada no vuelven a salir los que ya juegan',
+       ![l2, v2].some(n => n === local || n === visit),
+       'salieron: ' + l2 + ' vs ' + v2);
+
+    // 7c. Con la jornada llena, lo dice claro en vez de repetir
+    d.getElementById('ruleta-guardar').click();
+    await esperar(2600);
+    ok('el segundo partido de la jornada también se apunta',
+       w.Store.torneo(idTorneo).partidos.length === 2,
+       w.Store.torneo(idTorneo).partidos.length + ' partidos');
+
+    d.getElementById('btn-ruleta').click();
+    await esperar(300);
+    d.getElementById('ruleta-jornada').value = String(jornadaElegida);
+    d.getElementById('ruleta-jornada').dispatchEvent(new Event('change'));
+    await esperar(200);
+    d.getElementById('ruleta-girar').click();
+    await esperar(700);
+    const notaLlena = d.getElementById('ruleta-nota').textContent;
+    ok('con la jornada llena avisa en vez de repetir jugadores',
+       /ya están jugando todos|no queda nadie libre/i.test(notaLlena),
+       notaLlena.trim().slice(0, 70));
+
     // 8. Y con «permitir repetir» sí puede salir
     d.getElementById('ruleta-repetir').checked = true;
     const candidatosConRepetir = w.candidatosRuleta(w.Store.torneo(idTorneo), {

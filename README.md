@@ -23,9 +23,10 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
 - **🎰 Ruleta de emparejamientos**: los torneos nuevos nacen **sin ningún partido**. En la
   página Partidos pulsas *Ruleta* y giras: el primer jugador que sale juega en casa y el
-  segundo es el rival. La ruleta **no repite cruces** ya apuntados (hay una casilla para
-  permitirlo) y el partido se apunta en la jornada que elijas. Las jornadas se van montando
-  **poco a poco**; también puedes poner los cruces a mano con *+ Añadir partido*
+  segundo es el rival. La ruleta **no repite cruces** ya apuntados, **ni repite jugador
+  dentro de la misma jornada** (si la jornada ya está llena, avisa y te toca elegir otra).
+  Las jornadas se van montando **poco a poco**; también puedes poner los cruces a mano con
+  *+ Añadir partido*
 - **Sonido y efectos en la ruleta**: suena un **tic por cada sector** que pasa (desacelerando
   como una ruleta de verdad) y una **fanfarria** cuando sale el jugador, con efecto de onda,
   brillo del emoji y rebote de la rueda. Botón **🔊/🔇** para silenciarla (se recuerda)

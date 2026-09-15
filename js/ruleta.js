@@ -110,13 +110,8 @@ function pintarElegidosRuleta() {
   }
 
   const jornada = Number($('#ruleta-jornada').value);
-  const avisos = [];
-  if (jugadorYaJuegaEnJornada(torneo, local.id, jornada)) avisos.push(`${local.emoji} ${local.nombre} ya juega en la Jornada ${jornada}`);
-  if (jugadorYaJuegaEnJornada(torneo, visit.id, jornada)) avisos.push(`${visit.emoji} ${visit.nombre} ya juega en la Jornada ${jornada}`);
-
-  $('#ruleta-nota').innerHTML = avisos.length
-    ? `⚠️ ${avisos.join(' y ')}. Puedes apuntarlo igual, pero mira que no se repita el cruce.`
-    : `🎰 <b>${local.emoji} ${local.nombre}</b> contra <b>${visit.emoji} ${visit.nombre}</b> · se apunta en la Jornada ${jornada}. Pulsa <b>Apuntar el partido</b>.`;
+  $('#ruleta-nota').innerHTML =
+    `🎰 <b>${local.emoji} ${local.nombre}</b> contra <b>${visit.emoji} ${visit.nombre}</b> · se apunta en la Jornada ${jornada}. Pulsa <b>Apuntar el partido</b>.`;
 }
 
 function ponerElegido(lado, j) {
@@ -170,6 +165,28 @@ function girarRuedaA(torneo, jugadorElegido) {
   rueda.style.transform = `rotate(${ruletaEstado.rotacion}deg)`;
 }
 
+/* Explica por qué la ruleta no puede dar a nadie más (y qué se puede hacer) */
+function avisarSinCandidatos(torneo, jornada) {
+  const libres = torneo.jugadores.filter(j => !jugadorYaJuegaEnJornada(torneo, j.id, jornada));
+  const [localId] = ruletaEstado.elegidos;
+  const local = localId ? jugador(torneo, localId) : null;
+  const nota = $('#ruleta-nota');
+
+  if (!libres.length) {
+    nota.innerHTML = `En la <b>Jornada ${jornada}</b> ya están jugando todos. Elige otra jornada (o añade una nueva) y vuelve a girar 🎡`;
+    return;
+  }
+  if (local && libres.filter(j => j.id !== local.id).length === 0) {
+    nota.innerHTML = `No queda nadie libre en la Jornada ${jornada} para jugar contra <b>${local.emoji} ${local.nombre}</b>. Elige otra jornada 🎡`;
+    return;
+  }
+  if (local) {
+    nota.innerHTML = `Todos los cruces de <b>${local.emoji} ${local.nombre}</b> en la Jornada ${jornada} ya están apuntados. Marca <b>«Permitir repetir un cruce»</b> si queréis repetir alguno 🔁`;
+    return;
+  }
+  nota.innerHTML = `En la Jornada ${jornada} no queda nadie libre. Elige otra jornada 🎡`;
+}
+
 async function girarRuleta() {
   const torneo = torneoActual;
   if (!torneo || ruletaEstado.girando) return;
@@ -177,15 +194,16 @@ async function girarRuleta() {
   // Si ya estaban los dos, esto empieza un partido nuevo
   if (ruletaEstado.elegidos.length >= 2) ruletaEstado.elegidos = [];
 
-  const permitirRepetir = $('#ruleta-repetir').checked;
+  const jornada = Number($('#ruleta-jornada').value);
   const candidatos = candidatosRuleta(torneo, {
     yaElegidos: ruletaEstado.elegidos,
     localId: ruletaEstado.elegidos[0] || null,
-    permitirRepetir: permitirRepetir
+    permitirRepetir: $('#ruleta-repetir').checked,
+    jornada: jornada
   });
 
   if (!candidatos.length) {
-    $('#ruleta-nota').innerHTML = 'No queda ningún cruce nuevo con ese jugador. Marca <b>«Permitir repetir un cruce»</b> si queréis repetir alguno 🔁';
+    avisarSinCandidatos(torneo, jornada);
     return;
   }
 
@@ -218,6 +236,18 @@ async function guardarPartidoRuleta() {
 
   const [localId, visitId] = ruletaEstado.elegidos;
   const jornada = Number($('#ruleta-jornada').value);
+
+  // Nadie juega dos veces en la misma jornada (por si se cambió de jornada
+  // después de haber sorteado)
+  const repetido = [localId, visitId].find(id => jugadorYaJuegaEnJornada(torneo, id, jornada));
+  if (repetido) {
+    const j = jugador(torneo, repetido);
+    ruletaEstado.elegidos = [];
+    pintarElegidosRuleta();
+    avisar(`${j.emoji} ${j.nombre} ya juega en la Jornada ${jornada}: sorteo limpiado, vuelve a girar 🔄`, true);
+    return;
+  }
+
   const partido = nuevoPartidoLiga(localId, visitId, jornada);
 
   torneo.partidos.push(partido);
@@ -413,7 +443,22 @@ function engancharRuleta() {
   $('#ruleta-otra').onclick = () => { ruletaEstado.elegidos = []; pintarElegidosRuleta(); girarRuleta(); };
   $('#ruleta-cerrar').onclick = cerrarRuleta;
   $('#ruleta-guardar').onclick = guardarPartidoRuleta;
-  $('#ruleta-jornada').onchange = () => pintarElegidosRuleta();
+  $('#ruleta-jornada').onchange = () => {
+    const torneo = torneoActual;
+    const jornada = Number($('#ruleta-jornada').value);
+
+    // Si ya habían salido jugadores y en la nueva jornada alguno ya juega,
+    // el sorteo deja de valer y se limpia
+    if (torneo && ruletaEstado.elegidos.length &&
+        ruletaEstado.elegidos.some(id => jugadorYaJuegaEnJornada(torneo, id, jornada))) {
+      ruletaEstado.elegidos = [];
+      pintarElegidosRuleta();
+      $('#ruleta-nota').innerHTML =
+        `🔄 En la <b>Jornada ${jornada}</b> ya juega alguno de los que habían salido: sorteo limpiado, vuelve a girar 🎡`;
+      return;
+    }
+    pintarElegidosRuleta();
+  };
 
   $('#modal-ruleta').onclick = (e) => { if (e.target.id === 'modal-ruleta') cerrarRuleta(); };
   document.addEventListener('keydown', (e) => {

@@ -317,12 +317,18 @@ function jornadaSugerida(torneo) {
    - nadie elegido aún  → todos los jugadores
    - ya hay un local    → los demás, quitando los cruces ya apuntados
      (salvo que se permita repetir)
-   Nunca se ofrece a quien ya ha salido en este mismo sorteo. */
+   Nunca se ofrece a quien ya ha salido en este mismo sorteo, ni a quien YA
+   JUEGA en la jornada para la que se está sorteando (nadie juega dos veces
+   en la misma jornada). */
 function candidatosRuleta(torneo, opciones) {
   const o = opciones || {};
   const yaElegidos = o.yaElegidos || [];
 
   let candidatos = torneo.jugadores.filter(j => !yaElegidos.includes(j.id));
+
+  if (o.jornada) {
+    candidatos = candidatos.filter(j => !jugadorYaJuegaEnJornada(torneo, j.id, o.jornada));
+  }
 
   if (o.localId && !o.permitirRepetir) {
     candidatos = candidatos.filter(j => !parejaYaExiste(torneo, o.localId, j.id));

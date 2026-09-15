@@ -155,6 +155,21 @@ comprobar('se sabe si alguien ya juega en una jornada',
 comprobar('la jornada siguiente a la última es la 2', siguienteJornada(tRuleta) === 2, 'jornada ' + siguienteJornada(tRuleta));
 comprobar('los partidos de una jornada se cuentan bien', partidosDeJornada(tRuleta, 1).length === 2, partidosDeJornada(tRuleta, 1).length + ' en la jornada 1');
 
+// Nadie juega dos veces en la misma jornada
+const candJ1 = candidatosRuleta(tRuleta, { jornada: 1 });
+comprobar('en una jornada llena la ruleta no ofrece a nadie', candJ1.length === 0,
+  candJ1.map(j => j.nombre).join(', ') || 'ninguno');
+const candJ2 = candidatosRuleta(tRuleta, { jornada: 2 });
+comprobar('en una jornada nueva sí pueden salir todos', candJ2.length === 4,
+  candJ2.map(j => j.nombre).join(', '));
+
+// Y con una jornada a medias, solo salen los que aún no juegan en ella
+tRuleta.partidos.push(nuevoPartidoLiga('j1', 'j3', 2));
+const candJ2b = candidatosRuleta(tRuleta, { jornada: 2 });
+comprobar('con la jornada a medias solo salen los que aún no juegan en ella',
+  candJ2b.length === 2 && !candJ2b.some(j => j.id === 'j1' || j.id === 'j3'),
+  candJ2b.map(j => j.nombre).join(', '));
+
 // Un torneo vacío no debe romper nada
 const tVacio = crearTorneoNuevo('Vacío', [{ id: 'a', nombre: 'Uno', emoji: '⚪' }, { id: 'b', nombre: 'Dos', emoji: '⚪' }]);
 const clasVacia = calcularClasificacion(tVacio);
