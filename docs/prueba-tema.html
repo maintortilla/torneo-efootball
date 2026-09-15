@@ -131,6 +131,19 @@ marcoEl.onload = async function ejecutarPrueba() {
     ok('la clasificación enseña las insignias 🥇🥈🥉', medallas.length === 3,
        Array.from(medallas).map(m => m.textContent).join(' ') || 'ninguna');
 
+    // El podio con sus metales y los clasificados en esmeralda apagado
+    const colorTexto = nodo => d.defaultView.getComputedStyle(nodo).color;
+    const colorPos = i => colorTexto(d.querySelectorAll('#tabla-clasificacion tbody tr')[i].querySelector('td.pos'));
+    ok('el podio usa los metales sobrios de esta paleta',
+       colorPos(0) === 'rgb(233, 168, 0)' && colorPos(1) === 'rgb(185, 190, 198)' && colorPos(2) === 'rgb(185, 113, 58)',
+       [colorPos(0), colorPos(1), colorPos(2)].join('  '));
+
+    const recuadrosClas = Array.from(d.querySelectorAll('#resumen .dato .valor')).map(colorTexto);
+    ok('los recuadros de la clasificación cambian de tono con la paleta',
+       recuadrosClas.length === 4 && new Set(recuadrosClas).size === 4 &&
+       recuadrosClas[0] === 'rgb(5, 150, 105)',
+       recuadrosClas.join('  '));
+
     // 6. Volver al tema de siempre: la paleta verde sigue intacta
     await navegar(marco, '../ajustes.html');
     w = marco.contentWindow;

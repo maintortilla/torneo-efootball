@@ -37,6 +37,13 @@
   --pendiente:     #F59E0B;   --pendiente-rgb: 245, 158, 11;
   --jugado:        #10B981;   --jugado-rgb:    16, 185, 129;
   --en-curso:      #4DA3FF;   --en-curso-rgb:  77, 163, 255;
+  --lila:          #B388FF;   --lila-rgb:      179, 136, 255;
+  --gris-rgb:      126, 147, 168;
+
+  /* Metales del podio (1º, 2º y 3º) */
+  --oro:    #F5B301;
+  --plata:  #C7CBD1;
+  --bronce: #CD7F32;
 
   --radio: 14px;
   --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .25);
@@ -72,6 +79,13 @@
   --pendiente:     #D97706;   --pendiente-rgb: 217, 119, 6;
   --jugado:        #059669;   --jugado-rgb:    5, 150, 105;
   --en-curso:      #60A5FA;   --en-curso-rgb:  96, 165, 250;
+  --lila:          #A78BFA;   --lila-rgb:      167, 139, 250;
+  --gris-rgb:      107, 114, 128;
+
+  /* Metales un poco más sobrios para el gris de esta paleta */
+  --oro:    #E9A800;
+  --plata:  #B9BEC6;
+  --bronce: #B9713A;
 
   --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .35);
 }
@@ -146,14 +160,30 @@ body {
 .nav-item {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 14px; border-radius: 11px;
-  color: var(--muted); text-decoration: none;
+  color: var(--nav-color, var(--muted)); text-decoration: none;
   font-weight: 600; font-size: 16.5px;
   border: 1px solid transparent;
+  opacity: .8;
+  transition: opacity .15s ease, background .15s ease, border-color .15s ease;
 }
-.nav-item:hover { color: var(--texto); background: var(--panel); }
-.nav-item.activo { color: var(--neon); background: var(--neon-suave); border-color: var(--neon); }
-.nav-item.proximo { opacity: .45; cursor: default; }
-.nav-item.proximo:hover { color: var(--muted); background: none; }
+.nav-item:hover { opacity: 1; background: rgba(var(--nav-rgb, var(--gris-rgb)), .10); }
+.nav-item.activo {
+  opacity: 1;
+  color: var(--nav-color, var(--neon));
+  background: rgba(var(--nav-rgb, var(--acento-rgb)), .13);
+  border-color: var(--nav-color, var(--neon));
+}
+.nav-item.proximo { opacity: .4; cursor: default; }
+.nav-item.proximo:hover { opacity: .4; background: none; }
+
+/* Cada sección con su color (igual que los filtros): se identifica de un vistazo */
+.nav-item.nav-clasificacion { --nav-color: var(--pendiente); --nav-rgb: var(--pendiente-rgb); }
+.nav-item.nav-partidos      { --nav-color: var(--en-curso);  --nav-rgb: var(--en-curso-rgb); }
+.nav-item.nav-eliminatorias { --nav-color: var(--lila);      --nav-rgb: var(--lila-rgb); }
+.nav-item.nav-estadisticas  { --nav-color: var(--jugado);    --nav-rgb: var(--jugado-rgb); }
+.nav-item.nav-ajustes       { --nav-color: var(--texto-2);   --nav-rgb: var(--gris-rgb); }
+.nav-item.nav-crear         { --nav-color: var(--neon);      --nav-rgb: var(--acento-rgb); }
+.nav-item.nav-cambiar       { --nav-color: var(--texto-2);   --nav-rgb: var(--gris-rgb); }
 .sidebar-pie {
   margin-top: 22px; padding: 13px; border-radius: 12px;
   background: var(--panel); border: 1px solid var(--linea);
@@ -185,9 +215,16 @@ body {
 /* ---------- Datos de resumen (tira de arriba) ---------- */
 .resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
 .dato {
+  --dato-color: var(--texto);
+  position: relative; overflow: hidden;
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--linea); border-radius: var(--radio);
-  padding: 13px 16px;
+  padding: 13px 16px 13px 19px;
+}
+/* Barrita de color a la izquierda: cada dato con el suyo */
+.dato::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--dato-color); opacity: .9;
 }
 .dato .etiqueta {
   display: block; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
@@ -195,13 +232,17 @@ body {
 }
 .dato .valor {
   font-family: var(--fuente-numeros); font-size: 30px; font-weight: 800;
-  line-height: 1; color: #fff;
+  line-height: 1; color: var(--dato-color);
 }
-.dato .valor.verde { color: var(--neon); }
 .dato small {
   color: var(--muted); font-size: 13px; display: block;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* Un color por dato, con el mismo sistema que los filtros del menú */
+.dato-col-1 { --dato-color: var(--jugado);    }   /* progreso hecho */
+.dato-col-2 { --dato-color: var(--pendiente); }   /* goles / lo que queda */
+.dato-col-3 { --dato-color: var(--en-curso);  }   /* datos informativos */
+.dato-col-4 { --dato-color: var(--lila);      }   /* el resto */
 
 /* ---------- Tabla de clasificación ---------- */
 .tabla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; table-layout: auto; }
@@ -226,11 +267,19 @@ body {
    al sacar el td del modo tabla). El emoji va en línea, con su margen. */
 .tabla td.jugador { font-weight: 600; white-space: nowrap; }
 .tabla td.jugador .emoji { margin-right: 7px; font-size: 17px; vertical-align: -1px; }
-.tabla .clasifica td { background: rgba(var(--acento-rgb),.06); }
-.tabla .clasifica td.pos { color: var(--neon); }
+.tabla .clasifica td { background: rgba(var(--jugado-rgb),.07); }
+.tabla .clasifica td.pos { color: var(--jugado); }
 .tabla .fuera { opacity: .72; }
-.dg-pos { color: var(--neon); }
+.dg-pos { color: var(--jugado); }
 .dg-neg { color: var(--peligro); }
+
+/* Podio: barrita metálica en la columna de la posición */
+.tabla tr.podio-1 td.pos { box-shadow: inset 3px 0 0 var(--oro);    color: var(--oro); }
+.tabla tr.podio-2 td.pos { box-shadow: inset 3px 0 0 var(--plata);  color: var(--plata); }
+.tabla tr.podio-3 td.pos { box-shadow: inset 3px 0 0 var(--bronce); color: var(--bronce); }
+
+/* El marcador de las eliminatorias por jugar, en lila */
+#lista-eliminatorias .marcador-mini.pend { color: var(--lila); border-color: rgba(var(--lila-rgb), .45); }
 
 /* Rachita de forma: G E P */
 .forma { display: flex; gap: 3px; justify-content: center; }
@@ -533,7 +582,7 @@ body {
   display: inline-block; margin-right: 5px; font-size: 15px; line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
 }
-.tabla tr.podio td.pos { color: var(--texto); }
+/* El color de la posición lo pone el metal del podio (más arriba en el archivo) */
 .tabla tr.podio-1 td, .tabla tr.podio-2 td, .tabla tr.podio-3 td { font-weight: 600; }
 
 /* ---------- Sonido y efectos de la ruleta ---------- */

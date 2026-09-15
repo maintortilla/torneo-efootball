@@ -53,7 +53,7 @@ function pintarResumenPartidos() {
 
   // Torneo recién creado: aún no hay ningún partido
   if (!liga.length) {
-    caja.appendChild(el('div', 'dato',
+    caja.appendChild(el('div', 'dato dato-col-4',
       `<span class="etiqueta">Sin partidos todavía</span>
        <small style="font-size:15px;color:var(--texto);white-space:normal">
          Este torneo se monta jornada a jornada: pulsa <b>🎰 Ruleta</b> para sortear
@@ -73,15 +73,15 @@ function pintarResumenPartidos() {
   };
 
   [
-    { etiqueta: 'Partidos jugados', valor: jugados + '/' + liga.length, extra: pendientes + ' pendientes' },
-    { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', verde: true },
-    { etiqueta: 'Estado', valor: '', extra: textosEstado[estado.paso] || '—', textoLargo: true }
+    { etiqueta: 'Partidos jugados', valor: jugados + '/' + liga.length, extra: pendientes + ' pendientes', color: 1 },
+    { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', color: 2 },
+    { etiqueta: 'Estado', valor: '', extra: textosEstado[estado.paso] || '—', textoLargo: true, color: 4 }
   ].forEach(d => {
-    const div = el('div', 'dato',
+    const div = el('div', 'dato dato-col-' + d.color,
       `<span class="etiqueta">${d.etiqueta}</span>
        ${d.textoLargo
           ? `<small style="font-size:15px;color:var(--texto);white-space:normal">${d.extra}</small>`
-          : `<span class="valor${d.verde ? ' verde' : ''}">${d.valor}</span><small>${d.extra}</small>`}`);
+          : `<span class="valor">${d.valor}</span><small>${d.extra}</small>`}`);
     caja.appendChild(div);
   });
 }

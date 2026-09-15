@@ -196,6 +196,28 @@ document.getElementById('marco').onload = async () => {
     ok('la jornada en curso va en azul',
        coloresFiltros.proximos === 'rgb(77, 163, 255)', coloresFiltros.proximos);
 
+    // 15. Recuadros del resumen y menú lateral: cada uno con su color
+    const colorTexto = nodo => d.defaultView.getComputedStyle(nodo).color;
+
+    const recuadros = Array.from(d.querySelectorAll('#resumen-partidos .dato'));
+    const valoresResumen = Array.from(d.querySelectorAll('#resumen-partidos .dato .valor')).map(colorTexto);
+    ok('los recuadros del resumen tienen su color propio',
+       recuadros.length === 3 && valoresResumen.length === 2 &&
+       new Set(valoresResumen).size === valoresResumen.length,
+       recuadros.length + ' recuadros · colores: ' + valoresResumen.join('  '));
+    ok('partidos jugados en verde y goles en ámbar',
+       valoresResumen[0] === 'rgb(16, 185, 129)' && valoresResumen[1] === 'rgb(245, 158, 11)',
+       valoresResumen.slice(0, 2).join('  '));
+
+    const colorNav = c => colorTexto(d.querySelector('.nav-item.' + c));
+    ok('el menú lateral pone su color a cada sección',
+       colorNav('nav-clasificacion') === 'rgb(245, 158, 11)' &&
+       colorNav('nav-partidos') === 'rgb(77, 163, 255)' &&
+       colorNav('nav-eliminatorias') === 'rgb(179, 136, 255)' &&
+       colorNav('nav-estadisticas') === 'rgb(16, 185, 129)',
+       ['clasificacion', 'partidos', 'eliminatorias', 'estadisticas']
+         .map(c => c + '=' + colorNav('nav-' + c)).join('  '));
+
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   }

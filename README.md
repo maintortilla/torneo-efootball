@@ -40,6 +40,11 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 - **Filtros con color propio**: en Partidos cada filtro tiene su color — *Todos* el acento de
   la paleta, *Pendientes* ámbar, *Jugados* verde y *Solo la jornada en curso* azul. Cada paleta
   usa sus propios tonos (en morado van más apagados para que peguen con el gris)
+- **El color significa algo en toda la web**: el menú lateral pone su color a cada sección
+  (Clasificación ámbar, Partidos azul, Eliminatorias lila, Estadísticas esmeralda, Ajustes gris),
+  cada recuadro del resumen tiene su barrita de color (verde lo hecho, ámbar los goles, azul los
+  datos, lila el resto) y el podio de la clasificación lleva barrita metálica (oro/plata/bronce)
+  con las insignias 🥇🥈🥉
 - **Mis torneos** (página de inicio): la lista de todos los torneos en tarjetas. Desde ahí
   se entra a la clasificación, a los partidos o a los ajustes de cada uno, y se crean
   torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así

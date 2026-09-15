@@ -77,19 +77,19 @@ function pintarResumen() {
   const caja = $('#resumen');
   caja.innerHTML = '';
   const datos = [
-    { etiqueta: 'Partidos jugados', valor: jugados.length + '/' + total,
+    { etiqueta: 'Partidos jugados', valor: jugados.length + '/' + total, color: 1,   // verde: lo hecho
       extra: jornadaActual
         ? `Jornada ${jornadaActual} en juego · ${ligaPendiente.length} pendientes`
         : (pendientes.length ? 'Quedan las eliminatorias' : 'Liguilla terminada') },
-    { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', verde: true },
-    { etiqueta: 'Jugadores', valor: torneoActual.jugadores.length, extra: 'en el torneo' },
-    { etiqueta: 'Mayor goleada', valor: goleada ? goleada.dif + ' de dif.' : '—', extra: textoGoleada }
+    { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', color: 2 },  // ámbar: los goles
+    { etiqueta: 'Jugadores', valor: torneoActual.jugadores.length, extra: 'en el torneo', color: 3 },  // azul
+    { etiqueta: 'Mayor goleada', valor: goleada ? goleada.dif + ' de dif.' : '—', extra: textoGoleada, color: 4 }  // lila
   ];
 
   datos.forEach(d => {
-    caja.appendChild(el('div', 'dato',
+    caja.appendChild(el('div', 'dato dato-col-' + d.color,
       `<span class="etiqueta">${d.etiqueta}</span>
-       <span class="valor${d.verde ? ' verde' : ''}">${d.valor}</span>
+       <span class="valor">${d.valor}</span>
        <small>${d.extra}</small>`));
   });
 }
