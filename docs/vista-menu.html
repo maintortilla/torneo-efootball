@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Vista previa: menú plegable abierto</title>
+<style>
+  body { background:#0A1017; margin:0; padding:14px; }
+  iframe { width:1500px; height:560px; border:1px solid #223; }
+</style>
+</head>
+<body>
+<!-- Solo para echar un vistazo: carga la página de partidos y despliega el menú ☰ -->
+<iframe id="marco" src="../partidos.html"></iframe>
+<script>
+const marco = document.getElementById('marco');
+marco.onload = async () => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < 20000) {
+    await new Promise(r => setTimeout(r, 300));
+    const w = marco.contentWindow;
+    if (w && w.__listo) {
+      const b = marco.contentDocument.getElementById('btn-menu');
+      if (b) b.click();
+      document.title = 'vista-lista';
+      return;
+    }
+  }
+  document.title = 'vista-fallida';
+};
+</script>
+</body>
+</html>

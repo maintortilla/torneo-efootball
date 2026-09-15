@@ -21,8 +21,15 @@
     </div>
 
     <div class="topbar-derecha">
-      <span class="nota" id="nota-guardado"></span>
-      <a class="btn-mini-ir" href="index.html" title="Volver a la lista de torneos">🔄 Cambiar de torneo</a>
+      <div class="menu-plegable">
+        <button class="btn-menu" id="btn-menu" title="Menú" aria-expanded="false" aria-label="Abrir menú">☰</button>
+        <div class="menu-panel" id="menu-panel" hidden>
+          <a class="menu-opcion" href="index.html">🗂️ Cambiar de torneo</a>
+          <a class="menu-opcion" href="ajustes.html?nuevo=1">➕ Crear torneo nuevo</a>
+          <div class="menu-sep"></div>
+          <span class="menu-info" id="nota-guardado"></span>
+        </div>
+      </div>
     </div>
   </header>
 

@@ -75,9 +75,9 @@ function pintarResumenPartidos() {
 }
 
 function pintarProgreso() {
-  const liga = torneoActual.partidos.filter(p => p.fase === 'liga');
-  const jugados = liga.filter(p => p.jugado).length;
-  $('#progreso').textContent = liga.length ? `${jugados} de ${liga.length} jugados` : 'sin calendario';
+  // En la barra de arriba se ve cuántos jugadores tiene el torneo
+  const n = torneoActual.jugadores.length;
+  $('#progreso').textContent = n + (n === 1 ? ' jugador' : ' jugadores');
 }
 
 /* -------------------------------------------------------------- la lista */

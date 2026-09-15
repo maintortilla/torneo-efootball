@@ -383,6 +383,29 @@ body {
 .nombre-torneo .emoji-torneo { font-size: 17px; }
 @media (max-width: 1200px) { .nombre-torneo { max-width: 260px; font-size: 17px; } }
 
+/* ---------- Menú plegable de la barra de arriba ---------- */
+.menu-plegable { position: relative; }
+.btn-menu {
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
+  font-size: 19px; line-height: 1; padding: 7px 13px; border-radius: 10px; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease;
+}
+.btn-menu:hover, .btn-menu.abierto { border-color: var(--neon); color: var(--neon); }
+.menu-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 120;
+  min-width: 260px; padding: 8px;
+  background: #0E1621; border: 1px solid var(--linea); border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.6);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.menu-opcion {
+  display: block; padding: 10px 12px; border-radius: 9px; text-decoration: none;
+  color: var(--texto); font-weight: 600; font-size: 15px;
+}
+.menu-opcion:hover { background: rgba(0,230,118,.12); color: var(--neon); }
+.menu-sep { height: 1px; background: var(--linea); margin: 7px 2px; }
+.menu-info { padding: 3px 12px 7px; }
+
 /* ---------- Ventanita de apuntar el resultado ---------- */
 .modal-fondo {
   position: fixed; inset: 0; z-index: 100;

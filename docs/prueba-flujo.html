@@ -37,10 +37,16 @@ function esperarListo(marco, intentos) {
   });
 }
 
-/* Del texto "5 de 30 jugados" saca el 5 */
+/* Del texto "5/30" (o "5 de 30") saca el 5 y el total */
 function jugadosDe(texto) {
-  const m = String(texto).match(/(\d+)\s*de\s*(\d+)/);
+  const m = String(texto).match(/(\d+)\s*(?:\/|de)\s*(\d+)/);
   return m ? { jugados: Number(m[1]), total: Number(m[2]) } : null;
+}
+
+/* El progreso de la liguilla se lee en el primer recuadro del resumen */
+function progresoDe(d) {
+  const valor = d.querySelector('#resumen-partidos .dato .valor');
+  return jugadosDe(valor ? valor.textContent : '');
 }
 
 document.getElementById('marco').onload = async () => {
@@ -48,7 +54,7 @@ document.getElementById('marco').onload = async () => {
   document.getElementById('marco').onload = null;
 
   const marco = document.getElementById('marco');
-  const d = marco.contentDocument;
+  let d = marco.contentDocument;
   const w = marco.contentWindow;
 
   try {
@@ -64,7 +70,7 @@ document.getElementById('marco').onload = async () => {
     const modoNube = /nube/i.test(modo);
 
     // 3. Progreso inicial
-    const antes = jugadosDe(d.getElementById('progreso').textContent);
+    const antes = progresoDe(d);
     ok('el progreso se puede leer', !!antes, antes ? antes.jugados + ' de ' + antes.total : '—');
 
     // 4. Buscar un partido pendiente y pulsar Apuntar
@@ -96,19 +102,28 @@ document.getElementById('marco').onload = async () => {
     ok('la ventanita queda invisible de verdad', displayCerrado === 'none', 'display: ' + displayCerrado);
 
     // 8. El progreso sube exactamente un partido
-    const despues = jugadosDe(d.getElementById('progreso').textContent);
+    const despues = progresoDe(d);
     ok('el progreso sube un partido', despues && antes && despues.jugados === antes.jugados + 1,
        (antes ? antes.jugados : '?') + ' → ' + (despues ? despues.jugados : '?'));
 
     // 9. El resultado aparece en la lista
     ok('el resultado 2 - 0 aparece en la lista', d.getElementById('lista-partidos').textContent.includes('2 - 0'));
 
-    // 10. En modo nube: refrescar y comprobar que sigue ahí
+    // 10. En modo nube: recargar la página (F5) y comprobar que sigue ahí.
+    //     El botón de refrescar ya no existe: ahora se recarga la página.
     if (modoNube) {
-      d.getElementById('btn-refrescar').click();
-      await esperar(2200);
-      const trasRefresco = jugadosDe(d.getElementById('progreso').textContent);
-      ok('tras refrescar desde la nube el resultado sigue',
+      const marcoEl = document.getElementById('marco');
+      const recargada = new Promise(res => {
+        marcoEl.addEventListener('load', res, { once: true });
+        d.defaultView.location.reload();
+      });
+      await recargada;
+      await esperarListo(marcoEl);
+      await esperar(600);
+      d = marcoEl.contentDocument;
+
+      const trasRefresco = progresoDe(d);
+      ok('tras recargar desde la nube el resultado sigue',
          trasRefresco && trasRefresco.jugados === despues.jugados,
          trasRefresco ? trasRefresco.jugados + ' jugados' : '—');
     } else {
@@ -126,10 +141,31 @@ document.getElementById('marco').onload = async () => {
     //     y así la prueba no ensucia los datos de verdad)
     d.getElementById('modal-borrar').click();
     await esperar(1200);
-    const final = jugadosDe(d.getElementById('progreso').textContent);
+    const final = progresoDe(d);
     ok('el resultado se borra y el partido vuelve a estar pendiente',
        final && antes && final.jugados === antes.jugados,
        (despues ? despues.jugados : '?') + ' → ' + (final ? final.jugados : '?') + ' jugados');
+
+    // 13. La barra de arriba: cuántos jugadores hay y el menú plegable ☰
+    ok('la barra de arriba dice cuántos jugadores hay',
+       /jugadores/.test(d.getElementById('progreso').textContent),
+       d.getElementById('progreso').textContent.trim());
+
+    const panel = d.getElementById('menu-panel');
+    ok('el menú de arriba empieza plegado', panel.hidden === true);
+
+    d.getElementById('btn-menu').click();
+    await esperar(150);
+    const tieneCambiar = !!panel.querySelector('a[href^="index.html"]');
+    ok('al pulsar ☰ se despliega el menú y sale "Cambiar de torneo"',
+       panel.hidden === false && tieneCambiar,
+       panel.hidden ? 'sigue plegado' : (tieneCambiar ? 'abierto con el enlace' : 'abierto sin el enlace'));
+
+    d.body.click();
+    await esperar(150);
+    ok('el menú se vuelve a plegar al pulsar fuera', panel.hidden === true);
+
+    ok('el botón de refrescar ya no está en la barra', !d.getElementById('btn-refrescar'));
 
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);

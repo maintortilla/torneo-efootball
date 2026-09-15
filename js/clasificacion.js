@@ -69,16 +69,20 @@ function pintarResumen() {
   const pendientes = torneoActual.partidos.filter(p => !p.jugado);
   const ligaPendiente = pendientes.filter(p => p.fase === 'liga');
   const jornadaActual = ligaPendiente.length ? ligaPendiente[0].jornada : null;
-  $('#badge-jornada').textContent = ligaPendiente.length
-    ? `Jornada ${jornadaActual} en juego`
-    : (pendientes.length ? 'Eliminatorias en juego' : 'Torneo terminado 🏁');
+
+  // En la barra de arriba se ve cuántos jugadores tiene el torneo
+  const nJugadores = torneoActual.jugadores.length;
+  $('#badge-jornada').textContent = nJugadores + (nJugadores === 1 ? ' jugador' : ' jugadores');
 
   const caja = $('#resumen');
   caja.innerHTML = '';
   const datos = [
-    { etiqueta: 'Partidos jugados', valor: jugados.length + '/' + total, extra: ligaPendiente.length + ' de liguilla pendientes' },
+    { etiqueta: 'Partidos jugados', valor: jugados.length + '/' + total,
+      extra: jornadaActual
+        ? `Jornada ${jornadaActual} en juego · ${ligaPendiente.length} pendientes`
+        : (pendientes.length ? 'Quedan las eliminatorias' : 'Liguilla terminada') },
     { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', verde: true },
-    { etiqueta: 'Jugadores', valor: torneoActual.jugadores.length, extra: (torneoActual.config.vueltas === 2 ? 'ida y vuelta' : 'una vuelta') },
+    { etiqueta: 'Jugadores', valor: torneoActual.jugadores.length, extra: 'en el torneo' },
     { etiqueta: 'Mayor goleada', valor: goleada ? goleada.dif + ' de dif.' : '—', extra: textoGoleada }
   ];
 
