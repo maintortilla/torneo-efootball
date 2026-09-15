@@ -128,7 +128,7 @@ body {
 .panel-titulo b { color: var(--neon); }
 
 .rejilla-2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.rejilla-3 { display: grid; grid-template-columns: minmax(465px, 1.1fr) minmax(325px, .95fr) minmax(285px, .8fr); gap: 16px; align-items: start; }
+.rejilla-3 { display: grid; grid-template-columns: minmax(560px, 1.35fr) minmax(320px, .9fr) minmax(280px, .75fr); gap: 16px; align-items: start; }
 .columna { display: flex; flex-direction: column; gap: 0; }
 .sticky { position: sticky; top: 78px; }
 
@@ -151,7 +151,10 @@ body {
   line-height: 1; color: #fff;
 }
 .dato .valor.verde { color: var(--neon); }
-.dato small { color: var(--muted); font-size: 13px; }
+.dato small {
+  color: var(--muted); font-size: 13px; display: block;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* ---------- Tabla de clasificación ---------- */
 .tabla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; table-layout: auto; }
