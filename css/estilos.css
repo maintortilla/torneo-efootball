@@ -200,14 +200,26 @@ body {
   padding: 17px 18px;
   margin-bottom: 16px;
 }
+/* Títulos de los paneles: que se noten (barrita de acento, más grandes y en blanco) */
 .panel-titulo {
   font-family: var(--fuente-numeros);
-  font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--muted); margin: 0 0 14px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 6px;
+  font-size: 18px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--texto); font-weight: 800;
+  margin: 0 0 16px; padding-bottom: 10px;
+  border-bottom: 2px solid rgba(var(--acento-rgb), .32);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
 }
-.panel-titulo b { color: var(--neon); }
+/* Barrita de acento delante del título */
+.panel-titulo::before {
+  content: ''; flex: 0 0 auto;
+  width: 5px; height: 19px; border-radius: 3px;
+  background: var(--neon);
+  box-shadow: 0 0 10px rgba(var(--acento-rgb), .55);
+}
+.panel-titulo > b { margin-left: auto; color: var(--neon); }
+/* Los botones que van dentro del título se van a la derecha */
+.panel-titulo > .btn-mini-ir:first-of-type { margin-left: auto; }
+.panel-titulo > b + .btn-mini-ir { margin-left: 0; }
 
 .rejilla-3 { display: grid; grid-template-columns: minmax(560px, 1.35fr) minmax(320px, .9fr) minmax(280px, .75fr); gap: 16px; align-items: start; }
 .columna { display: flex; flex-direction: column; gap: 0; }
@@ -578,10 +590,12 @@ body {
 .tema-opcion.activo .tema-check { opacity: 1; }
 
 /* ---------- Insignias del podio en la clasificación (los dos temas) ---------- */
+/* En el 1º, 2º y 3º la medalla ocupa el sitio del número */
 .tabla td.pos .medalla {
-  display: inline-block; margin-right: 5px; font-size: 15px; line-height: 1;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+  display: block; font-size: 23px; line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
 }
+.tabla td.pos { width: 32px; }
 /* El color de la posición lo pone el metal del podio (más arriba en el archivo) */
 .tabla tr.podio-1 td, .tabla tr.podio-2 td, .tabla tr.podio-3 td { font-weight: 600; }
 

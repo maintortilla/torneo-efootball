@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Diagnóstico: abrir Partidos desde el menú</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:ui-monospace,monospace; padding:16px; }
+  iframe { width:1400px; height:420px; border:1px solid #223; }
+  pre { background:#0E1621; padding:14px; border-radius:10px; white-space:pre-wrap; font-size:13px; }
+</style>
+</head>
+<body>
+<h2 style="color:#00E676;font-size:16px">Diagnóstico del enlace "Partidos"</h2>
+<iframe id="marco" src="../clasificacion.html"></iframe>
+<pre id="salida">Ejecutando…</pre>
+<script>
+const marco = document.getElementById('marco');
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const salida = document.getElementById('salida');
+
+const info = { pasos: [] };
+
+async function esperarListo(win, intentos = 200) {
+  for (let i = 0; i < intentos; i++) {
+    await esperar(150);
+    try { if (win.__listo) return true; } catch (e) {}
+  }
+  return false;
+}
+
+marco.onload = async () => {
+  marco.onload = null;
+  try {
+    const w = marco.contentWindow;
+    const listo1 = await esperarListo(w);
+    info.pasos.push('clasificacion.html cargada: ' + listo1);
+    info.urlClasificacion = w.location.href;
+
+    // Enlaces del menú y sus destinos
+    const enlaces = Array.from(marco.contentDocument.querySelectorAll('nav a')).map(a => ({
+      texto: a.textContent.trim(), pagina: a.dataset.pagina || null, href: a.getAttribute('href')
+    }));
+    info.enlaces = enlaces;
+
+    // Clic en "Partidos", como haría Leo
+    const enlacePartidos = Array.from(marco.contentDocument.querySelectorAll('nav a'))
+      .find(a => /partidos/i.test(a.textContent));
+    info.enlacePulsado = enlacePartidos ? enlacePartidos.getAttribute('href') : 'NO ENCONTRADO';
+
+    if (enlacePartidos) enlacePartidos.click();
+    await esperar(6000);
+
+    const w2 = marco.contentWindow;
+    const listo2 = await esperarListo(w2, 60);
+    const d2 = marco.contentDocument;
+    info.urlTrasClic = w2.location.href;
+    info.partidosCargada = listo2;
+    info.tituloPartidos = d2.title;
+    info.filasDePartidos = d2.querySelectorAll('#lista-partidos .partido-fila').length;
+    info.jornadas = d2.querySelectorAll('#lista-partidos .jornada').length;
+    info.tieneMenu = !!d2.getElementById('sidebar');
+    info.errores = window.__errores || [];
+  } catch (e) {
+    info.excepcion = e.message;
+  }
+  salida.textContent = JSON.stringify(info, null, 2);
+  document.title = 'diag-listo';
+};
+</script>
+</body>
+</html>

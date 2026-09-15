@@ -133,7 +133,7 @@ function pintarClasificacion() {
 
     const tr = el('tr', clases.join(' '));
     tr.innerHTML = `
-      <td class="pos">${medalla ? `<span class="medalla" title="${i + 1}º puesto">${medalla}</span>` : ''}${i + 1}</td>
+      <td class="pos"${medalla ? ` title="${i + 1}º puesto"` : ''}>${medalla ? `<span class="medalla">${medalla}</span>` : (i + 1)}</td>
       <td class="nombre jugador"><span class="emoji">${f.emoji}</span>${f.nombre}</td>
       <td>${f.pj}</td>
       <td>${f.pg}</td>
