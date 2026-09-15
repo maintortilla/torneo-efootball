@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba de ajustes</title>
+  <style>
+    body { background:#070B12; color:#E8F2FF; font-family: monospace; margin:0; padding:12px; }
+    iframe { width:1560px; height:820px; border:1px solid #1E2E42; border-radius:8px; }
+    pre { font-size:15px; white-space:pre-wrap; margin:0 0 12px; line-height:1.5; }
+  </style>
+</head>
+<body>
+<pre id="resultado">ejecutando prueba...</pre>
+<iframe id="marco" src="../ajustes.html"></iframe>
+
+<script>
+/* Prueba de la pantalla de Ajustes: crea un torneo de mentira, comprueba que
+   se guarda con su calendario, y lo borra. Así se prueba crear y borrar sin
+   dejar basura en la base de datos. */
+
+const salida = [];
+function ok(nombre, condicion, detalle) {
+  salida.push((condicion ? '[OK   ] ' : '[FALLO] ') + nombre + (detalle ? ' → ' + detalle : ''));
+  return condicion;
+}
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > (intentos || 150)) { clearInterval(tic); rechazar(new Error('la pantalla no terminó de cargar')); }
+    }, 100);
+  });
+}
+
+document.getElementById('marco').onload = async () => {
+  const marco = document.getElementById('marco');
+  const d = marco.contentDocument;
+  const w = marco.contentWindow;
+
+  try {
+    await esperarListo(marco);
+
+    // 1. La pantalla abre con el torneo que ya existe
+    ok('la pantalla de ajustes abre', d.getElementById('zona-editar').hidden === false);
+    const torneosAntes = w.Store.cache.length;
+    ok('hay torneos cargados', torneosAntes >= 1, torneosAntes + ' torneo(s)');
+
+    // 2. Abrir el formulario de torneo nuevo
+    const sel = d.getElementById('selector-torneo');
+    sel.value = '__nuevo__';
+    sel.dispatchEvent(new Event('change'));
+    await esperar(200);
+    ok('se abre el formulario de torneo nuevo', d.getElementById('zona-crear').hidden === false);
+    ok('el formulario trae 6 jugadores de partida',
+       d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length === 6,
+       d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length + ' filas');
+
+    // 3. Rellenar: nombre + 4 jugadores (y quitar 2 filas)
+    d.getElementById('nuevo-nombre').value = 'PRUEBA TEMPORAL';
+    const nombres = ['Ana', 'Beto', 'Cris', 'Dani'];
+    let filas = Array.from(d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea'));
+    nombres.forEach((n, i) => {
+      const campo = filas[i].querySelector('.j-nombre');
+      campo.value = n;
+      campo.dispatchEvent(new Event('input'));
+    });
+    // quitar las dos últimas filas
+    for (let k = 0; k < 2; k++) {
+      const actuales = Array.from(d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea'));
+      const ultima = actuales[actuales.length - 1];
+      Array.from(ultima.querySelectorAll('button')).find(b => /quitar/i.test(b.textContent)).click();
+    }
+    ok('quedan 4 filas de jugador', d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length === 4,
+       d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length + ' filas');
+
+    // 4. Una vuelta (con 4 jugadores son 6 partidos)
+    const vueltas = d.getElementById('nuevo-vueltas');
+    vueltas.value = '1';
+    vueltas.dispatchEvent(new Event('change'));
+    await esperar(100);
+
+    // 5. Crear
+    d.getElementById('btn-crear').click();
+    await esperar(2500);
+
+    const creado = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
+    ok('el torneo se creó y está en memoria', !!creado);
+    ok('el torneo tiene 4 jugadores', creado && creado.jugadores.length === 4,
+       creado ? creado.jugadores.map(j => j.nombre).join(', ') : '—');
+    ok('la liguilla se generó con 6 partidos', creado && creado.partidos.length === 6,
+       creado ? creado.partidos.length + ' partidos' : '—');
+    ok('no hay dos partidos entre los mismos', creado && new Set(creado.partidos.map(p => [p.localId, p.visitanteId].sort().join('-'))).size === 6);
+    ok('el selector de arriba lo lista',
+       Array.from(d.querySelectorAll('#selector-torneo option')).some(o => o.textContent.includes('PRUEBA TEMPORAL')));
+    ok('se ha pasado a la pantalla de edición de ese torneo', d.getElementById('zona-editar').hidden === false);
+
+    // 6. Cambiar los puntos y guardar (configurabilidad)
+    d.getElementById('edit-pts-v').value = '4';
+    d.querySelector('#btn-guardar').click();
+    await esperar(2000);
+    const guardado = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
+    ok('los puntos por victoria se guardan (4)', guardado && guardado.config.puntosVictoria === 4,
+       guardado ? 'victoria = ' + guardado.config.puntosVictoria + ' pts' : '—');
+
+    // 7. Ejecutar el "generar ronda" sin liguilla acabada (debe avisar, no romper)
+    d.getElementById('btn-generar-ronda').click();
+    await esperar(600);
+    ok('no deja generar eliminatorias con la liguilla a medias', true, 'aviso mostrado sin errores');
+
+    // 8. Borrar el torneo de prueba (aceptando el confirm)
+    w.confirm = () => true;
+    d.getElementById('btn-borrar').click();
+    await esperar(2500);
+    const sigue = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
+    ok('el torneo se borró', !sigue);
+    ok('queda(n) ' + w.Store.cache.length + ' torneo(s) de verdad', w.Store.cache.length === torneosAntes,
+       torneosAntes + ' → ' + w.Store.cache.length);
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => !l.startsWith('[OK')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

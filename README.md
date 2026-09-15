@@ -1,93 +1,95 @@
 # ⚽ Torneo eFootball
 
 Web para organizar torneos de eFootball con los colegas: apuntar resultados, ver la
-clasificación, quién va clasificando a las eliminatorias y el historial.
+clasificación, quién va clasificando a las eliminatorias y configurarlo **todo** desde
+la propia web (crear torneos, jugadores, formato, puntos, desempates).
 
-**Es una plataforma de torneos, no un torneo:** la idea es crear todos los que
-queráis y configurarlo todo desde la propia web, sin tocar código.
+**Es una plataforma de torneos, no un torneo:** se crean todos los que queráis, sin
+tocar código.
 
-## Cómo abrirlo en tu PC
+## Cómo abrirlo
 
 **Opción rápida:** doble clic en `index.html`.
 
-**Opción recomendada para trabajar:** abre la carpeta en VS Code y en su terminal:
+**Opción recomendada:** abre la carpeta en VS Code y en su terminal:
 
 ```bash
 python -m http.server 8765
 ```
 
-Luego entra en http://127.0.0.1:8765 (F5 para recargar al cambiar algo).
+Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
-## Apuntar un resultado
+## Qué se puede hacer
 
-En la portada, pulsa **Apuntar** en cualquier partido → sale una **ventanita** con dos
-botones `+` y `−` para el marcador y el botón *Guardar*. Sin pantallas de por medio.
-Si te equivocas, pulsa **Editar** y usa *Borrar el resultado y dejarlo pendiente*.
+- **Apuntar un resultado**: botón *Apuntar* en cualquier partido → ventanita con los dos
+  marcadores → Guardar. La clasificación, las eliminatorias y el resumen se recalculan solos
+- **Ajustes** (menú lateral): crear un torneo nuevo, cambiar jugadores (emoji y color),
+  formato, vueltas, cuántos clasifican, 3º y 4º puesto, puntos por victoria/empate/derrota
+  y el orden de los desempates (con flechitas ↑↓)
+- **Eliminatorias**: cuando acaba la liguilla, un botón genera las semifinales; después,
+  la final (y el 3º puesto si está activado). Si un partido de eliminatoria acaba en
+  empate, pasa el que mejor quedó en la liguilla
+- **Refrescar**: el botón 🔄 trae lo que hayan apuntado los demás
 
 ## Estructura del proyecto
 
 ```
 Torneo-Efootball/
 ├── index.html            Portada: resumen, clasificación, partidos, eliminatorias
+├── ajustes.html          Crear torneos y configurarlo todo
 ├── css/estilos.css       Todo el estilo (tema oscuro + verde neón)
 ├── js/
-│   ├── config.js         Ajustes por defecto con los que nace cada torneo
-│   ├── modelo.js         Las reglas: clasificación, calendario, eliminatorias
-│   ├── store.js          Única puerta de los datos (hoy: navegador / Fase 2: nube)
-│   ├── datos-prueba.js   Torneo de mentira para poder probar
-│   └── index.js          Lógica de la portada y de la ventanita
-├── docs/
-│   ├── DISENO-TORNEO.md      El diseño acordado (¡leer esto!)
-│   ├── verificar-modelo.js   Comprobaciones del cálculo (Node)
-│   └── prueba-flujo.html     Prueba de la ventanita en el navegador
+│   ├── config.js         Ajustes por defecto de un torneo nuevo
+│   ├── config-nube.js    URL y clave pública de Supabase (son públicas a propósito)
+│   ├── modelo.js         Las reglas: calendario, clasificación, eliminatorias, fases
+│   ├── store.js          Única puerta de los datos (nube o navegador)
+│   ├── datos-prueba.js   Datos de mentira por si no hay conexión
+│   ├── index.js          Lógica de la portada y de la ventanita
+│   └── ajustes.js        Lógica de la pantalla de ajustes
+├── docs/                 Diseño + tests + el SQL de la base de datos
+├── tools/                Scripts de apoyo (creación del proyecto de Supabase)
 └── assets/               Capturas de prueba
 ```
 
 ## Comprobar que todo funciona
 
-**1. Las reglas del juego (rápido, sin navegador):**
+| Test | Cómo | Qué comprueba |
+|---|---|---|
+| Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores |
+| Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita guarda y la web recalcula (en local o en la nube) |
+| Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo con su calendario, se configura y se borra |
 
-```bash
-node docs/verificar-modelo.js
-```
+Los tres deben terminar en **✅ TODO CORRECTO**.
 
-Revisa el calendario (que cada uno juegue 10 partidos, que no se repitan cruces), la
-clasificación con distintos puntos y los formatos con 4, 5, 6, 8 y 10 jugadores.
-Termina en `✅ TODO CORRECTO`.
-
-**2. La ventanita de apuntar (en el navegador):**
-
-Abre http://127.0.0.1:8765/docs/prueba-flujo.html — simula apuntar un 3-1 y comprueba
-que se guarda y que la clasificación se recalcula sola.
+⚠️ El test de flujo **apunta un resultado de verdad**. En modo nube eso queda guardado
+(se limpia a mano si molesta).
 
 ## Estado por fases
 
 - [x] **Fase 0** — carpeta, git y esqueleto
-- [x] **Fase 1** — clasificación, partidos, eliminatorias y ventanita de resultados
-- [x] **Fase 2** — Supabase conectado: los datos viven en la nube y todos veis lo mismo
-- [ ] **Fase 3** — ajustes desde la web: crear torneo, configurar, generar calendario
-- [ ] **Fase 4** — publicar + login con Google + permisos
+- [x] **Fase 1** — portada, clasificación, partidos y ventanita de resultados
+- [x] **Fase 2** — Supabase: los datos viven en la nube y todos veis lo mismo
+- [x] **Fase 3** — ajustes desde la web: crear torneos, configurar y generar fases
+- [ ] **Fase 4** — publicar la web + login con Google + permisos
 - [ ] **Fase 5** — historial, gráficas, MVP
 - [ ] **Fase 6 (extra)** — leer las estadísticas del partido desde una captura de pantalla
+- [ ] **Fase 7** — temas visuales alternativos (azul, retro, claro...)
 
-## La nube (Fase 2) ✅
+## La nube ☁️
 
-Los datos viven en **Supabase** (proyecto `raccyikqsekbrnkjfvur`, servidores en Europa).
-En la barra de arriba de la web verás una pastilla:
+Los datos viven en **Supabase**, con servidores en Europa. En la barra de arriba verás:
 
-- **☁️ Datos en la nube** → todo va a Supabase: quien abra la web ve lo mismo
-- **💾 Modo local** → (solo si no hay internet o falta la configuración) los datos se
-  quedan en ese PC
+- **☁️ Datos en la nube** → todos los que abran la web ven y apuntan lo mismo
+- **💾 Modo local** → (sin internet o sin configurar) los datos se quedan en ese PC
 
-Las dos claves de la conexión están en `js/config-nube.js` y **son públicas a propósito**
-(van en el navegador; lo que protege los datos son las políticas de la base de datos).
-La contraseña de la base de datos y el token de administración **no** se guardan en el
-repositorio (`.gitignore`).
+Las claves de `js/config-nube.js` **son públicas a propósito** (van en el navegador; quien
+protege los datos son las políticas de la base de datos). La contraseña de la base de datos
+y el token de administración **no** se guardan en el repositorio (`.gitignore`).
 
-## Reglas del juego (importante)
+Las tablas están abiertas (cualquiera con la dirección puede escribir) — es temporal,
+hasta la Fase 4 (login y permisos).
 
-- Todo lo configurable (puntos, vueltas, clasificados, tipos de gol...) se guarda
-  **por torneo**, nunca en el código.
-- Los goles detallados, el pichichi y las estadísticas finas están **aparcados** hasta
-  la Fase 6, cuando se leerán de la captura de pantalla del partido. El modelo ya los
-  soporta (tabla `goles`), solo falta la puerta de entrada.
+## Regla importante
+
+Todo lo configurable (puntos, vueltas, clasificados, jugadores, desempates...) se guarda
+**por torneo**, nunca en el código. Si algo no se puede cambiar desde Ajustes, es un bug.

@@ -257,3 +257,154 @@ function calcularStatsJugador(torneo, jugadorId) {
     paradasMedia: (paradas / partidosConStats).toFixed(1)
   };
 }
+
+/* =========================================================================
+   TORNEO NUEVO Y FASES FINALES (Fase 3)
+   ========================================================================= */
+
+/* Monta un torneo nuevo desde cero y le genera el calendario */
+function crearTorneoNuevo(nombre, jugadores, configPersonalizada) {
+  const config = Object.assign(
+    JSON.parse(JSON.stringify(CONFIG_DEFECTO)),
+    configPersonalizada || {}
+  );
+
+  const torneo = {
+    id: nuevoId('t'),
+    nombre: nombre,
+    estado: 'en_curso',
+    config: config,
+    jugadores: jugadores,
+    futbolistas: [],
+    partidos: []
+  };
+
+  torneo.partidos = generarCalendario(torneo.jugadores, config);
+  return torneo;
+}
+
+/* Regenera el calendario de un torneo que ya existe (se pierden los resultados) */
+function regenerarCalendario(torneo) {
+  const ids = {};
+  torneo.jugadores.forEach(j => { ids[j.nombre] = 0; });   // solo para saber que existen
+
+  // Los partidos viejos de liga se tiran; se conserva lo que ya se jugó en
+  // eliminatorias (normalmente no hay nada) para no romper nada.
+  const eliminatorias = torneo.partidos.filter(p => p.fase !== 'liga');
+  torneo.partidos = generarCalendario(torneo.jugadores, torneo.config).concat(eliminatorias);
+  return torneo;
+}
+
+/* ¿En qué punto está el torneo y qué toca hacer? */
+function estadoDeFases(torneo) {
+  const liga = torneo.partidos.filter(p => p.fase === 'liga');
+  const semis = torneo.partidos.filter(p => p.fase === 'semifinal');
+  const final = torneo.partidos.filter(p => p.fase === 'final');
+  const tercero = torneo.partidos.filter(p => p.fase === 'tercer_puesto');
+
+  if (!liga.length) return { paso: 'sin_calendario' };
+
+  const ligaPendientes = liga.filter(p => !p.jugado).length;
+  if (ligaPendientes > 0) return { paso: 'liga', pendientes: ligaPendientes };
+
+  if (!semis.length) return { paso: 'generar_semis' };
+
+  const semisPendientes = semis.filter(p => !p.jugado).length;
+  if (semisPendientes > 0) return { paso: 'semis', pendientes: semisPendientes };
+
+  if (!final.length) return { paso: 'generar_final' };
+
+  const finalPendiente = final.filter(p => !p.jugado).length;
+  const terceroPendiente = torneo.config.partidoTercerPuesto
+    ? tercero.filter(p => !p.jugado).length : 0;
+
+  if (finalPendiente === 0 && terceroPendiente === 0) return { paso: 'terminado' };
+  return { paso: 'final', pendientes: finalPendiente + terceroPendiente };
+}
+
+/* Genera la ronda que toque (semifinales o final) a partir de los resultados */
+function generarSiguienteRonda(torneo) {
+  const estado = estadoDeFases(torneo);
+  const clasificacion = calcularClasificacion(torneo);
+  const nuevos = [];
+
+  if (estado.paso === 'generar_semis') {
+    generarEliminatorias(clasificacion, torneo.config).forEach(c => {
+      nuevos.push({
+        id: nuevoId('e'),
+        fase: 'semifinal',
+        jornada: null,
+        localId: c.localId,
+        visitanteId: c.visitanteId,
+        golesLocal: 0, golesVisitante: 0,
+        jugado: false, goles: [], stats: null, fecha: null
+      });
+    });
+    return { nuevos, mensaje: 'Semifinales generadas ✅' };
+  }
+
+  if (estado.paso === 'generar_final') {
+    const semis = torneo.partidos.filter(p => p.fase === 'semifinal');
+    const ganadores = semis.map(s => ganadorDe(torneo, s, clasificacion));
+    if (ganadores.some(g => !g)) {
+      return { nuevos: [], mensaje: 'Faltan resultados de semifinales' };
+    }
+
+    nuevos.push({
+      id: nuevoId('e'),
+      fase: 'final',
+      jornada: null,
+      localId: ganadores[0],
+      visitanteId: ganadores[1],
+      golesLocal: 0, golesVisitante: 0,
+      jugado: false, goles: [], stats: null, fecha: null
+    });
+
+    if (torneo.config.partidoTercerPuesto) {
+      const perdedores = semis.map(s => perdedorDe(torneo, s, clasificacion));
+      nuevos.push({
+        id: nuevoId('e'),
+        fase: 'tercer_puesto',
+        jornada: null,
+        localId: perdedores[0],
+        visitanteId: perdedores[1],
+        golesLocal: 0, golesVisitante: 0,
+        jugado: false, goles: [], stats: null, fecha: null
+      });
+    }
+
+    return { nuevos, mensaje: 'Final generada ✅' };
+  }
+
+  return { nuevos: [], mensaje: 'Todavía no toca generar nada' };
+}
+
+/* Quién gana un partido. Si empatan en eliminatorias, pasa el que mejor quedó
+   en la liguilla (regla habitual en los torneos y así no hace falta que nadie
+   apunte los penaltis). */
+function ganadorDe(torneo, partido, clasificacion) {
+  if (!partido.jugado) return null;
+  if (partido.golesLocal > partido.golesVisitante) return partido.localId;
+  if (partido.golesVisitante > partido.golesLocal) return partido.visitanteId;
+
+  const orden = (clasificacion || calcularClasificacion(torneo)).map(f => f.id);
+  const posLocal = orden.indexOf(partido.localId);
+  const posVisit = orden.indexOf(partido.visitanteId);
+  return posLocal <= posVisit ? partido.localId : partido.visitanteId;
+}
+
+function perdedorDe(torneo, partido, clasificacion) {
+  const g = ganadorDe(torneo, partido, clasificacion);
+  if (!g) return null;
+  return g === partido.localId ? partido.visitanteId : partido.localId;
+}
+
+/* ¿Este jugador tiene partidos jugados? (para no dejarle quitar del torneo) */
+function tienePartidosJugados(torneo, jugadorId) {
+  return torneo.partidos.some(p => p.jugado && (p.localId === jugadorId || p.visitanteId === jugadorId));
+}
+
+/* ¿Hay algún resultado apuntado en la liguilla? */
+function hayResultados(torneo) {
+  return torneo.partidos.some(p => p.jugado);
+}

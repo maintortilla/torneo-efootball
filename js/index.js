@@ -46,6 +46,10 @@ function pintarSelectorTorneo(torneos) {
     if (t.id === torneoActual.id) o.selected = true;
     sel.appendChild(o);
   });
+
+  const nuevo = el('option', null, '＋ Crear torneo nuevo…');
+  nuevo.value = '__nuevo__';
+  sel.appendChild(nuevo);
 }
 
 function pintarTodo() {
@@ -165,10 +169,15 @@ function pintarPartidos() {
   if (filtroPartidos === 'pendientes') lista = lista.filter(p => !p.jugado);
   if (filtroPartidos === 'jugados') lista = lista.filter(p => p.jugado);
 
-  $('#contador-partidos').textContent =
-    lista.length + (filtroPartidos === 'todos' ? ' partidos' : ' mostrados');
+  // Las eliminatorias generadas también salen aquí (con su propia cabecera)
+  let eliminatorias = torneoActual.partidos.filter(p => p.fase !== 'liga');
+  if (filtroPartidos === 'pendientes') eliminatorias = eliminatorias.filter(p => !p.jugado);
+  if (filtroPartidos === 'jugados') eliminatorias = eliminatorias.filter(p => p.jugado);
 
-  if (!lista.length) {
+  $('#contador-partidos').textContent =
+    (lista.length + eliminatorias.length) + (filtroPartidos === 'todos' ? ' partidos' : ' mostrados');
+
+  if (!lista.length && !eliminatorias.length) {
     caja.appendChild(el('div', 'vacio', 'No hay partidos en esta vista 👀'));
     return;
   }
@@ -178,34 +187,74 @@ function pintarPartidos() {
 
   Object.keys(porJornada).sort((a, b) => a - b).forEach(j => {
     caja.appendChild(el('div', 'cabecera-jornada', `Jornada ${j}`));
-
-    porJornada[j].forEach(p => {
-      const local = jugador(torneoActual, p.localId);
-      const visit = jugador(torneoActual, p.visitanteId);
-      const ganaLocal = p.jugado && p.golesLocal > p.golesVisitante;
-      const ganaVisit = p.jugado && p.golesVisitante > p.golesLocal;
-
-      const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
-      fila.innerHTML = `
-        <span class="quien ${ganaLocal ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
-        <span class="marcador-mini ${p.jugado ? '' : 'pend'}">
-          ${p.jugado ? p.golesLocal + ' - ' + p.golesVisitante : 'vs'}
-        </span>
-        <span class="quien der ${ganaVisit ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
-
-      const boton = el('button', 'btn-mini-ir', p.jugado ? 'Editar' : 'Apuntar');
-      boton.onclick = () => abrirModal(p.id);
-      fila.appendChild(boton);
-
-      caja.appendChild(fila);
-    });
+    porJornada[j].forEach(p => caja.appendChild(filaDePartido(p)));
   });
+
+  if (eliminatorias.length) {
+    caja.appendChild(el('div', 'cabecera-jornada', 'Eliminatorias'));
+    eliminatorias.forEach(p => caja.appendChild(filaDePartido(p)));
+  }
 }
 
-/* ------------------------------------------- eliminatorias de hoy mismo */
+/* Una línea de la lista de partidos (con su botón de apuntar/editar) */
+function filaDePartido(p) {
+  const local = jugador(torneoActual, p.localId);
+  const visit = jugador(torneoActual, p.visitanteId);
+  const ganaLocal = p.jugado && p.golesLocal > p.golesVisitante;
+  const ganaVisit = p.jugado && p.golesVisitante > p.golesLocal;
+  const nombresFase = { semifinal: 'Semifinal', final: 'Final', tercer_puesto: '3º y 4º' };
+
+  const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
+  fila.innerHTML = `
+    <span class="quien ${ganaLocal ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
+    <span class="marcador-mini ${p.jugado ? '' : 'pend'}">
+      ${p.jugado ? p.golesLocal + ' - ' + p.golesVisitante : (nombresFase[p.fase] || 'vs')}
+    </span>
+    <span class="quien der ${ganaVisit ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
+
+  const boton = el('button', 'btn-mini-ir', p.jugado ? 'Editar' : 'Apuntar');
+  boton.onclick = () => abrirModal(p.id);
+  fila.appendChild(boton);
+
+  return fila;
+}
+
+/* ------------------------------------------- eliminatorias */
 function pintarEliminatorias() {
   const caja = $('#lista-eliminatorias');
   caja.innerHTML = '';
+  const etiqueta = $('#etiqueta-eliminatorias');
+
+  const nombresFase = { semifinal: 'Semifinal', final: 'Final', tercer_puesto: '3º y 4º' };
+  const generadas = torneoActual.partidos.filter(p => p.fase !== 'liga');
+
+  // Si ya se generaron las eliminatorias, se muestran los cruces de verdad
+  if (generadas.length) {
+    etiqueta.textContent = 'en juego';
+
+    const final = generadas.find(p => p.fase === 'final');
+    if (final && final.jugado) {
+      const campeon = ganadorDe(torneoActual, final);
+      const c = jugador(torneoActual, campeon);
+      caja.appendChild(el('div', 'aviso',
+        `<span>🏆</span><span>Campeón del torneo: <b>${c.emoji} ${c.nombre}</b></span>`));
+    }
+
+    generadas.forEach(p => {
+      const local = jugador(torneoActual, p.localId);
+      const visit = jugador(torneoActual, p.visitanteId);
+      const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
+      fila.innerHTML = `
+        <span class="quien ${p.jugado && p.golesLocal > p.golesVisitante ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
+        <span class="marcador-mini ${p.jugado ? '' : 'pend'}">${p.jugado ? p.golesLocal + ' - ' + p.golesVisitante : nombresFase[p.fase] || p.fase}</span>
+        <span class="quien der ${p.jugado && p.golesVisitante > p.golesLocal ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
+      caja.appendChild(fila);
+    });
+    return;
+  }
+
+  // Si todavía no hay eliminatorias: se enseña cómo quedarían los cruces hoy
+  etiqueta.textContent = 'si acabara hoy';
 
   const clasificacion = calcularClasificacion(torneoActual);
   const cruces = generarEliminatorias(clasificacion, torneoActual.config);
@@ -274,9 +323,17 @@ function abrirModal(idPartido) {
   $('#modal-nom-local').textContent = local.nombre;
   $('#modal-av-visit').textContent = visit.emoji;
   $('#modal-nom-visit').textContent = visit.nombre;
-  $('#modal-nota').textContent = partidoEnEdicion.jugado
-    ? 'Este partido ya tiene resultado: puedes cambiarlo y volver a guardar.'
-    : `Jornada ${partidoEnEdicion.jornada} · pon el resultado con los botones.`;
+  const nombresFase = { semifinal: 'la semifinal', final: 'la final', tercer_puesto: 'el 3º y 4º puesto' };
+  if (partidoEnEdicion.fase && partidoEnEdicion.fase !== 'liga') {
+    const etiqueta = nombresFase[partidoEnEdicion.fase] || 'la eliminatoria';
+    $('#modal-nota').innerHTML = partidoEnEdicion.jugado
+      ? `Partido de <b>${etiqueta}</b> ya jugado: puedes cambiar el resultado y volver a guardar.`
+      : `Partido de <b>${etiqueta}</b>. Si acaba en empate, pasa el que mejor quedó en la liguilla 🎯`;
+  } else {
+    $('#modal-nota').textContent = partidoEnEdicion.jugado
+      ? 'Este partido ya tiene resultado: puedes cambiarlo y volver a guardar.'
+      : `Jornada ${partidoEnEdicion.jornada} · pon el resultado con los botones.`;
+  }
 
   pintarModal();
   $('#modal-fondo').hidden = false;
@@ -343,6 +400,10 @@ async function borrarResultado() {
 /* --------------------------------------------------------------- eventos */
 function engancharIndex() {
   $('#selector-torneo').onchange = (e) => {
+    if (e.target.value === '__nuevo__') {
+      window.location.href = 'ajustes.html?nuevo=1';
+      return;
+    }
     torneoActual = Store.torneo(e.target.value);
     pintarTodo();
   };

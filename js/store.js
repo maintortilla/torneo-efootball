@@ -51,12 +51,18 @@ const StoreLocal = {
     return torneos;
   },
 
-  async guardarTorneo(torneo) {
+  async guardarTorneo(torneo, modo) {
     const torneos = (this.leer() || []);
     const i = torneos.findIndex(t => t.id === torneo.id);
     if (i >= 0) torneos[i] = torneo; else torneos.push(torneo);
     this.guardar(torneos);
     return torneo;
+  },
+
+  async borrarTorneo(id) {
+    const torneos = (this.leer() || []).filter(t => t.id !== id);
+    this.guardar(torneos);
+    return torneos;
   },
 
   async reiniciarDemo() {
@@ -117,8 +123,10 @@ const StoreNube = {
     ));
   },
 
-  /* Sube un torneo completo (el torneo, sus jugadores, sus partidos y sus futbolistas) */
-  async guardarTorneo(torneo) {
+  /* Sube un torneo completo (el torneo, sus jugadores, sus partidos y sus futbolistas)
+     modo = 'reemplazar' → borra los partidos viejos antes de insertar los nuevos
+     (se usa al regenerar el calendario, para no dejar partidos sueltos) */
+  async guardarTorneo(torneo, modo) {
     const c = this.conectar();
     const T = NUBE_CONFIG.tablas;
     const filas = torneoAFilas(torneo);
@@ -136,7 +144,14 @@ const StoreNube = {
       if (r.error) throw new Error('No se pudieron guardar los futbolistas: ' + r.error.message);
     }
 
-    if (filas.partidos.length) {
+    if (modo === 'reemplazar') {
+      const borrado = await c.from(T.partidos).delete().eq('torneo_id', torneo.id);
+      if (borrado.error) throw new Error('No se pudieron borrar los partidos viejos: ' + borrado.error.message);
+      if (filas.partidos.length) {
+        const r = await c.from(T.partidos).insert(filas.partidos);
+        if (r.error) throw new Error('No se pudieron guardar los partidos: ' + r.error.message);
+      }
+    } else if (filas.partidos.length) {
       const r = await c.from(T.partidos).upsert(filas.partidos);
       if (r.error) throw new Error('No se pudieron guardar los partidos: ' + r.error.message);
     }
@@ -146,6 +161,15 @@ const StoreNube = {
 
   async reiniciarDemo() {
     throw new Error('En modo nube el borrado se hará desde los ajustes del torneo (Fase 3)');
+  },
+
+  /* Borra un torneo entero. Los partidos, jugadores y futbolistas caen solos
+     (las tablas hijas tienen ON DELETE CASCADE en Supabase) */
+  async borrarTorneo(id) {
+    const c = this.conectar();
+    const r = await c.from(NUBE_CONFIG.tablas.torneos).delete().eq('id', id);
+    if (r.error) throw new Error('No se pudo borrar el torneo: ' + r.error.message);
+    return this.traerTodo();
   }
 };
 
@@ -240,9 +264,9 @@ const Store = {
   },
 
   /* Cualquier cambio de un torneo pasa por aquí */
-  async guardarTorneo(torneo) {
+  async guardarTorneo(torneo, modo) {
     const motor = this.elegirMotor();
-    await motor.guardarTorneo(torneo);
+    await motor.guardarTorneo(torneo, modo);
 
     const i = this.cache.findIndex(t => t.id === torneo.id);
     if (i >= 0) this.cache[i] = torneo; else this.cache.push(torneo);
@@ -255,6 +279,19 @@ const Store = {
     return this.iniciar();
   },
 
+  /* Crea un torneo nuevo (lo deja guardado y en memoria) */
+  async crearTorneo(torneo) {
+    await this.guardarTorneo(torneo);
+    return torneo;
+  },
+
+  /* Borra un torneo y devuelve la lista que queda */
+  async borrarTorneo(id) {
+    const motor = this.elegirMotor();
+    this.cache = await motor.borrarTorneo(id);
+    return this.cache;
+  },
+
   async reiniciarDemo() {
     const motor = this.elegirMotor();
     this.cache = await motor.reiniciarDemo();
@@ -264,6 +301,10 @@ const Store = {
   /* ¿En qué modo estamos? Para avisar al usuario */
   modo() { return modoDatos(); }
 };
+
+/* Exponer el Store en window: así se puede inspeccionar desde la consola del
+   navegador (útil para depurar) y lo usan las pruebas automáticas. */
+if (typeof window !== 'undefined') window.Store = Store;
 
 /* ==========================================================================
    AYUDANTES cortos que usan mucho las pantallas

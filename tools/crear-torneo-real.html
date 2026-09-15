@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear el torneo real</title>
+  <style>body { background:#070B12; color:#E8F2FF; font-family: monospace; padding:12px; }</style>
+</head>
+<body>
+<pre id="salida">creando el torneo…</pre>
+
+<script>
+/* Crea el torneo de verdad de Leo (con los nombres reales) usando el MISMO
+   código de la web, y borra el torneo de prueba con nombres de mentira.
+   Se ejecuta una sola vez. */
+
+const JUGADORES = [
+  { nombre: 'Jairo',     emoji: '🔵', color: '#4DA3FF' },
+  { nombre: 'Borja',     emoji: '🟡', color: '#FFD54F' },
+  { nombre: 'Leo',       emoji: '🟢', color: '#00E676' },
+  { nombre: 'Alejandro', emoji: '🔴', color: '#FF4D5E' },
+  { nombre: 'Pedro',     emoji: '🟣', color: '#B388FF' },
+  { nombre: 'Aritz',     emoji: '🟠', color: '#FFA24D' }
+];
+
+const CONFIG = { vueltas: 2, clasificados: 4, partidoTercerPuesto: false, eliminatoriasIdaYVuelta: false };
+
+function marco() {
+  return new Promise((resolver) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:1px;height:1px;opacity:0';
+    iframe.src = '../index.html';
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      let n = 0;
+      const tic = setInterval(() => {
+        let listo = false;
+        try { listo = iframe.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); resolver(iframe.contentWindow); }
+        else if (++n > 150) { clearInterval(tic); resolver(null); }
+      }, 100);
+    };
+  });
+}
+
+(async () => {
+  const salida = document.getElementById('salida');
+  const lineas = [];
+  const escribir = (t) => { lineas.push(t); salida.textContent = lineas.join('\n'); };
+
+  const w = await marco();
+  if (!w) { escribir('❌ la web no cargó'); return; }
+
+  // 1. Borrar el torneo de prueba (nombres de mentira)
+  const prueba = w.Store.cache.find(t => t.nombre === 'Torneo Otoño 2026');
+  if (prueba) {
+    await w.Store.borrarTorneo(prueba.id);
+    escribir('🧹 Torneo de prueba borrado (' + prueba.jugadores.map(j => j.nombre).join(', ') + ')');
+  } else {
+    escribir('ℹ️ No había torneo de prueba (o ya se borró)');
+  }
+
+  // 2. Crear el torneo real
+  const jugadores = JUGADORES.map(j => ({ id: w.nuevoId('j'), nombre: j.nombre, emoji: j.emoji, color: j.color }));
+  const torneo = w.crearTorneoNuevo('Torneo Otoño 2026', jugadores, CONFIG);
+
+  escribir('🎲 Calendario generado: ' + torneo.partidos.length + ' partidos');
+  escribir('   ' + torneo.jugadores.map(j => j.emoji + ' ' + j.nombre).join(' · '));
+
+  await w.Store.crearTorneo(torneo);
+  escribir('✅ Torneo guardado en la nube con ' + torneo.jugadores.length + ' jugadores');
+
+  // 3. Comprobación final
+  const comprobado = w.Store.cache.find(t => t.id === torneo.id);
+  escribir(comprobado ? '🔎 Comprobado: está en la web (' + comprobado.partidos.length + ' partidos)' : '❌ no aparece');
+  escribir('🏁 LISTO');
+  document.title = comprobado ? 'TORNEO-OK' : 'TORNEO-FALLIDO';
+})();
+</script>
+</body>
+</html>
