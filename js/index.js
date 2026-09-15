@@ -1,11 +1,14 @@
 /* ==========================================================================
    PANTALLA: PORTADA / CUADRO DE MANDO
-   Clasificación + partidos + pichichi, todo a la vista en PC.
+   Clasificación + partidos + eliminatorias, todo a la vista en PC.
+   El resultado se apunta con una ventanita, sin salir de esta pantalla.
    Todos los números salen del modelo (js/modelo.js): aquí solo se pintan.
    ========================================================================== */
 
 let torneoActual;
 let filtroPartidos = 'todos';
+let partidoEnEdicion = null;                  // partido que se está apuntando
+let marcadorEdit = { local: 0, visitante: 0 }; // marcador de la ventanita
 
 function arrancarIndex() {
   const torneos = Store.iniciar();
@@ -31,8 +34,8 @@ function pintarTodo() {
   pintarResumen();
   pintarClasificacion();
   pintarPartidos();
-  pintarGoleadores();
-  pintarTipos();
+  pintarEliminatorias();
+  pintarUltimos();
 }
 
 /* ------------------------------------------------------------- resumen */
@@ -49,7 +52,7 @@ function pintarResumen() {
     if (!goleada || dif > goleada.dif) goleada = { dif, p };
   });
 
-  let textoGoleada = '—';
+  let textoGoleada = 'Todavía sin partidos';
   if (goleada) {
     const l = jugador(torneoActual, goleada.p.localId);
     const v = jugador(torneoActual, goleada.p.visitanteId);
@@ -59,8 +62,7 @@ function pintarResumen() {
   // Jornada actual: la primera con partidos pendientes
   const pendientes = torneoActual.partidos.filter(p => !p.jugado && p.fase === 'liga');
   const jornadaActual = pendientes.length ? pendientes[0].jornada : null;
-  const badge = $('#badge-jornada');
-  badge.textContent = pendientes.length
+  $('#badge-jornada').textContent = pendientes.length
     ? `Jornada ${jornadaActual} en juego`
     : 'Liguilla terminada 🏁';
 
@@ -74,11 +76,10 @@ function pintarResumen() {
   ];
 
   datos.forEach(d => {
-    const div = el('div', 'dato',
+    caja.appendChild(el('div', 'dato',
       `<span class="etiqueta">${d.etiqueta}</span>
        <span class="valor${d.verde ? ' verde' : ''}">${d.valor}</span>
-       <small>${d.extra}</small>`);
-    caja.appendChild(div);
+       <small>${d.extra}</small>`));
   });
 }
 
@@ -156,23 +157,19 @@ function pintarPartidos() {
     return;
   }
 
-  // Agrupados por jornada
   const porJornada = {};
   lista.forEach(p => { (porJornada[p.jornada] = porJornada[p.jornada] || []).push(p); });
 
   Object.keys(porJornada).sort((a, b) => a - b).forEach(j => {
-    const cab = el('div', 'cabecera-jornada', `Jornada ${j}`);
-    caja.appendChild(cab);
+    caja.appendChild(el('div', 'cabecera-jornada', `Jornada ${j}`));
 
     porJornada[j].forEach(p => {
       const local = jugador(torneoActual, p.localId);
       const visit = jugador(torneoActual, p.visitanteId);
-
-      const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
-
       const ganaLocal = p.jugado && p.golesLocal > p.golesVisitante;
       const ganaVisit = p.jugado && p.golesVisitante > p.golesLocal;
 
+      const fila = el('div', 'partido-fila ' + (p.jugado ? 'jugado' : 'pendiente'));
       fila.innerHTML = `
         <span class="quien ${ganaLocal ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
         <span class="marcador-mini ${p.jugado ? '' : 'pend'}">
@@ -181,7 +178,7 @@ function pintarPartidos() {
         <span class="quien der ${ganaVisit ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
 
       const boton = el('button', 'btn-mini-ir', p.jugado ? 'Editar' : 'Apuntar');
-      boton.onclick = () => { window.location.href = 'acta.html?partido=' + p.id; };
+      boton.onclick = () => abrirModal(p.id);
       fila.appendChild(boton);
 
       caja.appendChild(fila);
@@ -189,65 +186,127 @@ function pintarPartidos() {
   });
 }
 
-/* --------------------------------------------------------- goleadores */
-function pintarGoleadores() {
-  const caja = $('#lista-goleadores');
+/* ------------------------------------------- eliminatorias de hoy mismo */
+function pintarEliminatorias() {
+  const caja = $('#lista-eliminatorias');
   caja.innerHTML = '';
 
-  const goleadores = calcularGoleadores(torneoActual);
-  if (!goleadores.length) {
-    caja.appendChild(el('div', 'vacio', 'Todavía no hay goles detallados. Se apuntan al meter el resultado ⚽'));
+  const clasificacion = calcularClasificacion(torneoActual);
+  const cruces = generarEliminatorias(clasificacion, torneoActual.config);
+  const pendientes = torneoActual.partidos.filter(p => !p.jugado && p.fase === 'liga').length;
+
+  if (!cruces.length) {
+    caja.appendChild(el('div', 'vacio', 'Cuando haya jugadores en la liguilla aparecerán aquí los cruces.'));
     return;
   }
 
-  const max = goleadores[0].goles;
-  goleadores.slice(0, 10).forEach((g, i) => {
-    const tipos = Object.entries(g.tipos).map(([t, n]) => {
-      const def = tipoGol(torneoActual, t);
-      return `${def.emoji} ${def.nombre} ×${n}`;
-    }).join(' · ');
+  if (pendientes) {
+    caja.appendChild(el('div', 'aviso',
+      `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> partidos de liguilla: esto es cómo quedarían los cruces <b>si acabara hoy</b>.</span>`));
+  }
 
-    const div = el('div', 'goleador' + (i === 0 ? ' primero' : ''),
-      `<span class="puesto">${i + 1}</span>
-       <span>
-         <span class="nombre-fut">${g.nombre}</span>
-         <span class="detalle">${tipos}</span>
-         <span class="barra"><i style="width:${Math.round(g.goles / max * 100)}%"></i></span>
-       </span>
-       <span class="cifra">${g.goles}</span>`);
-    caja.appendChild(div);
+  cruces.forEach((c, i) => {
+    const local = jugador(torneoActual, c.localId);
+    const visit = jugador(torneoActual, c.visitanteId);
+    const fila = el('div', 'partido-fila pendiente');
+    fila.innerHTML = `
+      <span class="quien">${local.emoji} ${local.nombre}</span>
+      <span class="marcador-mini pend">${c.fase}</span>
+      <span class="quien der">${visit.nombre} ${visit.emoji}</span>`;
+    caja.appendChild(fila);
   });
 }
 
-/* ------------------------------------------------------- goles por tipo */
-function pintarTipos() {
-  const caja = $('#lista-tipos');
+/* ---------------------------------------------------- últimos resultados */
+function pintarUltimos() {
+  const caja = $('#lista-ultimos');
   caja.innerHTML = '';
 
-  const totales = {};
-  torneoActual.partidos.forEach(p => (p.goles || []).forEach(g => {
-    totales[g.tipoId] = (totales[g.tipoId] || 0) + 1;
-  }));
+  const jugados = torneoActual.partidos.filter(p => p.jugado).slice(-5).reverse();
 
-  const filas = Object.entries(totales).sort((a, b) => b[1] - a[1]);
-  if (!filas.length) {
-    caja.appendChild(el('div', 'vacio', 'Sin datos todavía.'));
+  if (!jugados.length) {
+    caja.appendChild(el('div', 'vacio', 'Todavía no hay resultados apuntados.'));
     return;
   }
 
-  const total = filas.reduce((s, f) => s + f[1], 0);
-  filas.forEach(([id, n]) => {
-    const def = tipoGol(torneoActual, id);
-    const fila = el('div', 'goleador',
-      `<span class="puesto">${def.emoji}</span>
-       <span>
-         <span class="nombre-fut">${def.nombre}</span>
-         <span class="detalle">${Math.round(n / total * 100)}% de los goles</span>
-         <span class="barra"><i style="width:${Math.round(n / total * 100)}%"></i></span>
-       </span>
-       <span class="cifra">${n}</span>`);
+  jugados.forEach(p => {
+    const local = jugador(torneoActual, p.localId);
+    const visit = jugador(torneoActual, p.visitanteId);
+    const fila = el('div', 'partido-fila jugado');
+    fila.innerHTML = `
+      <span class="quien ${p.golesLocal > p.golesVisitante ? 'gana' : ''}">${local.emoji} ${local.nombre}</span>
+      <span class="marcador-mini">${p.golesLocal} - ${p.golesVisitante}</span>
+      <span class="quien der ${p.golesVisitante > p.golesLocal ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
     caja.appendChild(fila);
   });
+}
+
+/* ----------------------------------------------- ventanita del resultado */
+function abrirModal(idPartido) {
+  partidoEnEdicion = torneoActual.partidos.find(p => p.id === idPartido);
+  if (!partidoEnEdicion) return;
+
+  marcadorEdit = {
+    local: Number(partidoEnEdicion.golesLocal) || 0,
+    visitante: Number(partidoEnEdicion.golesVisitante) || 0
+  };
+
+  const local = jugador(torneoActual, partidoEnEdicion.localId);
+  const visit = jugador(torneoActual, partidoEnEdicion.visitanteId);
+
+  $('#modal-av-local').textContent = local.emoji;
+  $('#modal-nom-local').textContent = local.nombre;
+  $('#modal-av-visit').textContent = visit.emoji;
+  $('#modal-nom-visit').textContent = visit.nombre;
+  $('#modal-nota').textContent = partidoEnEdicion.jugado
+    ? 'Este partido ya tiene resultado: puedes cambiarlo y volver a guardar.'
+    : `Jornada ${partidoEnEdicion.jornada} · pon el resultado con los botones.`;
+
+  pintarModal();
+  $('#modal-fondo').hidden = false;
+}
+
+function pintarModal() {
+  $('#modal-cifra-local').textContent = marcadorEdit.local;
+  $('#modal-cifra-visit').textContent = marcadorEdit.visitante;
+
+  // El botón de borrar solo tiene sentido si el partido ya tenía resultado
+  $('#modal-borrar').hidden = !partidoEnEdicion.jugado;
+}
+
+function cerrarModal() {
+  $('#modal-fondo').hidden = true;
+  partidoEnEdicion = null;
+}
+
+function guardarModal() {
+  if (!partidoEnEdicion) return;
+
+  const i = torneoActual.partidos.findIndex(p => p.id === partidoEnEdicion.id);
+  torneoActual.partidos[i].golesLocal = marcadorEdit.local;
+  torneoActual.partidos[i].golesVisitante = marcadorEdit.visitante;
+  torneoActual.partidos[i].jugado = true;
+  torneoActual.partidos[i].fecha = new Date().toISOString().slice(0, 10);
+
+  Store.guardarTorneo(torneoActual);
+  cerrarModal();
+  pintarTodo();
+  avisar('Resultado guardado ✅');
+}
+
+function borrarResultado() {
+  if (!partidoEnEdicion) return;
+
+  const i = torneoActual.partidos.findIndex(p => p.id === partidoEnEdicion.id);
+  torneoActual.partidos[i].jugado = false;
+  torneoActual.partidos[i].golesLocal = 0;
+  torneoActual.partidos[i].golesVisitante = 0;
+  torneoActual.partidos[i].fecha = null;
+
+  Store.guardarTorneo(torneoActual);
+  cerrarModal();
+  pintarTodo();
+  avisar('Resultado borrado: el partido vuelve a estar pendiente 🧹');
 }
 
 /* ------------------------------------------------------------- eventos */
@@ -264,6 +323,47 @@ function engancharIndex() {
       pintarPartidos();
     };
   });
+
+  // Contadores de la ventanita
+  $$('[data-modal-paso]').forEach(b => {
+    b.onclick = () => {
+      const lado = b.dataset.modalPaso;
+      const delta = Number(b.dataset.delta);
+      marcadorEdit[lado] = Math.max(0, marcadorEdit[lado] + delta);
+      pintarModal();
+    };
+  });
+
+  $('#modal-guardar').onclick = guardarModal;
+  $('#modal-cancelar').onclick = cerrarModal;
+  $('#modal-borrar').onclick = borrarResultado;
+
+  // Cerrar con Escape o pinchando fuera de la caja
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#modal-fondo').hidden) cerrarModal();
+  });
+  $('#modal-fondo').onclick = (e) => {
+    if (e.target.id === 'modal-fondo') cerrarModal();
+  };
+}
+
+/* ---------------------------------------------------- aviso flotante (toast) */
+let temporizadorAviso = null;
+function avisar(texto, esError) {
+  let t = $('#toast');
+  if (!t) {
+    t = el('div', null, '');
+    t.id = 'toast';
+    t.style.cssText = `position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
+      background:#0E1621;padding:12px 20px;border-radius:12px;font-weight:700;z-index:200;
+      max-width:80vw;text-align:center;box-shadow:0 0 22px rgba(0,0,0,.55);font-family:var(--fuente)`;
+    document.body.appendChild(t);
+  }
+  t.textContent = texto;
+  t.style.border = '1px solid ' + (esError ? '#FF4D5E' : '#00E676');
+  t.style.color = esError ? '#FF4D5E' : '#00E676';
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(() => t.remove(), 2400);
 }
 
 document.addEventListener('DOMContentLoaded', arrancarIndex);

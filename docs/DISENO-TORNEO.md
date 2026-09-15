@@ -1,15 +1,18 @@
 # DISEÑO — Web de Torneos eFootball
 
-**Estado:** ✅ APROBADO por Leo (15 sep 2026) · Fases 0 y 1 terminadas
-**Versión:** v3 — plataforma de torneos, **exclusiva de PC**, entrada de datos por opciones
-**Proyecto:** gestión de torneos de eFootball entre amigos (6 jugadores de momento)
+**Estado:** ✅ Fases 0 y 1 terminadas · **Versión:** v4 (15 sep 2026)
+**Proyecto:** plataforma de torneos de eFootball para Leo y sus amigos (6 jugadores)
+
+> Cambios de la v4: fuera la pantalla de acta (el resultado se apunta en una ventanita
+> desde la portada), aparcados el pichichi y los goles por tipo hasta la Fase 6
+> (lectura automática de la captura de estadísticas del partido).
 
 ---
 
 ## 1. Objetivo
 
-Web para organizar torneos de eFootball entre colegas: apuntar resultados y goles,
-ver la clasificación, el pichichi y las eliminatorias, y **reutilizarla** creando
+Web para organizar torneos de eFootball entre colegas: apuntar resultados, ver la
+clasificación y quién va clasificando a las eliminatorias, y **reutilizarla** creando
 torneos nuevos cuando queramos.
 
 **Prioridad número uno (dicho por Leo):** que TODO se configure desde la web. No es
@@ -19,109 +22,68 @@ torneos nuevos cuando queramos.
 
 ### Lo que SÍ hace
 - Crear varios torneos, cada uno con su configuración propia
-- Apuntar resultados, goleadores y stats del partido (todo con opciones, sección 6)
-- Clasificación automática + cuadro de eliminatorias
-- Estadísticas: pichichi, goles por tipo, tarjetas, mejores partidos
-- Login con Google y permisos (admin / editor / solo mirar)
+- Apuntar el resultado de cada partido con una ventanita (sin salir de la portada)
+- Clasificación automática con desempates configurables + racha de forma
+- Cruces de eliminatorias calculados ("si acabara hoy")
+- Últimos resultados, goles totales, mayor goleada
+- (Fase 4) Login con Google y permisos: admin / editor / solo mirar
 
 ### Lo que NO hace (por ahora, YAGNI)
 - No se apunta el equipo que usa cada amigo
 - No se conecta al juego: los datos se meten a mano
 - No hay comentarios ni chat dentro de la web
-- No hay apuestas ni dinero, tranquilo 😄
+- **No hay goles detallados, pichichi ni estadísticas finas** → aparcado a la Fase 6
 
 ## 3. Decisiones cerradas
 
 | Tema | Decisión |
 |---|---|
-| **Plataforma** | **Solo PC** (pantalla de escritorio, 1920x1080). Sin diseño móvil. |
-| **Layout** | Sidebar de navegación + contenido en columnas: clasificación, partidos y goleadores a la vez |
+| **Plataforma** | **Solo PC** (escritorio, 1920x1080). Sin diseño móvil |
+| **Layout** | Sidebar de navegación + contenido en columnas |
 | Formato por defecto | Liguilla única de 6, ida y vuelta (10 partidos cada uno) → semis 1º-4º y 2º-3º → final |
-| Configurable | Formato, nº de vueltas, nº de clasificados, 3º/4º puesto, **puntuación**, desempates, listas de opciones |
-| Cuaderno de datos | Supabase (base de datos en la nube + login Google) — Fase 2 |
-| Por partido | Resultado (obligatorio) · goles: futbolista + minuto + tipo · stats (opcionales) |
-| Cuándo se apunta | En el PC, **después** de jugar los partidos (no hace falta que sea exprés) |
-| Stats opcionales | Posesión, tiros, paradas, tarjetas: se rellenan si apetece, nunca obligan |
-| **Entrada de datos** | **Todo con opciones cerradas (botones/listas): nada de escribir a mano**, salvo bautizar jugadores y futbolistas |
-| Equipos | No se guardan |
-| 3º y 4º puesto | Interruptor en los ajustes (sin decidir todavía) |
+| Configurable | Formato, nº de vueltas, nº de clasificados, 3º/4º puesto, **puntuación**, desempates |
+| **Apuntar un resultado** | **Ventanita en la portada**: botones `+`/`−` para los dos marcadores, Guardar, y botón para borrar el resultado |
+| Cuándo se apunta | En el PC, después de jugar los partidos |
+| Goles detallados / pichichi | **Aparcado a la Fase 6** (se leerán de la captura). El modelo ya los soporta |
+| Stats finas (posesión, tiros...) | Aparcadas junto con lo anterior |
+| Cuaderno de datos | Supabase (Fase 2) — hoy localStorage para poder trabajar |
 | Visual | Oscuro tipo estadio + verde neón + tipografía de marcador (Rajdhani / Saira) |
 | Dónde se ve | Web publicada gratis (Netlify o GitHub Pages) + Supabase |
 
-## 4. Modelo de datos (el "cuaderno")
+## 4. Modelo de datos
 
-6 tablas en Supabase. Explicado en lenguaje normal:
+**`torneos`** — cada liga: `id`, `nombre`, `estado`, `config` (todos los ajustes), `creado_en`
 
-**`torneos`** — cada liga que creéis
-`id`, `nombre`, `estado` (en_curso / finalizado), `config` (TODOS los ajustes, sección 5), `creado_en`
+**`jugadores`** — los amigos de cada torneo: `id`, `torneo_id`, `nombre`, `emoji`, `color`
 
-**`jugadores`** — los amigos de cada torneo
-`id`, `torneo_id`, `nombre`, `emoji`, `color`
+**`partidos`** — `id`, `torneo_id`, `fase` (liga / semifinal / final / tercer_puesto),
+`jornada`, `local_id`, `visitante_id`, `goles_local`, `goles_visitante`, `jugado`, `fecha`
 
-**`futbolistas`** — catálogo de futbolistas del torneo (para el pichichi)
-`id`, `torneo_id`, `nombre`. Se añaden desde la pantalla al apuntar un gol; una vez en
-la lista, se eligen con un clic. Así el pichichi nunca se rompe por una errata.
+**`futbolistas`** y **`goles`** — aparcados para la Fase 6 (el pichichi): `id`,
+`partido_id`, `lado`, `futbolista_id`, `minuto`, `tipo_id`. El modelo ya los calcula
+(`calcularGoleadores`), solo falta la entrada de datos.
 
-**`partidos`**
-`id`, `torneo_id`, `fase` (liga / semifinal / final / tercer_puesto), `jornada`,
-`local_id`, `visitante_id`, `goles_local`, `goles_visitante`, `jugado`, `fecha`, y las
-stats opcionales: `posesion_local`, `tiros_local`, `tiros_visitante`, `paradas_local`,
-`paradas_visitante`, `amarillas_local`, `amarillas_visitante`, `rojas_local`, `rojas_visitante`
+**`perfiles`** — `user_id` (Google), `rol` (admin / editor / lector), `jugador_id`
 
-**`goles`** — el acta, gol a gol
-`id`, `partido_id`, `lado` (local / visitante), `futbolista_id`, `minuto` (opcional),
-`tipo_id`
+## 5. Configuración del torneo (todo editable desde la web — Fase 3)
 
-**`perfiles`** — quién puede hacer qué
-`user_id` (cuenta Google), `rol` (admin / editor / lector), `jugador_id` (opcional)
+- **Puntuación**: victoria (3), empate (1), derrota (0)
+- **Desempates por prioridad**: diferencia de goles · goles a favor · enfrentamiento
+  directo · tarjetas (fair play)
+- **Formato**: liguilla o grupos · una vuelta o ida y vuelta · cuántos clasifican ·
+  3º y 4º puesto sí/no · eliminatorias a partido único o ida y vuelta
+- **Jugadores del torneo**: añadir, editar emoji/color, dar de baja
 
-## 5. Configuración del torneo (todo editable desde la web)
+## 6. Cómo se apunta un resultado
 
-Pantalla de **Ajustes del torneo** (solo admin):
-
-**Puntuación**
-- Puntos por **victoria** (por defecto 3) · **empate** (1) · **derrota** (0)
-
-**Desempates en la tabla** (ordenables por prioridad)
-- Diferencia de goles · Goles a favor · Enfrentamiento directo · Tarjetas (fair play)
-
-**Formato**
-- Liguilla única / Grupos + eliminatorias
-- Una vuelta / ida y vuelta
-- Cuántos clasifican a eliminatorias (2, 4, 8...)
-- Partido de 3º y 4º puesto: sí / no
-- Eliminatorias a partido único o ida y vuelta
-
-**Listas de opciones** (ampliables sin tocar código)
-- **Tipos de gol** — por defecto: Normal · Penalti · Falta directa · Cabeza · Remate ·
-  Propia puerta · Fuera de juego
-- **Futbolistas** — catálogo del torneo; renombrar y fusionar duplicados
-- **Jugadores** — añadir, editar emoji/color, dar de baja
-
-## 6. Entrada de datos: todo a golpe de botón
-
-Regla de oro: **el teclado se usa lo mínimo**. Nada de escribir en campos de texto
-salvo para bautizar a un jugador o un futbolista la primera vez.
-
-### Pantalla "Apuntar partido"
-1. **Marcador**: dos contadores grandes con `−` y `+`
-2. Botón **"+ Añadir gol"** → formulario de un gol:
-   - **¿De quién es el gol?** → botones `LOCAL` / `VISITANTE` (con el contador de
-     cuántos van detallados de cada lado)
-   - **Futbolista** → desplegable del catálogo + botón "+ Nuevo futbolista"
-   - **Tipo de gol** → botones: Normal · Penalti · Falta directa · Cabeza · Remate ·
-     Propia puerta · Fuera de juego
-   - **Minuto** → campo numérico + botón "*No lo sé*"
-3. **Acta**: los goles apuntados se listan con su minuto, futbolista, tipo y de quién
-   son, y se pueden borrar con un clic
-4. **Datos de más** (opcionales, panel aparte): posesión con deslizador (el otro lado se
-   calcula solo), tiros / paradas / tarjetas amarillas y rojas con contadores `−` `+`
-5. **Guardar resultado** ✅
-
-### Por qué así y no escribiendo
-- **Cero erratas**: el pichichi no se parte en dos por un acento o una mayúscula
-- **Estadísticas que cuadran**: permite "Máximo goleador de penalti", "Goles de cabeza"...
-- **Rápido**: apuntar un partido son unos segundos
+1. En la portada, botón **Apuntar** en la fila del partido
+2. Sale la **ventanita**: nombres y emojis de los dos jugadores, dos contadores `+`/`−`
+   y el marcador en grande
+3. **Guardar** ✅ → la clasificación, los cruces de eliminatorias, el resumen y los
+   últimos resultados se recalculan al momento
+4. Con **Editar** se puede corregir, y hay un botón para **borrar el resultado** y
+   dejar el partido pendiente otra vez
+5. Se cierra con `Esc` o pinchando fuera
 
 ## 7. Reglas del juego (lógica de la web)
 
@@ -130,67 +92,75 @@ salvo para bautizar a un jugador o un futbolista la primera vez.
 - **Calendario:** generado automáticamente (método del círculo) — con 6 jugadores e ida
   y vuelta salen 30 partidos y cada uno juega 10. Probado con 4, 5, 6, 8 y 10 jugadores
 - **Eliminatorias:** cruces 1º vs último clasificado, 2º vs penúltimo, etc.
-- **Validaciones:** no se guardan más goles detallados que los del marcador; todo se
-  puede corregir después
-- **Clasificación:** una función en JavaScript a partir de los partidos jugados, así
-  sirve igual para cualquier torneo y tamaño
+- **Clasificación:** una función en JavaScript a partir de los partidos jugados
 
 ## 8. Pantallas
 
 | Pantalla | Estado |
 |---|---|
-| Portada: resumen + clasificación + partidos + pichichi + goles por tipo | ✅ hecha |
-| Apuntar partido (marcador, goles, datos de más, guardar) | ✅ hecha |
-| Eliminatorias (cuadro) | ⏳ Fase 3 |
-| Estadísticas (por jugador, rachas, comparador) | ⏳ Fase 5 |
-| Ajustes del torneo (lo de la sección 5) | ⏳ Fase 3 |
-| Crear torneo / lista de torneos / historial | ⏳ Fase 3 |
+| Portada (resumen + clasificación + partidos + eliminatorias + últimos resultados) | ✅ |
+| Ventanita de apuntar/corregir resultado | ✅ |
+| Ajustes del torneo / crear torneo / historial | ⏳ Fase 3 |
 | Login con Google + permisos | ⏳ Fase 4 |
+| Estadísticas y comparador entre jugadores | ⏳ Fase 5 |
+| Lectura de la captura de estadísticas del partido | ⏳ Fase 6 (extra) |
 
-## 9. Fases de trabajo
+## 9. Fases
 
 | Fase | Qué se hace | Estado |
 |---|---|---|
 | **0** | Carpeta, git, esqueleto HTML/CSS/JS | ✅ |
-| **1** | Clasificación, partidos, pichichi y acta con datos de prueba + estilo estadio | ✅ |
-| **2** | Supabase: tablas + leer/escribir desde la nube | ⏳ |
-| **3** | Ajustes desde la web: crear torneo, configurar, generar calendario y eliminatorias | ⏳ |
-| **4** | Publicar + login Google + permisos (admin/editor/lector) | ⏳ |
-| **5** | Historial de torneos, gráficas, MVP, piques | ⏳ |
+| **1** | Portada completa + ventanita de resultados + estilo estadio | ✅ |
+| **2** | Supabase: los datos pasan a la nube | ⏳ |
+| **3** | Ajustes desde la web: crear torneo, configurar, generar calendario y cruces | ⏳ |
+| **4** | Publicar + login Google + permisos | ⏳ |
+| **5** | Historial de torneos, gráficas, MVP | ⏳ |
+| **6** | **Extra:** leer las estadísticas de la captura del partido (OCR/visión) | ⏳ |
 
-## 10. Archivos del proyecto
+### Nota sobre la Fase 6 (idea de Leo)
+
+Hay tres niveles, de menos a más complicado:
+1. A mano (lo de ahora).
+2. **Ya posible sin desarrollo**: Leo pasa la captura al chat y Hermes la lee con
+   visión y mete los datos.
+3. Automático en la web: subir la imagen y que un OCR/visión la interprete
+   (necesita API de visión o Tesseract + bastante ajuste). Es el objetivo de la Fase 6.
+
+## 10. Archivos
 
 ```
 Torneo-Efootball/
-├── index.html          Portada (clasificación, partidos, goleadores)
-├── acta.html           Apuntar un partido
-├── css/estilos.css     Todo el estilo (tema estadio)
+├── index.html          Portada (única pantalla por ahora)
+├── css/estilos.css     Todo el estilo
 ├── js/config.js        Ajustes por defecto de un torneo nuevo
-├── js/modelo.js        Cálculo: clasificación, calendario, eliminatorias, pichichi
-├── js/store.js         Única puerta de los datos (navegador hoy, Supabase en Fase 2)
+├── js/modelo.js        Cálculo: clasificación, calendario, eliminatorias, (goles)
+├── js/store.js         Única puerta de los datos
 ├── js/datos-prueba.js  Torneo de mentira para probar
-├── js/index.js         Lógica de la portada
-├── js/acta.js          Lógica de apuntar partido
-├── docs/               Este diseño + verificar-modelo.js
+├── js/index.js         Lógica de la portada y de la ventanita
+├── docs/               Este diseño + los dos tests
 └── assets/             Capturas de prueba
 ```
 
 **Truco importante:** las pantallas nunca hablan directamente con el almacén de datos:
-siempre pasan por `js/store.js`. En la Fase 2 solo se reescribe ese archivo y todo lo
-demás sigue funcionando igual.
+siempre pasan por `js/store.js`. En la Fase 2 solo se reescribe ese archivo.
 
-## 11. Riesgos y cómo los evitamos
+## 11. Cómo se comprueba (tests)
 
-- **Que nadie apunte las stats** → campos opcionales y botones en vez de teclado
+| Test | Comando | Qué comprueba |
+|---|---|---|
+| Modelo | `node docs/verificar-modelo.js` | Calendario, puntos configurables, desempates, eliminatorias, formatos de 4 a 10 jugadores |
+| Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita abre, guarda, recalcula la clasificación y persiste |
+
+## 12. Riesgos
+
 - **Claves de Supabase mal puestas** → en la web solo va la clave pública; la de
   escritura se queda en Supabase, con reglas de permisos
-- **Resultados mal tecleados** → siempre se pueden editar
-- **Pichichi duplicado o mal escrito** → listas cerradas de futbolistas
+- **Resultados mal tecleados** → siempre se pueden editar o borrar
 - **Formatos raros** → el generador de calendario está probado con 4, 5, 6, 8 y 10 jugadores
 
-## 12. Preguntas abiertas
+## 13. Preguntas abiertas
 
-- Nombres y emojis de los 6 jugadores (los de prueba son de mentira)
-- ¿Partido de 3º y 4º puesto? → queda como interruptor, se decide al llegar
+- Nombres y emojis reales de los 6 jugadores (los de prueba son de mentira)
+- ¿Partido de 3º y 4º puesto? → interruptor en los ajustes, se decide al llegar
 - ¿Cuándo es el primer torneo de verdad?
 - ¿Alguien más será admin aparte de Leo?

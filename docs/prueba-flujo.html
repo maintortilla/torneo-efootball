@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba de flujo</title>
+  <style>
+    body { background:#070B12; color:#E8F2FF; font-family: monospace; margin:0; padding:12px; }
+    iframe { width:1560px; height:820px; border:1px solid #1E2E42; border-radius:8px; }
+    pre { font-size:15px; white-space:pre-wrap; margin:0 0 12px; line-height:1.5; }
+    .ok { color:#00E676; }
+  </style>
+</head>
+<body>
+<pre id="resultado">ejecutando prueba...</pre>
+<iframe id="marco" src="../index.html"></iframe>
+
+<script>
+/* Prueba de humo: simula un usuario apuntando un resultado en la portada y
+   comprueba que se guarda y que la clasificación se recalcula.
+   Se abre en el navegador (o headless) y deja el resultado escrito arriba. */
+
+const salida = [];
+function ok(nombre, condicion, detalle) {
+  salida.push((condicion ? '[OK   ] ' : '[FALLO] ') + nombre + (detalle ? ' → ' + detalle : ''));
+  return condicion;
+}
+
+document.getElementById('marco').onload = () => {
+  const d = document.getElementById('marco').contentDocument;
+
+  try {
+    // 1. La tabla de clasificación se ha pintado
+    const filas = d.querySelectorAll('#tabla-clasificacion tbody tr');
+    ok('la clasificación tiene 6 filas', filas.length === 6, filas.length + ' filas');
+
+    // 2. Estado inicial del resumen
+    const resumenInicial = d.getElementById('resumen').textContent;
+    ok('el resumen arranca en 4/30 partidos', resumenInicial.includes('4/30'), resumenInicial.slice(0, 40).replace(/\s+/g, ' '));
+
+    // 3. Buscar un partido pendiente y pulsar Apuntar
+    const botonApuntar = Array.from(d.querySelectorAll('.btn-mini-ir'))
+      .find(b => b.textContent.trim() === 'Apuntar');
+    ok('hay un partido pendiente con botón Apuntar', !!botonApuntar);
+    botonApuntar.click();
+
+    // 4. La ventanita se abre
+    ok('la ventanita se abre', d.getElementById('modal-fondo').hidden === false);
+
+    // 5. Poner un 3-1 con los botones
+    const masLocal = d.querySelector('[data-modal-paso="local"][data-delta="1"]');
+    const masVisit = d.querySelector('[data-modal-paso="visitante"][data-delta="1"]');
+    masLocal.click(); masLocal.click(); masLocal.click(); masVisit.click();
+    const marcaLocal = d.getElementById('modal-cifra-local').textContent;
+    const marcaVisit = d.getElementById('modal-cifra-visit').textContent;
+    ok('el marcador de la ventanita marca 3-1', marcaLocal === '3' && marcaVisit === '1', marcaLocal + '-' + marcaVisit);
+
+    // 6. Guardar
+    d.getElementById('modal-guardar').click();
+    ok('la ventanita se cierra al guardar', d.getElementById('modal-fondo').hidden === true);
+
+    // 7. El resumen ya cuenta 5 partidos
+    const resumenDespues = d.getElementById('resumen').textContent;
+    ok('el resumen pasa a 5/30 partidos', resumenDespues.includes('5/30'), resumenDespues.slice(0, 40).replace(/\s+/g, ' '));
+
+    // 8. El resultado aparece en la lista de partidos
+    ok('el resultado 3 - 1 aparece en la lista', d.getElementById('lista-partidos').textContent.includes('3 - 1'));
+
+    // 9. Y se queda guardado al recargar (localStorage)
+    ok('queda guardado en el navegador', !!localStorage.getItem('torneos-efootball-v1'));
+
+    // 10. La fila de eliminatorias se ha recalculado (sigue habiendo 2 cruces)
+    const cruces = d.querySelectorAll('#lista-eliminatorias .partido-fila');
+    ok('las eliminatorias muestran 2 cruces', cruces.length === 2, cruces.length + ' cruces');
+
+    // 11. Reabrir el mismo partido para la captura de pantalla
+    const botonEditar = Array.from(d.querySelectorAll('.btn-mini-ir'))
+      .find(b => b.textContent.trim() === 'Editar');
+    botonEditar.click();
+    ok('se puede reabrir para editar', d.getElementById('modal-fondo').hidden === false);
+    ok('el botón de borrar aparece al editar', d.getElementById('modal-borrar').hidden === false);
+
+    // 12. Dejar el marcador en 3-1 otra vez en el modal abierto
+    while (d.getElementById('modal-cifra-local').textContent !== '3') {
+      d.querySelector('[data-modal-paso="local"][data-delta="-1"]').click();
+      break;
+    }
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => !l.startsWith('[OK')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

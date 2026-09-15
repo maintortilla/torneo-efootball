@@ -20,7 +20,7 @@
     </div>
 
     <div class="topbar-derecha">
-      <a class="btn-volver" href="acta.html">✍️ Apuntar partido</a>
+      <span class="nota" id="nota-guardado">Los cambios se guardan solos</span>
     </div>
   </header>
 
@@ -31,14 +31,12 @@
       <nav>
         <a class="nav-item activo" href="index.html">🏆 <span class="texto">Clasificación</span></a>
         <a class="nav-item" href="index.html#partidos">📅 <span class="texto">Partidos</span></a>
-        <a class="nav-item" href="index.html#goleadores">🥇 <span class="texto">Goleadores</span></a>
-        <a class="nav-item" href="acta.html">✍️ <span class="texto">Apuntar partido</span></a>
         <span class="nav-item proximo" title="Próximamente">🏟️ <span class="texto">Eliminatorias · pronto</span></span>
         <span class="nav-item proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
         <span class="nav-item proximo" title="Próximamente">⚙️ <span class="texto">Ajustes · pronto</span></span>
       </nav>
       <div class="sidebar-pie">
-        <b>Fase 1</b><br>Datos de prueba guardados en tu navegador. En la Fase 2 pasan a la nube.
+        <b>Apuntar un resultado</b><br>Pulsa <b>Apuntar</b> en cualquier partido: sale una ventanita con las dos casillas. Sin pantallas de por medio.
       </div>
     </aside>
 
@@ -66,21 +64,62 @@
           <div id="lista-partidos"></div>
         </section>
 
-        <!-- Goleadores -->
+        <!-- Eliminatorias y últimos resultados -->
         <div class="columna">
-          <section class="panel" id="goleadores">
-            <p class="panel-titulo">Pichichi <b>futbolistas</b></p>
-            <div id="lista-goleadores"></div>
+          <section class="panel">
+            <p class="panel-titulo">Eliminatorias <b>si acabara hoy</b></p>
+            <div id="lista-eliminatorias"></div>
           </section>
 
           <section class="panel">
-            <p class="panel-titulo">Goles por tipo</p>
-            <div id="lista-tipos"></div>
+            <p class="panel-titulo">Últimos resultados</p>
+            <div id="lista-ultimos"></div>
           </section>
         </div>
 
       </div>
     </main>
+  </div>
+
+  <!-- Ventanita para apuntar el resultado -->
+  <div class="modal-fondo" id="modal-fondo" hidden>
+    <div class="modal">
+      <p class="panel-titulo">Apuntar resultado</p>
+
+      <div class="marcador">
+        <div class="equipo local">
+          <span class="avatar" id="modal-av-local">🟢</span>
+          <span class="nombre" id="modal-nom-local">Leo</span>
+        </div>
+        <span class="vs">—</span>
+        <div class="equipo visitante">
+          <span class="avatar" id="modal-av-visit">🔵</span>
+          <span class="nombre" id="modal-nom-visit">Javi</span>
+        </div>
+      </div>
+
+      <div class="marcador">
+        <div class="contador">
+          <button class="btn-paso" data-modal-paso="local" data-delta="-1">−</button>
+          <span class="cifra" id="modal-cifra-local">0</span>
+          <button class="btn-paso" data-modal-paso="local" data-delta="1">+</button>
+        </div>
+        <span class="vs">:</span>
+        <div class="contador">
+          <button class="btn-paso" data-modal-paso="visitante" data-delta="-1">−</button>
+          <span class="cifra" id="modal-cifra-visit">0</span>
+          <button class="btn-paso" data-modal-paso="visitante" data-delta="1">+</button>
+        </div>
+      </div>
+
+      <p class="nota" id="modal-nota"></p>
+
+      <div class="fila-2" style="margin-top:16px">
+        <button class="btn btn-gol" id="modal-guardar">Guardar ✅</button>
+        <button class="btn btn-ghost" id="modal-cancelar">Cancelar</button>
+      </div>
+      <button class="btn btn-ghost btn-ancho" id="modal-borrar" style="margin-top:10px">Borrar el resultado y dejarlo pendiente</button>
+    </div>
   </div>
 
   <script src="js/config.js"></script>

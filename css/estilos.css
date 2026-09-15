@@ -97,9 +97,7 @@ body {
   border: 1px solid transparent;
 }
 .nav-item:hover { color: var(--texto); background: var(--panel); }
-.nav-item.activo {
-  color: var(--neon); background: var(--neon-suave); border-color: var(--neon);
-}
+.nav-item.activo { color: var(--neon); background: var(--neon-suave); border-color: var(--neon); }
 .nav-item.proximo { opacity: .45; cursor: default; }
 .nav-item.proximo:hover { color: var(--muted); background: none; }
 .sidebar-pie {
@@ -127,16 +125,11 @@ body {
 }
 .panel-titulo b { color: var(--neon); }
 
-.rejilla-2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .rejilla-3 { display: grid; grid-template-columns: minmax(560px, 1.35fr) minmax(320px, .9fr) minmax(280px, .75fr); gap: 16px; align-items: start; }
 .columna { display: flex; flex-direction: column; gap: 0; }
-.sticky { position: sticky; top: 78px; }
 
 /* ---------- Datos de resumen (tira de arriba) ---------- */
-.resumen {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-  margin-bottom: 16px;
-}
+.resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
 .dato {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--linea); border-radius: var(--radio);
@@ -214,7 +207,9 @@ body {
   background: var(--panel-2); border: 1px solid var(--linea);
   border-radius: 9px; padding: 3px 10px; min-width: 62px; text-align: center;
 }
-.partido-fila .marcador-mini.pend { color: var(--muted); font-size: 15px; }
+.partido-fila .marcador-mini.pend { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+/* Sin botón (eliminatorias y últimos resultados), la fila respira mejor */
+.partido-fila:has(.quien + .marcador-mini + .quien:last-child) { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
 .btn-mini-ir {
   background: transparent; color: var(--neon); border: 1px solid var(--neon);
   border-radius: 9px; padding: 6px 11px; cursor: pointer;
@@ -226,30 +221,9 @@ body {
   margin: 16px 0 8px; font-family: var(--fuente-numeros);
   font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
 }
-.cabecera-jornada::after {
-  content: ''; flex: 1; height: 1px; background: var(--linea);
-}
+.cabecera-jornada::after { content: ''; flex: 1; height: 1px; background: var(--linea); }
 
-/* ---------- Goleadores (pichichi) ---------- */
-.goleador {
-  display: grid; grid-template-columns: 26px 1fr auto; align-items: center;
-  gap: 11px; padding: 10px 0; border-bottom: 1px solid rgba(30,46,66,.55);
-}
-.goleador:last-child { border-bottom: none; }
-.goleador .puesto {
-  font-family: var(--fuente-numeros); font-size: 18px; font-weight: 800; color: var(--muted);
-}
-.goleador.primero .puesto { color: var(--neon); }
-.goleador .nombre-fut { font-weight: 700; }
-.goleador .detalle { font-size: 13px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.goleador > span:nth-child(2) { min-width: 0; }
-.goleador .cifra {
-  font-family: var(--fuente-numeros); font-size: 24px; font-weight: 800; color: #fff;
-}
-.barra { height: 5px; border-radius: 3px; background: var(--panel); margin-top: 6px; overflow: hidden; }
-.barra i { display: block; height: 100%; background: linear-gradient(90deg, var(--neon), #19F7A0); border-radius: 3px; }
-
-/* ---------- Marcador (pantalla de acta) ---------- */
+/* ---------- Marcador (se usa en la ventanita) ---------- */
 .marcador { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 6px 0; }
 .marcador, .contador, .equipo { min-width: 0; }
 .equipo { text-align: center; }
@@ -287,90 +261,13 @@ body {
 .btn-ancho { width: 100%; }
 .btn-gol { background: var(--neon); color: #05170E; box-shadow: var(--sombra-neon); }
 .btn-gol:hover { filter: brightness(1.08); }
-.btn-guardar { background: var(--neon); color: #05170E; width: 100%; font-size: 20px; padding: 16px; }
-.btn-guardar:hover { filter: brightness(1.08); }
 .btn-ghost {
   background: transparent; color: var(--muted);
   border: 1px solid var(--linea); font-size: 16px; padding: 11px 16px;
 }
 .btn-ghost:hover { color: var(--texto); border-color: var(--neon); }
-.btn-volver {
-  color: var(--muted); text-decoration: none; font-weight: 600;
-  border: 1px solid var(--linea); border-radius: 10px; padding: 8px 14px;
-}
-.btn-volver:hover { color: var(--neon); border-color: var(--neon); }
 
-/* ---------- Formulario de gol ---------- */
-.panel-gol {
-  border: 1px dashed var(--neon); border-radius: var(--radio);
-  padding: 16px; margin: 14px 0; background: rgba(0,230,118,.05);
-  animation: entra .18s ease-out;
-}
-@keyframes entra { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; } }
-.panel-gol h3 {
-  font-family: var(--fuente-numeros); font-size: 16px; text-transform: uppercase;
-  letter-spacing: .1em; margin: 0 0 13px; color: var(--neon);
-}
-.campo { margin-bottom: 14px; }
-.campo label {
-  display: block; font-size: 13px; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
-}
-.lados { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.lado-btn {
-  cursor: pointer; border-radius: 12px; padding: 13px 10px; text-align: center;
-  background: var(--panel-2); border: 1px solid var(--linea);
-  font-family: var(--fuente-numeros); font-size: 16px; text-transform: uppercase;
-  letter-spacing: .06em; color: var(--texto);
-}
-.lado-btn small { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; text-transform: none; }
-.lado-btn.activo { border-color: var(--neon); background: var(--neon-suave); color: var(--neon); }
-.lado-btn:disabled { opacity: .35; cursor: not-allowed; }
-
-select, input[type="number"], input[type="text"] {
-  width: 100%; padding: 12px; border-radius: 12px; max-width: 100%;
-  background: var(--panel); color: var(--texto);
-  border: 1px solid var(--linea); font-family: var(--fuente); font-size: 17px;
-}
-select:focus, input:focus { outline: none; border-color: var(--neon); }
-.fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip {
-  cursor: pointer; padding: 9px 13px; border-radius: 999px;
-  background: var(--panel); border: 1px solid var(--linea);
-  font-size: 15px; font-weight: 600; color: var(--texto);
-}
-.chip:hover { border-color: var(--muted); }
-.chip.activo { border-color: var(--neon); background: var(--neon-suave); color: var(--neon); }
-
-/* ---------- Acta (lista de goles) ---------- */
-.goles-lista { list-style: none; margin: 0; padding: 0; }
-.gol-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 13px; border-radius: 12px; margin-bottom: 8px;
-  background: var(--panel); border: 1px solid var(--linea);
-  border-left: 3px solid var(--neon);
-}
-.gol-item.visitante { border-left-color: var(--azul); }
-.gol-item .minuto {
-  font-family: var(--fuente-numeros); font-size: 18px; font-weight: 800;
-  min-width: 50px; color: var(--neon);
-}
-.gol-item.visitante .minuto { color: var(--azul); }
-.gol-item .quien { flex: 1; min-width: 0; }
-.gol-item .quien small { display: block; color: var(--muted); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gol-item .quitar {
-  cursor: pointer; background: none; border: none; color: var(--muted);
-  font-size: 20px; padding: 4px 9px; border-radius: 8px; flex-shrink: 0;
-}
-.gol-item .quitar:hover { color: var(--peligro); background: rgba(255,77,94,.1); }
-.vacio {
-  text-align: center; color: var(--muted); font-size: 15.5px;
-  padding: 20px 12px; border: 1px dashed var(--linea); border-radius: 12px;
-}
-
-/* ---------- Pestañas / filtros ---------- */
+/* ---------- Filtros ---------- */
 .tabs { display: flex; gap: 6px; margin-bottom: 13px; }
 .tab {
   flex: 1; cursor: pointer; padding: 10px; border-radius: 11px; text-align: center;
@@ -381,36 +278,7 @@ select:focus, input:focus { outline: none; border-color: var(--neon); }
 .tab:hover { color: var(--texto); }
 .tab.activo { color: var(--neon); border-color: var(--neon); background: var(--neon-suave); }
 
-/* ---------- Stats opcionales ---------- */
-.stat-fila {
-  display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: center; gap: 10px; padding: 9px 0;
-  border-bottom: 1px solid rgba(30,46,66,.55);
-}
-.stat-fila:last-child { border-bottom: none; }
-.stat-nombre {
-  text-align: center; font-size: 12.5px; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted); white-space: nowrap;
-}
-.stat-valor {
-  font-family: var(--fuente-numeros); font-size: 23px; font-weight: 800;
-  min-width: 38px; text-align: center;
-}
-.contador-mini { display: flex; align-items: center; gap: 6px; }
-.contador-mini.der { flex-direction: row-reverse; }
-.btn-mini {
-  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
-  background: var(--panel-2); border: 1px solid var(--linea); color: var(--neon);
-  font-size: 19px; font-weight: 700; display: grid; place-items: center;
-}
-.btn-mini:hover { border-color: var(--neon); }
-input[type="range"] { width: 100%; accent-color: var(--neon); }
-.posesion-cifras {
-  display: flex; justify-content: space-between; font-family: var(--fuente-numeros);
-  font-size: 27px; font-weight: 800; margin-bottom: 6px;
-}
-
-/* ---------- Avisos y notas ---------- */
+/* ---------- Avisos, notas y huecos vacíos ---------- */
 .aviso {
   display: flex; gap: 10px; align-items: flex-start;
   background: rgba(255,176,32,.1); border: 1px solid rgba(255,176,32,.4);
@@ -418,21 +286,43 @@ input[type="range"] { width: 100%; accent-color: var(--neon); }
   font-size: 15px; margin-bottom: 12px;
 }
 .nota { color: var(--muted); font-size: 13.5px; margin: 8px 0 0; line-height: 1.45; }
+.vacio {
+  text-align: center; color: var(--muted); font-size: 15.5px;
+  padding: 20px 12px; border: 1px dashed var(--linea); border-radius: 12px;
+}
 
-/* Barra de acciones al pie (ya no fija: en PC no hace falta) */
-.barra-abajo { margin-top: 6px; max-width: 420px; }
+/* ---------- Ventanita de apuntar el resultado ---------- */
+.modal-fondo {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  background: rgba(3, 6, 11, .72);
+  backdrop-filter: blur(4px);
+  animation: aparece .14s ease-out;
+}
+@keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  width: 480px; max-width: 92vw;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--neon);
+  border-radius: 18px;
+  padding: 22px 24px 20px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 34px rgba(0,230,118,.12);
+  animation: sube .18s ease-out;
+}
+@keyframes sube { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.modal .panel-titulo { margin-bottom: 8px; }
+.fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* ---------- Pantallas medianas (portátiles pequeños) ---------- */
 @media (max-width: 1400px) {
-  .rejilla-3 { grid-template-columns: minmax(340px, 1fr) minmax(300px, 1fr); }
+  .rejilla-3 { grid-template-columns: minmax(430px, 1fr) minmax(300px, 1fr); }
   .rejilla-3 > .columna:last-child { grid-column: span 2; }
 }
 @media (max-width: 1080px) {
   .layout { grid-template-columns: 74px minmax(0, 1fr); gap: 14px; padding: 16px; }
   .nav-item span.texto { display: none; }
   .nav-item { justify-content: center; padding: 12px 0; }
-  .rejilla-3, .rejilla-2 { grid-template-columns: 1fr; }
+  .rejilla-3 { grid-template-columns: 1fr; }
   .rejilla-3 > .columna:last-child { grid-column: auto; }
   .resumen { grid-template-columns: repeat(2, 1fr); }
-  .sticky { position: static; }
 }
