@@ -159,6 +159,37 @@ async function borrarResultado() {
   }
 }
 
+/* Quita el partido del torneo (para cuando la ruleta o el apunte se equivocan) */
+async function eliminarPartido() {
+  if (!partidoEnEdicion) return;
+
+  const local = jugador(torneoComun, partidoEnEdicion.localId);
+  const visit = jugador(torneoComun, partidoEnEdicion.visitanteId);
+  const conResultado = partidoEnEdicion.jugado
+    ? `\n\nOjo: ya tiene resultado (${partidoEnEdicion.golesLocal}-${partidoEnEdicion.golesVisitante}) y dejará de contar en la clasificación.`
+    : '';
+
+  const seguro = confirm(
+    `¿Eliminar del torneo el partido ${local.nombre} vs ${visit.nombre}?${conResultado}\n\nNo se puede deshacer.`
+  );
+  if (!seguro) return;
+
+  const copia = torneoComun.partidos.slice();
+  torneoComun.partidos = torneoComun.partidos.filter(p => p.id !== partidoEnEdicion.id);
+
+  try {
+    // 'reemplazar': en la nube hay que rehacer los partidos para que el borrado cuente
+    await Store.guardarTorneo(torneoComun, 'reemplazar');
+    cerrarModal();
+    alCambiarComun();
+    avisar(`Partido ${local.nombre} vs ${visit.nombre} eliminado 🗑️`);
+  } catch (e) {
+    console.error(e);
+    torneoComun.partidos = copia;      // si falla, se queda como estaba
+    avisar('No se pudo eliminar: ' + e.message, true);
+  }
+}
+
 /* Engancha los botones de la ventanita (se llama una vez al arrancar) */
 function engancharModal() {
   $$('[data-modal-paso]').forEach(b => {
@@ -173,6 +204,7 @@ function engancharModal() {
   $('#modal-guardar').onclick = guardarModal;
   $('#modal-cancelar').onclick = cerrarModal;
   $('#modal-borrar').onclick = borrarResultado;
+  if ($('#modal-eliminar')) $('#modal-eliminar').onclick = eliminarPartido;
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('#modal-fondo').hidden) cerrarModal();

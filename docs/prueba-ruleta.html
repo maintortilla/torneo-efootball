@@ -211,6 +211,30 @@ marcoEl.onload = async function ejecutarPrueba() {
        /ya están jugando todos|no queda nadie libre/i.test(notaLlena),
        notaLlena.trim().slice(0, 70));
 
+    // 7d. Eliminar un partido equivocado desde su ventanita
+    d.getElementById('ruleta-cerrar').click();
+    await esperar(250);
+
+    const filas = Array.from(d.querySelectorAll('#lista-partidos .partido-fila'));
+    const filaEliminar = filas.find(f => f.textContent.includes(l2) && f.textContent.includes(v2));
+    ok('el partido apuntado aparece en la lista', !!filaEliminar,
+       filaEliminar ? filaEliminar.textContent.replace(/\s+/g, ' ').trim().slice(0, 40) : 'no encontrado');
+
+    if (filaEliminar) {
+      filaEliminar.querySelector('.btn-mini-ir').click();
+      await esperar(300);
+      ok('la ventanita tiene botón para eliminar el partido', !!d.getElementById('modal-eliminar'));
+
+      w.confirm = () => true;                 // el navegador pregunta "¿seguro?"
+      d.getElementById('modal-eliminar').click();
+      await esperar(2800);
+      ok('el partido se elimina del torneo',
+         w.Store.torneo(idTorneo).partidos.length === 1,
+         w.Store.torneo(idTorneo).partidos.length + ' partido(s)');
+      ok('y desaparece de la lista',
+         !d.getElementById('lista-partidos').textContent.includes(l2 + ' - ' + v2));
+    }
+
     // 8. Y con «permitir repetir» sí puede salir
     d.getElementById('ruleta-repetir').checked = true;
     const candidatosConRepetir = w.candidatosRuleta(w.Store.torneo(idTorneo), {

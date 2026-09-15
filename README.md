@@ -38,7 +38,9 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
   torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así
   que al pasar de Partidos a Clasificación ya no se cambia de torneo solo
 - **Apuntar un resultado**: botón *Apuntar* en cualquier partido → ventanita con los dos
-  marcadores → Guardar. La clasificación, las eliminatorias y el resumen se recalculan solos
+  marcadores → Guardar. La clasificación, las eliminatorias y el resumen se recalculan solos.
+  En esa misma ventanita se puede **borrar el resultado** (deja el partido pendiente) o
+  **eliminar el partido** del torneo si os habéis equivocado al apuntarlo
 - **Ajustes** (menú lateral): crear un torneo nuevo, cambiar jugadores (emoji y color),
   formato, vueltas, cuántos clasifican, 3º y 4º puesto, puntos por victoria/empate/derrota
   y el orden de los desempates (con flechitas ↑↓)
