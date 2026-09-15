@@ -166,6 +166,9 @@ document.getElementById('marco').onload = async () => {
     ok('al plegarlo, el menú se queda solo con los iconos',
        sidebar.classList.contains('plegado') && d.querySelector('.layout').classList.contains('plegado'),
        Math.round(anchoAntes) + 'px → ' + Math.round(sidebar.getBoundingClientRect().width) + 'px');
+    ok('al plegarlo tampoco se ven los emojis del menú',
+       d.defaultView.getComputedStyle(sidebar.querySelector('nav')).display === 'none',
+       'nav oculto');
 
     botonPlegar.click();
     await esperar(500);

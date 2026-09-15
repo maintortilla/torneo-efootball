@@ -400,13 +400,12 @@ body {
 }
 .btn-plegar:hover { border-color: var(--neon); color: var(--neon); }
 
-/* Con el menú plegado: solo iconos */
+/* Con el menú plegado: se cierra entero (textos y emojis), solo queda el botón */
 .layout { transition: grid-template-columns .16s ease; }
-.layout.plegado { grid-template-columns: 64px minmax(0, 1fr); }
+.layout.plegado { grid-template-columns: 52px minmax(0, 1fr); }
 .sidebar.plegado .sidebar-cabecera { justify-content: center; }
 .sidebar.plegado .sidebar-titulo { display: none; }
-.sidebar.plegado .nav-item .texto { display: none; }
-.sidebar.plegado .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+.sidebar.plegado nav { display: none; }
 .sidebar.plegado .sidebar-pie { display: none; }
 /* La pastilla del modo de datos va en su propia línea, si no se pega al texto */
 .sidebar-pie .nota { display: block; margin-bottom: 10px; }
