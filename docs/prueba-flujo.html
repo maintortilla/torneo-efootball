@@ -55,9 +55,14 @@ document.getElementById('marco').onload = async () => {
     const modo = d.getElementById('nota-guardado').textContent.trim();
     ok('la web dice en qué modo está', /nube|local/i.test(modo), modo);
 
-    // 3. Estado inicial del resumen
+    // 3. Estado inicial del resumen (vale cualquier punto de partida: en la nube
+    //    puede haber ya resultados de otros, así que guardamos el número y
+    //    comprobamos que SUBE uno al guardar)
     const resumenInicial = d.getElementById('resumen').textContent;
-    ok('el resumen arranca en 4/30 partidos', resumenInicial.includes('4/30'), resumenInicial.slice(0, 40).replace(/\s+/g, ' '));
+    const coincide = resumenInicial.match(/(\d+)\s*\/\s*(\d+)/);
+    const jugadosAntes = coincide ? Number(coincide[1]) : null;
+    ok('el resumen muestra los partidos jugados', jugadosAntes !== null,
+       jugadosAntes + ' jugados de ' + (coincide ? coincide[2] : '?'));
 
     // 4. Buscar un partido pendiente y pulsar Apuntar
     const botonApuntar = Array.from(d.querySelectorAll('.btn-mini-ir'))
@@ -87,9 +92,12 @@ document.getElementById('marco').onload = async () => {
     const displayCerrado = w.getComputedStyle(d.getElementById('modal-fondo')).display;
     ok('la ventanita queda invisible de verdad', displayCerrado === 'none', 'display: ' + displayCerrado);
 
-    // 8. El resumen ya cuenta 5 partidos
+    // 8. El resumen cuenta un partido más que antes
     const resumenDespues = d.getElementById('resumen').textContent;
-    ok('el resumen pasa a 5/30 partidos', resumenDespues.includes('5/30'), resumenDespues.slice(0, 40).replace(/\s+/g, ' '));
+    const coincideDespues = resumenDespues.match(/(\d+)\s*\/\s*(\d+)/);
+    const jugadosDespues = coincideDespues ? Number(coincideDespues[1]) : null;
+    ok('el resumen sube exactamente un partido', jugadosDespues === jugadosAntes + 1,
+       jugadosAntes + ' → ' + jugadosDespues + ' jugados');
 
     // 9. El resultado aparece en la lista
     ok('el resultado 2 - 0 aparece en la lista', d.getElementById('lista-partidos').textContent.includes('2 - 0'));

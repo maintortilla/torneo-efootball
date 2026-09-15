@@ -19,8 +19,8 @@
    ========================================================================== */
 
 const NUBE_CONFIG = {
-  url: '',
-  anonKey: '',
+  url: 'https://raccyikqsekbrnkjfvur.supabase.co',
+  anonKey: 'sb_publishable_uhPIwnHofJ9p3abBAnC88w_Sq85YIB2',
 
   // Nombre de las tablas (por si algún día hubiera que cambiarlas)
   tablas: {

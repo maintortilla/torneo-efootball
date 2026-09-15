@@ -1,11 +1,12 @@
 # DISEÑO — Web de Torneos eFootball
 
-**Estado:** ✅ Fases 0 y 1 terminadas · **Versión:** v4 (15 sep 2026)
+**Estado:** ✅ Fases 0, 1 y **2 (nube)** terminadas · **Versión:** v5 (15 sep 2026)
 **Proyecto:** plataforma de torneos de eFootball para Leo y sus amigos (6 jugadores)
 
-> Cambios de la v4: fuera la pantalla de acta (el resultado se apunta en una ventanita
-> desde la portada), aparcados el pichichi y los goles por tipo hasta la Fase 6
-> (lectura automática de la captura de estadísticas del partido).
+> Proyecto de Supabase: `raccyikqsekbrnkjfvur` (región Europa) · la web ya lee y escribe
+> en la nube: todos los que abran la página ven los mismos datos.
+> Pendiente de Leo: **revocar el token de acceso** que se usó para crearlo (no llegó a
+> servir para nada, pero mejor quitarlo).
 
 ---
 
@@ -111,7 +112,7 @@ torneos nuevos cuando queramos.
 |---|---|---|
 | **0** | Carpeta, git, esqueleto HTML/CSS/JS | ✅ |
 | **1** | Portada completa + ventanita de resultados + estilo estadio | ✅ |
-| **2** | Supabase: los datos pasan a la nube | ⏳ |
+| **2** | Supabase: los datos pasan a la nube | ✅ |
 | **3** | Ajustes desde la web: crear torneo, configurar, generar calendario y cruces | ⏳ |
 | **4** | Publicar + login Google + permisos | ⏳ |
 | **5** | Historial de torneos, gráficas, MVP | ⏳ |

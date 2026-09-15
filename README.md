@@ -64,11 +64,25 @@ que se guarda y que la clasificación se recalcula sola.
 
 - [x] **Fase 0** — carpeta, git y esqueleto
 - [x] **Fase 1** — clasificación, partidos, eliminatorias y ventanita de resultados
-- [ ] **Fase 2** — conectar Supabase (los datos pasan a la nube, todos ven lo mismo)
+- [x] **Fase 2** — Supabase conectado: los datos viven en la nube y todos veis lo mismo
 - [ ] **Fase 3** — ajustes desde la web: crear torneo, configurar, generar calendario
 - [ ] **Fase 4** — publicar + login con Google + permisos
 - [ ] **Fase 5** — historial, gráficas, MVP
 - [ ] **Fase 6 (extra)** — leer las estadísticas del partido desde una captura de pantalla
+
+## La nube (Fase 2) ✅
+
+Los datos viven en **Supabase** (proyecto `raccyikqsekbrnkjfvur`, servidores en Europa).
+En la barra de arriba de la web verás una pastilla:
+
+- **☁️ Datos en la nube** → todo va a Supabase: quien abra la web ve lo mismo
+- **💾 Modo local** → (solo si no hay internet o falta la configuración) los datos se
+  quedan en ese PC
+
+Las dos claves de la conexión están en `js/config-nube.js` y **son públicas a propósito**
+(van en el navegador; lo que protege los datos son las políticas de la base de datos).
+La contraseña de la base de datos y el token de administración **no** se guardan en el
+repositorio (`.gitignore`).
 
 ## Reglas del juego (importante)
 
