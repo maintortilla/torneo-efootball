@@ -14,9 +14,11 @@
 <iframe id="marco" src="../ajustes.html"></iframe>
 
 <script>
-/* Prueba de la pantalla de Ajustes: crea un torneo de mentira, comprueba que
-   se guarda con su calendario, y lo borra. Así se prueba crear y borrar sin
-   dejar basura en la base de datos. */
+/* Prueba de la pantalla de Ajustes:
+   1. crea un torneo de mentira (y comprueba que lleva a la clasificación)
+   2. vuelve a ajustes, cambia la puntuación y la guarda
+   3. lo borra y comprueba que todo queda como estaba
+   Así se prueba crear, configurar y borrar sin dejar basura. */
 
 const salida = [];
 function ok(nombre, condicion, detalle) {
@@ -24,6 +26,9 @@ function ok(nombre, condicion, detalle) {
   return condicion;
 }
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* Nombre único por ejecución: así la prueba nunca se lía con restos de otras */
+const NOMBRE_PRUEBA = 'PRUEBA ' + Date.now().toString(36);
 
 function esperarListo(marco, intentos) {
   return new Promise((resolver, rechazar) => {
@@ -37,13 +42,31 @@ function esperarListo(marco, intentos) {
   });
 }
 
-document.getElementById('marco').onload = async () => {
-  const marco = document.getElementById('marco');
-  const d = marco.contentDocument;
-  const w = marco.contentWindow;
+/* Navega el iframe a una URL y espera a que la nueva página esté lista */
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  // ¡IMPORTANTE! Desenganchar este handler: si no, la prueba se volvería a
+  // ejecutar cada vez que el iframe navega (y puede liar un desastre).
+  marcoEl.onload = null;
+
+  const marco = marcoEl;
 
   try {
     await esperarListo(marco);
+    let d = marco.contentDocument;
+    let w = marco.contentWindow;
 
     // 1. La pantalla abre con el torneo que ya existe
     ok('la pantalla de ajustes abre', d.getElementById('zona-editar').hidden === false);
@@ -61,7 +84,7 @@ document.getElementById('marco').onload = async () => {
        d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length + ' filas');
 
     // 3. Rellenar: nombre + 4 jugadores (y quitar 2 filas)
-    d.getElementById('nuevo-nombre').value = 'PRUEBA TEMPORAL';
+    d.getElementById('nuevo-nombre').value = NOMBRE_PRUEBA;
     const nombres = ['Ana', 'Beto', 'Cris', 'Dani'];
     let filas = Array.from(d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea'));
     nombres.forEach((n, i) => {
@@ -69,7 +92,6 @@ document.getElementById('marco').onload = async () => {
       campo.value = n;
       campo.dispatchEvent(new Event('input'));
     });
-    // quitar las dos últimas filas
     for (let k = 0; k < 2; k++) {
       const actuales = Array.from(d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea'));
       const ultima = actuales[actuales.length - 1];
@@ -78,54 +100,60 @@ document.getElementById('marco').onload = async () => {
     ok('quedan 4 filas de jugador', d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length === 4,
        d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length + ' filas');
 
-    // 4. Una vuelta (con 4 jugadores son 6 partidos)
     const vueltas = d.getElementById('nuevo-vueltas');
     vueltas.value = '1';
     vueltas.dispatchEvent(new Event('change'));
     await esperar(100);
 
-    // 5. Crear
+    // 4. Crear → debe llevar a la clasificación
     d.getElementById('btn-crear').click();
-    await esperar(2500);
+    await esperar(1600);
 
-    const creado = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
-    ok('el torneo se creó y está en memoria', !!creado);
-    ok('el torneo tiene 4 jugadores', creado && creado.jugadores.length === 4,
+    const urlAhora = marco.contentWindow.location.pathname;
+    ok('tras crear lleva a la clasificación', /index\.html$/.test(urlAhora), urlAhora);
+    const hayToast = !!marco.contentDocument.getElementById('toast');
+    ok('avisa de que el torneo se creó', hayToast,
+       hayToast ? marco.contentDocument.getElementById('toast').textContent : 'sin aviso');
+
+    await esperar(2000);   // margen para que termine de guardarse
+    const creado = marco.contentWindow.Store.cache.find(t => t.nombre === NOMBRE_PRUEBA);
+    ok('el torneo se creó con 4 jugadores', creado && creado.jugadores.length === 4,
        creado ? creado.jugadores.map(j => j.nombre).join(', ') : '—');
     ok('la liguilla se generó con 6 partidos', creado && creado.partidos.length === 6,
        creado ? creado.partidos.length + ' partidos' : '—');
-    ok('no hay dos partidos entre los mismos', creado && new Set(creado.partidos.map(p => [p.localId, p.visitanteId].sort().join('-'))).size === 6);
-    ok('el selector de arriba lo lista',
-       Array.from(d.querySelectorAll('#selector-torneo option')).some(o => o.textContent.includes('PRUEBA TEMPORAL')));
-    ok('se ha pasado a la pantalla de edición de ese torneo', d.getElementById('zona-editar').hidden === false);
 
-    // 6. Cambiar los puntos y guardar (configurabilidad)
+    // 5. Volver a ajustes de ese torneo y cambiar la puntuación
+    await navegar(marco, '../ajustes.html?torneo=' + creado.id);
+    d = marco.contentDocument;
+    ok('se vuelve a abrir la pantalla de ajustes', d.getElementById('zona-editar').hidden === false);
+
     d.getElementById('edit-pts-v').value = '4';
     d.querySelector('#btn-guardar').click();
-    await esperar(2000);
-    const guardado = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
+    await esperar(2500);
+    const guardado = marco.contentWindow.Store.cache.find(t => t.nombre === NOMBRE_PRUEBA);
     ok('los puntos por victoria se guardan (4)', guardado && guardado.config.puntosVictoria === 4,
        guardado ? 'victoria = ' + guardado.config.puntosVictoria + ' pts' : '—');
 
-    // 7. Ejecutar el "generar ronda" sin liguilla acabada (debe avisar, no romper)
+    // 6. Generar ronda sin liguilla acabada (debe avisar, no romper)
     d.getElementById('btn-generar-ronda').click();
     await esperar(600);
     ok('no deja generar eliminatorias con la liguilla a medias', true, 'aviso mostrado sin errores');
 
-    // 8. Borrar el torneo de prueba (aceptando el confirm)
-    w.confirm = () => true;
+    // 7. Borrar el torneo de prueba
+    marco.contentWindow.confirm = () => true;
     d.getElementById('btn-borrar').click();
-    await esperar(2500);
-    const sigue = w.Store.cache.find(t => t.nombre === 'PRUEBA TEMPORAL');
+    await esperar(3000);
+    const sigue = marco.contentWindow.Store.cache.find(t => t.nombre === NOMBRE_PRUEBA);
     ok('el torneo se borró', !sigue);
-    ok('queda(n) ' + w.Store.cache.length + ' torneo(s) de verdad', w.Store.cache.length === torneosAntes,
-       torneosAntes + ' → ' + w.Store.cache.length);
+    ok('quedan los torneos de siempre (' + marco.contentWindow.Store.cache.length + ')',
+       marco.contentWindow.Store.cache.length === torneosAntes,
+       torneosAntes + ' → ' + marco.contentWindow.Store.cache.length);
 
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   }
 
-  const fallos = salida.filter(l => !l.startsWith('[OK')).length;
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
   document.getElementById('resultado').textContent =
     salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
   document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';

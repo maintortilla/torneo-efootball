@@ -344,13 +344,13 @@ async function crearTorneo() {
     torneoActual = torneo;
     pintarSelector();
     cargarTorneo(torneo.id);
-    avisar(`Torneo "${nombre}" creado con ${torneo.partidos.length} partidos 🎉`);
+    // Se avisa desde la clasificación (a donde se va ahora mismo)
+    window.location.href = 'index.html?creado=' + encodeURIComponent(nombre);
   } catch (e) {
     console.error(e);
     avisar('No se pudo crear: ' + e.message, true);
-  } finally {
     boton.disabled = false;
-    boton.textContent = 'Crear torneo y generar calendario 🗓️';
+    boton.textContent = 'Crear torneo y generar calendario';
   }
 }
 

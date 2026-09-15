@@ -55,6 +55,7 @@
           <div class="bloque-titulo">
             <span class="num">1</span>
             <h3>Nombre y formato</h3>
+            <span class="ayuda" data-tip="El nombre del torneo y si cada pareja se enfrenta una vez (una vuelta) o dos (ida y vuelta).">?</span>
           </div>
 
           <div class="form-rejilla">
@@ -77,6 +78,7 @@
           <div class="bloque-titulo">
             <span class="num">2</span>
             <h3>Jugadores</h3>
+            <span class="ayuda" data-tip="Escribe el nombre de cada jugador. El emoji y el color son para reconocerlos en la clasificación y en los partidos.">?</span>
           </div>
 
           <div id="lista-jugadores-nuevo"></div>
@@ -90,6 +92,7 @@
           <div class="bloque-titulo">
             <span class="num">3</span>
             <h3>Puntuación y eliminatorias</h3>
+            <span class="ayuda" data-tip="Cuántos puntos suma cada resultado y cuántos jugadores pasan a las eliminatorias cuando acabe la liga.">?</span>
           </div>
 
           <div class="form-rejilla">
@@ -131,7 +134,9 @@
         </header>
 
         <section class="panel">
-          <p class="panel-titulo">Datos del torneo <b id="resumen-torneo"></b></p>
+          <p class="panel-titulo verde">Datos del torneo
+            <span class="ayuda" data-tip="El nombre que veréis en la web y si el torneo sigue en juego o ya ha terminado.">?</span>
+            <b id="resumen-torneo"></b></p>
           <div class="form-rejilla">
             <div class="campo-form">
               <label>Nombre</label>
@@ -148,16 +153,19 @@
         </section>
 
         <section class="panel">
-          <p class="panel-titulo">Jugadores <b id="cuenta-jugadores"></b></p>
-          <p class="nota">Los que tengan partidos jugados no se pueden quitar (hay que borrar antes sus resultados).</p>
-          <div id="lista-jugadores" style="margin-top:12px"></div>
+          <p class="panel-titulo verde">Jugadores
+            <span class="ayuda" data-tip="Puedes cambiar nombres, emojis y colores cuando quieras. Los jugadores que ya tienen partidos jugados no se pueden quitar (borra antes sus resultados).">?</span>
+            <b id="cuenta-jugadores"></b></p>
+          <div id="lista-jugadores" style="margin-top:6px"></div>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-add-jugador">+ Añadir jugador</button>
+            <button class="btn btn-ghost" id="btn-add-jugador">Añadir jugador</button>
           </div>
         </section>
 
         <section class="panel">
-          <p class="panel-titulo">Formato y puntuación</p>
+          <p class="panel-titulo verde">Formato y puntuación
+            <span class="ayuda" data-tip="Las vueltas son las veces que se enfrenta cada pareja. Si cambias las vueltas o el número de jugadores, hay que rehacer el calendario (te avisará antes).">?</span>
+          </p>
           <div class="form-rejilla">
             <div class="campo-form">
               <label>Vueltas de la liguilla</label>
@@ -177,11 +185,9 @@
             </div>
             <div class="campo-form">
               <label>Puntos (victoria / empate / derrota)</label>
-              <div class="fila-2">
+              <div class="fila-3">
                 <input type="number" id="edit-pts-v" min="0" max="99">
                 <input type="number" id="edit-pts-e" min="0" max="99">
-              </div>
-              <div style="margin-top:8px">
                 <input type="number" id="edit-pts-d" min="0" max="99">
               </div>
             </div>
@@ -194,25 +200,30 @@
         </section>
 
         <section class="panel">
-          <p class="panel-titulo">Orden de los desempates <b>si hay empate a puntos</b></p>
+          <p class="panel-titulo verde">Orden de los desempates
+            <span class="ayuda" data-tip="Si dos jugadores acaban con los mismos puntos, decide el primero de esta lista. Si siguen empatados, el segundo, y así. Usa las flechas para cambiar el orden.">?</span>
+            <b>si hay empate a puntos</b></p>
           <ul class="desempates-lista" id="lista-desempates"></ul>
-          <p class="nota">El primero de la lista es el que decide. Usa las flechas para cambiar el orden.</p>
         </section>
 
         <section class="panel">
-          <p class="panel-titulo">Fases finales <b id="estado-fases"></b></p>
+          <p class="panel-titulo verde">Fases finales
+            <span class="ayuda" data-tip="Cuando acabe la liguilla, pulsa el botón para crear las semifinales con los mejores clasificados. Cuando acaben, el botón creará la final.">?</span>
+            <b id="estado-fases"></b></p>
           <ul class="paso-lista" id="pasos-torneo"></ul>
           <div class="zona-acciones">
-            <button class="btn btn-gol" id="btn-generar-ronda">Generar la ronda que toque 🏟️</button>
+            <button class="btn btn-gol" id="btn-generar-ronda">Generar la ronda que toque</button>
           </div>
           <div id="lista-eliminatorias" style="margin-top:14px"></div>
         </section>
 
         <section class="panel">
-          <p class="panel-titulo">Calendario</p>
+          <p class="panel-titulo verde">Calendario
+            <span class="ayuda" data-tip="Rehace todos los partidos de la liguilla desde cero con los jugadores y las vueltas actuales. Ojo: se pierden los resultados apuntados.">?</span>
+          </p>
           <p class="nota" id="aviso-calendario"></p>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-regenerar">Regenerar el calendario 🗓️</button>
+            <button class="btn btn-ghost" id="btn-regenerar">Regenerar el calendario</button>
           </div>
         </section>
 
@@ -220,12 +231,12 @@
           <h4>Zona peligrosa</h4>
           <p class="nota">Borrar el torneo se lleva por delante sus partidos y resultados. No hay vuelta atrás.</p>
           <div class="zona-acciones">
-            <button class="btn btn-peligro" id="btn-borrar">Borrar este torneo 🗑️</button>
+            <button class="btn btn-peligro" id="btn-borrar">Borrar este torneo</button>
           </div>
         </section>
 
         <div class="zona-acciones" style="margin-bottom:26px">
-          <button class="btn btn-gol" id="btn-guardar">Guardar los cambios 💾</button>
+          <button class="btn btn-gol" id="btn-guardar">Guardar los cambios</button>
           <span class="nota" id="nota-guardar"></span>
         </div>
 

@@ -332,6 +332,4 @@ function tipoGol(torneo, id) {
   return (torneo.config.tiposGol || []).find(t => t.id === id) || { nombre: '—', emoji: '' };
 }
 
-function nuevoId(prefijo) {
-  return prefijo + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-}
+/* nuevoId() vive en modelo.js (se carga antes y así está disponible para todo) */

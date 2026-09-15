@@ -46,7 +46,10 @@
       <div class="resumen" id="resumen-partidos"></div>
 
       <section class="panel">
-        <p class="panel-titulo">Todos los partidos <b id="contador-partidos"></b></p>
+        <p class="panel-titulo">Todos los partidos
+          <b id="contador-partidos"></b>
+          <button class="btn-mini-ir" id="btn-nuevo-partido" title="Añadir un partido de liga o un amistoso">+ Añadir partido</button>
+        </p>
 
         <div class="tabs">
           <div class="tab activo" data-filtro="todos">Todos</div>
@@ -99,6 +102,42 @@
         <button class="btn btn-ghost" id="modal-cancelar">Cancelar</button>
       </div>
       <button class="btn btn-ghost btn-ancho" id="modal-borrar" style="margin-top:10px">Borrar el resultado y dejarlo pendiente</button>
+    </div>
+  </div>
+
+  <!-- Ventanita para añadir un partido nuevo (de liga o amistoso) -->
+  <div class="modal-fondo" id="modal-nuevo" hidden>
+    <div class="modal">
+      <p class="panel-titulo">Añadir partido</p>
+
+      <div class="campo-form">
+        <label>Jugador local</label>
+        <select id="np-local"></select>
+      </div>
+
+      <div class="campo-form" style="margin-top:12px">
+        <label>Jugador visitante</label>
+        <select id="np-visitante"></select>
+      </div>
+
+      <div class="campo-form" style="margin-top:12px">
+        <label>Tipo de partido</label>
+        <select id="np-tipo">
+          <option value="liga">De liga · cuenta para la clasificación</option>
+          <option value="amistoso">Amistoso · no cuenta en la clasificación</option>
+        </select>
+      </div>
+
+      <div class="campo-form" id="np-jornada-caja" style="margin-top:12px">
+        <label>Jornada</label>
+        <input type="number" id="np-jornada" min="1" value="1">
+        <p class="pista">Ponla en una jornada que ya exista o crea una nueva.</p>
+      </div>
+
+      <div class="fila-2" style="margin-top:16px">
+        <button class="btn btn-gol" id="np-guardar">Añadir partido</button>
+        <button class="btn btn-ghost" id="np-cancelar">Cancelar</button>
+      </div>
     </div>
   </div>
 

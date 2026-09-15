@@ -6,6 +6,17 @@
    ========================================================================== */
 
 /* -------------------------------------------------------------------------
+   IDENTIFICADORES ÚNICOS
+   ¡Ojo! Tienen que ser únicos en TODA la base de datos, no solo dentro de un
+   torneo. Si dos torneos generasen "p1", "p2"… se pisarían entre ellos.
+   ------------------------------------------------------------------------- */
+let contadorIds = 0;
+function nuevoId(prefijo) {
+  contadorIds++;
+  return prefijo + '-' + Date.now().toString(36) + contadorIds.toString(36);
+}
+
+/* -------------------------------------------------------------------------
    CALENDARIO: reparte todos contra todos sin repetir ni dejarse ninguno.
    Usa el "método del círculo": uno se queda fijo y los demás van rotando.
    Si el torneo es a ida y vuelta (config.vueltas = 2), se repite la segunda
@@ -23,7 +34,6 @@ function generarCalendario(jugadores, config) {
   const rondas = n - 1;
   const porRonda = n / 2;
   const partidos = [];
-  let idPartido = 1;
 
   for (let r = 0; r < rondas; r++) {
     for (let i = 0; i < porRonda; i++) {
@@ -31,7 +41,7 @@ function generarCalendario(jugadores, config) {
       const visitante = lista[n - 1 - i];
       if (local === descansa || visitante === descansa) continue;
       partidos.push({
-        id: 'p' + idPartido++,
+        id: nuevoId('p'),
         fase: 'liga',
         jornada: r + 1,
         localId: local,
@@ -50,17 +60,16 @@ function generarCalendario(jugadores, config) {
 
   // Segunda vuelta (ida y vuelta): mismos cruces con los lados invertidos
   if (config.vueltas === 2) {
-    const vueltas = partidos.length;
     const segunda = partidos.map(p => ({
       ...p,
-      id: 'p' + idPartido++,
+      id: nuevoId('p'),
       jornada: p.jornada + rondas,
       localId: p.visitanteId,
       visitanteId: p.localId,
       goles: [],
       jugado: false
     }));
-    return partidos.concat(segunda).slice(0, partidos.length * 2);
+    return partidos.concat(segunda);
   }
 
   return partidos;

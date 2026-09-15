@@ -385,6 +385,39 @@ body {
 .panel-cabecera h2 em { color: var(--neon); font-style: normal; }
 .panel-cabecera p { margin: 8px 0 0; color: var(--muted); font-size: 15.5px; }
 
+/* ---------- Título de sección destacado (en verde) ---------- */
+.panel-titulo.verde {
+  color: var(--neon); font-size: 17px;
+  justify-content: flex-start; gap: 9px;
+}
+.panel-titulo.verde b {
+  margin-left: auto; color: var(--texto); opacity: .8;
+  font-size: 13.5px; letter-spacing: .08em;
+}
+
+/* ---------- Icono de ayuda (explica cómo funciona cada sección) ---------- */
+.ayuda {
+  display: inline-grid; place-items: center;
+  width: 19px; height: 19px; border-radius: 50%;
+  border: 1px solid var(--muted); color: var(--muted);
+  font-size: 12px; font-weight: 800; cursor: help;
+  position: relative; flex-shrink: 0;
+  font-family: var(--fuente); line-height: 1;
+}
+.ayuda:hover { border-color: var(--neon); color: var(--neon); }
+.ayuda::after {
+  content: attr(data-tip);
+  position: absolute; left: -8px; bottom: calc(100% + 10px);
+  width: max-content; max-width: 360px;
+  background: #0B1420; border: 1px solid var(--neon); border-radius: 11px;
+  padding: 11px 13px; color: var(--texto);
+  font-size: 13.5px; font-weight: 500; line-height: 1.45;
+  text-transform: none; letter-spacing: 0; text-align: left; white-space: normal;
+  opacity: 0; pointer-events: none; transition: opacity .15s ease;
+  box-shadow: 0 12px 34px rgba(0,0,0,.6); z-index: 40;
+}
+.ayuda:hover::after, .ayuda:focus::after { opacity: 1; }
+
 /* Bloques numerados del formulario (1 · Nombre y formato, 2 · Jugadores…) */
 .bloque-form { border-top: 1px solid var(--linea); padding-top: 18px; margin-top: 20px; }
 .bloque-titulo { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }

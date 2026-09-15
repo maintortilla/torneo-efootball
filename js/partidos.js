@@ -91,7 +91,8 @@ function pintarLista() {
   caja.innerHTML = '';
 
   let liga = torneoActual.partidos.filter(p => p.fase === 'liga');
-  let eliminatorias = torneoActual.partidos.filter(p => p.fase !== 'liga');
+  let eliminatorias = torneoActual.partidos.filter(p => ['semifinal', 'final', 'tercer_puesto'].includes(p.fase));
+  let amistosos = torneoActual.partidos.filter(p => p.fase === 'amistoso');
 
   const pendientes = liga.filter(p => !p.jugado);
   const jornadaEnCurso = pendientes.length ? pendientes[0].jornada : null;
@@ -99,17 +100,20 @@ function pintarLista() {
   if (filtroPartidos === 'pendientes') {
     liga = liga.filter(p => !p.jugado);
     eliminatorias = eliminatorias.filter(p => !p.jugado);
+    amistosos = amistosos.filter(p => !p.jugado);
   } else if (filtroPartidos === 'jugados') {
     liga = liga.filter(p => p.jugado);
     eliminatorias = eliminatorias.filter(p => p.jugado);
+    amistosos = amistosos.filter(p => p.jugado);
   } else if (filtroPartidos === 'proximos') {
     liga = liga.filter(p => p.jornada === jornadaEnCurso && !p.jugado);
     eliminatorias = [];
+    amistosos = [];
   }
 
-  $('#contador-partidos').textContent = (liga.length + eliminatorias.length) + ' en pantalla';
+  $('#contador-partidos').textContent = (liga.length + eliminatorias.length + amistosos.length) + ' en pantalla';
 
-  if (!liga.length && !eliminatorias.length) {
+  if (!liga.length && !eliminatorias.length && !amistosos.length) {
     caja.appendChild(el('div', 'vacio', 'No hay partidos en esta vista 👀'));
     return;
   }
@@ -140,6 +144,95 @@ function pintarLista() {
     eliminatorias.forEach(p => bloque.appendChild(filaDePartido(p)));
     caja.appendChild(bloque);
   }
+
+  if (amistosos.length) {
+    const bloque = el('div', 'jornada');
+    bloque.appendChild(el('div', 'cabecera-jornada',
+      `<span class="num">🤝</span><span class="etiqueta">Amistosos</span><span class="estado hecho">no cuentan</span>`));
+    amistosos.forEach(p => bloque.appendChild(filaDePartido(p)));
+    caja.appendChild(bloque);
+  }
+}
+
+/* ------------------------------------------- añadir un partido nuevo */
+function abrirModalNuevoPartido() {
+  const local = $('#np-local'), visit = $('#np-visitante');
+  local.innerHTML = ''; visit.innerHTML = '';
+
+  torneoActual.jugadores.forEach(j => {
+    const o1 = el('option', null, `${j.emoji} ${j.nombre}`); o1.value = j.id;
+    local.appendChild(o1);
+    const o2 = el('option', null, `${j.emoji} ${j.nombre}`); o2.value = j.id;
+    visit.appendChild(o2);
+  });
+
+  // Por defecto: los dos primeros jugadores (distintos)
+  if (torneoActual.jugadores.length > 1) {
+    local.value = torneoActual.jugadores[0].id;
+    visit.value = torneoActual.jugadores[1].id;
+  }
+
+  // Jornada por defecto: la que está en curso; si no, una nueva al final
+  const pendientes = torneoActual.partidos.filter(p => p.fase === 'liga' && !p.jugado);
+  const jornadas = torneoActual.partidos.filter(p => p.jornada).map(p => p.jornada);
+  const ultima = jornadas.length ? Math.max.apply(null, jornadas) : 0;
+  $('#np-jornada').value = pendientes.length ? pendientes[0].jornada : (ultima + 1);
+
+  $('#np-tipo').value = 'liga';
+  actualizarTipoPartido();
+  $('#modal-nuevo').hidden = false;
+}
+
+function actualizarTipoPartido() {
+  $('#np-jornada-caja').hidden = $('#np-tipo').value === 'amistoso';
+}
+
+function cerrarModalNuevo() {
+  $('#modal-nuevo').hidden = true;
+}
+
+async function guardarNuevoPartido() {
+  const localId = $('#np-local').value;
+  const visitanteId = $('#np-visitante').value;
+  const tipo = $('#np-tipo').value;
+
+  if (!localId || !visitanteId) { avisar('Elige los dos jugadores 👥', true); return; }
+  if (localId === visitanteId) { avisar('Un jugador no puede jugar contra sí mismo 😅', true); return; }
+
+  const nuevo = {
+    id: nuevoId('p'),
+    fase: tipo === 'amistoso' ? 'amistoso' : 'liga',
+    jornada: tipo === 'amistoso' ? null : Math.max(1, Number($('#np-jornada').value) || 1),
+    localId, visitanteId,
+    golesLocal: 0, golesVisitante: 0,
+    jugado: false, goles: [], stats: null, fecha: null
+  };
+
+  // No dejar crear el mismo partido dos veces en la misma jornada
+  const repetido = torneoActual.partidos.some(p =>
+    p.fase === nuevo.fase && p.jornada === nuevo.jornada &&
+    ((p.localId === localId && p.visitanteId === visitanteId) ||
+     (p.localId === visitanteId && p.visitanteId === localId)));
+
+  if (repetido) { avisar('Ese partido ya existe ahí 🤔', true); return; }
+
+  torneoActual.partidos.push(nuevo);
+  const boton = $('#np-guardar');
+  boton.disabled = true;
+  try {
+    await Store.guardarTorneo(torneoActual);
+    cerrarModalNuevo();
+    pintarTodoPartidos();
+    avisar(tipo === 'amistoso'
+      ? 'Amistoso añadido 🤝'
+      : 'Partido añadido a la jornada ' + nuevo.jornada + ' ✅');
+  } catch (e) {
+    torneoActual.partidos.pop();
+    console.error(e);
+    avisar('No se pudo añadir: ' + e.message, true);
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 /* ------------------------------------------------------------- eventos */
@@ -163,6 +256,19 @@ function engancharPartidos() {
   });
 
   engancharModal();
+
+  // Añadir partido (de liga o amistoso)
+  $('#btn-nuevo-partido').onclick = abrirModalNuevoPartido;
+  $('#np-tipo').onchange = actualizarTipoPartido;
+  $('#np-guardar').onclick = guardarNuevoPartido;
+  $('#np-cancelar').onclick = cerrarModalNuevo;
+  $('#modal-nuevo').onclick = (e) => {
+    if (e.target.id === 'modal-nuevo') cerrarModalNuevo();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#modal-nuevo').hidden) cerrarModalNuevo();
+  });
+
   engancharRefrescar(() => {
     torneoActual = Store.torneo(torneoActual.id);
     configurarComun(torneoActual, () => pintarTodoPartidos());

@@ -16,6 +16,13 @@ async function arrancarIndex() {
     pintarModoDatos();
     pintarTodo();
     engancharIndex();
+
+    // Aviso si venimos de crear un torneo (redirige aquí al crearlo)
+    const creado = new URLSearchParams(window.location.search).get('creado');
+    if (creado) {
+      avisar(`Torneo "${creado}" creado 🎉`, false, 6000);
+      window.history.replaceState({}, '', 'index.html');
+    }
   } catch (e) {
     console.error(e);
     avisar('No se pudo conectar con la nube: ' + e.message, true);
@@ -150,7 +157,8 @@ function pintarEliminatorias() {
   const caja = $('#lista-eliminatorias');
   caja.innerHTML = '';
   const etiqueta = $('#etiqueta-eliminatorias');
-  const generadas = torneoActual.partidos.filter(p => p.fase !== 'liga');
+  const FASES_FINALES = ['semifinal', 'final', 'tercer_puesto'];
+  const generadas = torneoActual.partidos.filter(p => FASES_FINALES.includes(p.fase));
 
   // Si ya están generadas, se muestran los cruces de verdad (con botón para apuntar)
   if (generadas.length) {

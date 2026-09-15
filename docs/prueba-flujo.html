@@ -44,6 +44,9 @@ function jugadosDe(texto) {
 }
 
 document.getElementById('marco').onload = async () => {
+  // Desenganchamos el handler para que no se repita si el iframe navega
+  document.getElementById('marco').onload = null;
+
   const marco = document.getElementById('marco');
   const d = marco.contentDocument;
   const w = marco.contentWindow;

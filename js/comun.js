@@ -169,7 +169,7 @@ function pintarModoDatos() {
 
 /* ---------------------------------------------------- aviso flotante (toast) */
 let temporizadorAviso = null;
-function avisar(texto, esError) {
+function avisar(texto, esError, duracionMs) {
   let t = $('#toast');
   if (!t) {
     t = el('div', null, '');
@@ -183,7 +183,7 @@ function avisar(texto, esError) {
   t.style.border = '1px solid ' + (esError ? '#FF4D5E' : '#00E676');
   t.style.color = esError ? '#FF4D5E' : '#00E676';
   clearTimeout(temporizadorAviso);
-  temporizadorAviso = setTimeout(() => t.remove(), esError ? 5200 : 2400);
+  temporizadorAviso = setTimeout(() => t.remove(), duracionMs || (esError ? 5200 : 2400));
 }
 
 /* -------------------------------------------------- botón de refrescar */
