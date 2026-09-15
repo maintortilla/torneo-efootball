@@ -10,11 +10,20 @@ let filtroPartidos = 'todos';
 async function arrancarPartidos() {
   try {
     const torneos = await Store.iniciar();
-    torneoActual = Store.torneo(torneos[0].id);
+
+    const idInicial = elegirTorneoInicial(torneos);
+    if (!idInicial) {   // no hay torneos: a la lista
+      window.location.href = 'index.html';
+      return;
+    }
+
+    torneoActual = Store.torneo(idInicial);
+    recordarTorneo(torneoActual.id);
 
     configurarComun(torneoActual, () => pintarTodoPartidos());
-    pintarSelectorTorneo(torneos);
     pintarModoDatos();
+    pintarNombreTorneo(torneoActual);
+    enlacesConTorneo(torneoActual.id);
     pintarTodoPartidos();
     engancharPartidos();
   } catch (e) {
@@ -22,20 +31,6 @@ async function arrancarPartidos() {
     avisar('No se pudo conectar con la nube: ' + e.message, true);
   }
   window.__listo = true;
-}
-
-function pintarSelectorTorneo(torneos) {
-  const sel = $('#selector-torneo');
-  sel.innerHTML = '';
-  torneos.forEach(t => {
-    const o = el('option', null, t.nombre + (t.estado === 'finalizado' ? ' (finalizado)' : ''));
-    o.value = t.id;
-    if (t.id === torneoActual.id) o.selected = true;
-    sel.appendChild(o);
-  });
-  const nuevo = el('option', null, '＋ Crear torneo nuevo…');
-  nuevo.value = '__nuevo__';
-  sel.appendChild(nuevo);
 }
 
 function pintarTodoPartidos() {
@@ -237,16 +232,6 @@ async function guardarNuevoPartido() {
 
 /* ------------------------------------------------------------- eventos */
 function engancharPartidos() {
-  $('#selector-torneo').onchange = (e) => {
-    if (e.target.value === '__nuevo__') {
-      window.location.href = 'ajustes.html?nuevo=1';
-      return;
-    }
-    torneoActual = Store.torneo(e.target.value);
-    configurarComun(torneoActual, () => pintarTodoPartidos());
-    pintarTodoPartidos();
-  };
-
   $$('[data-filtro]').forEach(t => {
     t.onclick = () => {
       filtroPartidos = t.dataset.filtro;
@@ -272,7 +257,7 @@ function engancharPartidos() {
   engancharRefrescar(() => {
     torneoActual = Store.torneo(torneoActual.id);
     configurarComun(torneoActual, () => pintarTodoPartidos());
-    pintarSelectorTorneo(Store.cache);
+    pintarNombreTorneo(torneoActual);
     pintarTodoPartidos();
   });
 }

@@ -15,16 +15,13 @@ const COLORES = ['#00E676','#4DA3FF','#FFD54F','#FF4D5E','#B388FF','#FFA24D','#9
 async function arrancarAjustes() {
   try {
     torneos = await Store.iniciar();
-    pintarSelector();
     pintarModoDatos();
 
     const quiereNuevo = new URLSearchParams(window.location.search).get('nuevo') === '1';
-    if (!torneos.length || quiereNuevo) {
+    if (quiereNuevo || !torneos.length) {
       abrirCrear();
     } else {
-      const pedido = new URLSearchParams(window.location.search).get('torneo');
-      const existe = pedido && torneos.some(t => t.id === pedido);
-      cargarTorneo(existe ? pedido : torneos[0].id);
+      cargarTorneo(elegirTorneoInicial(torneos));
     }
   } catch (e) {
     console.error(e);
@@ -38,22 +35,6 @@ function pintarModoDatos() {
   $('#nota-guardado').innerHTML = nube
     ? '<span class="pastilla nube">☁️ Datos en la nube</span>'
     : '<span class="pastilla local">💾 Modo local</span>';
-}
-
-function pintarSelector() {
-  const sel = $('#selector-torneo');
-  sel.innerHTML = '';
-  torneos.forEach(t => {
-    const o = el('option', null, t.nombre + (t.estado === 'finalizado' ? ' (finalizado)' : ''));
-    o.value = t.id;
-    sel.appendChild(o);
-  });
-
-  const o = el('option', null, '＋ Crear torneo nuevo…');
-  o.value = '__nuevo__';
-  sel.appendChild(o);
-
-  if (torneoActual) sel.value = torneoActual.id;
 }
 
 /* ------------------------------------------------------- abrir / cerrar */
@@ -102,7 +83,11 @@ function cargarTorneo(id) {
   pintarPistaPartidos();
   pintarCalendarioAviso();
 
-  $('#selector-torneo').value = torneoActual.id;
+  // Que la página recuerde este torneo y los enlaces del menú lo arrastren
+  recordarTorneo(torneoActual.id);
+  pintarNombreTorneo(torneoActual);
+  enlacesConTorneo(torneoActual.id);
+  $('#estado-torneo').textContent = torneoActual.estado === 'finalizado' ? 'Finalizado' : 'En curso';
 }
 
 /* ------------------------------------------------- jugadores (edición) */
@@ -342,10 +327,10 @@ async function crearTorneo() {
     await Store.crearTorneo(torneo);
     torneos = Store.cache;
     torneoActual = torneo;
-    pintarSelector();
-    cargarTorneo(torneo.id);
-    // Se avisa desde la clasificación (a donde se va ahora mismo)
-    window.location.href = 'index.html?creado=' + encodeURIComponent(nombre);
+    recordarTorneo(torneo.id);
+    // Se va a la clasificación de ese torneo, con su aviso
+    window.location.href = 'clasificacion.html?torneo=' + encodeURIComponent(torneo.id) +
+                           '&creado=' + encodeURIComponent(nombre);
   } catch (e) {
     console.error(e);
     avisar('No se pudo crear: ' + e.message, true);
@@ -398,7 +383,6 @@ async function guardarCambios() {
   try {
     await Store.guardarTorneo(torneoActual, formatoCambiado ? 'reemplazar' : null);
     torneos = Store.cache;
-    pintarSelector();
     cargarTorneo(torneoActual.id);
     avisar('Cambios guardados ✅');
   } catch (e) {
@@ -406,7 +390,7 @@ async function guardarCambios() {
     avisar('No se pudo guardar: ' + e.message, true);
   } finally {
     boton.disabled = false;
-    boton.textContent = 'Guardar los cambios 💾';
+    boton.textContent = 'Guardar los cambios';
   }
 }
 
@@ -448,13 +432,14 @@ async function borrarTorneo() {
   try {
     const restantes = await Store.borrarTorneo(id);
     torneos = restantes;
-    if (restantes.length) {
-      torneoActual = null;
-      pintarSelector();
-      cargarTorneo(restantes[0].id);
-    } else {
-      abrirCrear();
+
+    if (!restantes.length) {
+      window.location.href = 'index.html';   // ya no queda ningún torneo
+      return;
     }
+
+    torneoActual = null;
+    cargarTorneo(restantes[0].id);
     avisar('Torneo borrado 🗑️');
   } catch (e) {
     console.error(e);
@@ -464,11 +449,6 @@ async function borrarTorneo() {
 
 /* ------------------------------------------------------------- eventos */
 function engancharAjustes() {
-  $('#selector-torneo').onchange = (e) => {
-    if (e.target.value === '__nuevo__') abrirCrear();
-    else cargarTorneo(e.target.value);
-  };
-
   $('#btn-add-jugador-nuevo').onclick = () => { anadirJugadorBorrador(); pintarJugadoresBorrador(); pintarPistaPartidos(); };
   $('#btn-autocompletar').onclick = () => {
     jugadoresBorrador.forEach((j, i) => { j.emoji = EMOJIS[i % EMOJIS.length]; j.color = COLORES[i % COLORES.length]; });
@@ -477,8 +457,8 @@ function engancharAjustes() {
   $('#nuevo-vueltas').onchange = pintarPistaPartidos;
   $('#btn-crear').onclick = crearTorneo;
   $('#btn-cancelar-crear').onclick = () => {
-    if (torneos.length) cargarTorneo(torneos[0].id);
-    else avisar('Crea un torneo para empezar 🙂', true);
+    if (torneos.length) cargarTorneo(elegirTorneoInicial(torneos));
+    else window.location.href = 'index.html';
   };
 
   $('#btn-add-jugador').onclick = () => {
@@ -491,25 +471,6 @@ function engancharAjustes() {
   $('#btn-regenerar').onclick = regenerar;
   $('#btn-generar-ronda').onclick = generarRonda;
   $('#btn-borrar').onclick = borrarTorneo;
-}
-
-/* ---------------------------------------------------- aviso flotante (toast) */
-let temporizadorAviso = null;
-function avisar(texto, esError) {
-  let t = $('#toast');
-  if (!t) {
-    t = el('div', null, '');
-    t.id = 'toast';
-    t.style.cssText = `position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
-      background:#0E1621;padding:12px 20px;border-radius:12px;font-weight:700;z-index:200;
-      max-width:80vw;text-align:center;box-shadow:0 0 22px rgba(0,0,0,.55);font-family:var(--fuente)`;
-    document.body.appendChild(t);
-  }
-  t.textContent = texto;
-  t.style.border = '1px solid ' + (esError ? '#FF4D5E' : '#00E676');
-  t.style.color = esError ? '#FF4D5E' : '#00E676';
-  clearTimeout(temporizadorAviso);
-  temporizadorAviso = setTimeout(() => t.remove(), esError ? 5200 : 2600);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

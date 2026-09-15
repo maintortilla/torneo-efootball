@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: el torneo no se pierde al cambiar de página</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  h1 { font-size:20px; color:#00E676; }
+  iframe { border:1px solid #223; background:#0A1017; width:1400px; height:620px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba de navegación entre torneos</h1>
+<p>Comprueba que al pasar de una página a otra NO se cambia de torneo solo (el fallo que se arregló).</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos = 200) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      const w = marco.contentWindow;
+      if (w && w.__listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(150); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;   // que no se repita en cada navegación
+  const marco = marcoEl;
+  let recordadoAntes = null;
+
+  try {
+    await esperarListo(marco);
+    let d = marco.contentDocument;
+    let w = marco.contentWindow;
+
+    // 0. La página de inicio es la lista de torneos
+    const titulo = d.querySelector('.panel-cabecera h2');
+    ok('la página de inicio es "Mis torneos"', !!titulo && /Mis/i.test(titulo.textContent),
+       titulo ? titulo.textContent.trim() : 'sin título');
+
+    const torneos = w.Store.cache;
+    ok('hay torneos cargados', torneos.length >= 1, torneos.length + ' torneo(s)');
+    ok('la lista enseña una tarjeta por torneo',
+       d.querySelectorAll('#lista-torneos .tarjeta-torneo').length === torneos.length,
+       d.querySelectorAll('#lista-torneos .tarjeta-torneo').length + ' tarjetas');
+
+    if (torneos.length < 2) {
+      salida.push('[AVISO] Hacen falta 2 torneos para probar el cambio; esta prueba se salta el resto.');
+      return terminar();
+    }
+
+    const A = torneos[0];
+    const B = torneos[1];
+    recordadoAntes = localStorage.getItem('torneo-activo');
+
+    // 1. Entrar a los partidos del torneo A por la dirección
+    await navegar(marco, '../partidos.html?torneo=' + A.id);
+    d = marco.contentDocument;
+    let nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('Partidos abre en el torneo de la dirección', nombre.includes(A.nombre),
+       'muestra: ' + nombre.trim() + ' · esperado: ' + A.nombre);
+
+    // 2. Los enlaces del menú llevan el torneo consigo (esto era el fallo)
+    const enlaces = Array.from(d.querySelectorAll('[data-pagina]'));
+    ok('el menú arrastra el torneo a las demás páginas',
+       enlaces.length >= 2 && enlaces.every(a => a.getAttribute('href').includes('torneo=' + A.id)),
+       enlaces.map(a => a.getAttribute('href').split('?')[1]).join(' | '));
+
+    // 3. Ir a Partidos SIN parámetro: debe seguir en A (recordado)
+    await navegar(marco, '../partidos.html');
+    d = marco.contentDocument;
+    nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('sin parámetro en la dirección sigue en el torneo que estaba (A)', nombre.includes(A.nombre),
+       'muestra: ' + nombre.trim());
+
+    // 4. Cambiar a B desde la clasificación
+    await navegar(marco, '../clasificacion.html?torneo=' + B.id);
+    d = marco.contentDocument;
+    nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('Clasificación abre en el torneo B', nombre.includes(B.nombre), 'muestra: ' + nombre.trim());
+
+    // 5. Y de nuevo a Partidos sin parámetro: ahora debe ser B (no vuelve a A)
+    await navegar(marco, '../partidos.html');
+    d = marco.contentDocument;
+    nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('al volver a Partidos sigue en B (no salta al primer torneo)', nombre.includes(B.nombre),
+       'muestra: ' + nombre.trim());
+
+    // 6. Un torneo que no existe no debe romper nada
+    await navegar(marco, '../clasificacion.html?torneo=no-existe-123');
+    d = marco.contentDocument;
+    nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('un torneo inventado cae al último usado sin romperse', nombre.includes(B.nombre),
+       'muestra: ' + nombre.trim());
+
+    // 7. Y los ajustes también recuerdan el torneo
+    await navegar(marco, '../ajustes.html');
+    d = marco.contentDocument;
+    nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
+    ok('Ajustes abre el mismo torneo', nombre.includes(B.nombre), 'muestra: ' + nombre.trim());
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  } finally {
+    if (recordadoAntes !== null) localStorage.setItem('torneo-activo', recordadoAntes);
+  }
+  terminar();
+
+  function terminar() {
+    const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+    document.getElementById('resultado').textContent =
+      salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+    document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+  }
+};
+</script>
+</body>
+</html>

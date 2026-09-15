@@ -73,12 +73,12 @@ marcoEl.onload = async function ejecutarPrueba() {
     const torneosAntes = w.Store.cache.length;
     ok('hay torneos cargados', torneosAntes >= 1, torneosAntes + ' torneo(s)');
 
-    // 2. Abrir el formulario de torneo nuevo
-    const sel = d.getElementById('selector-torneo');
-    sel.value = '__nuevo__';
-    sel.dispatchEvent(new Event('change'));
-    await esperar(200);
-    ok('se abre el formulario de torneo nuevo', d.getElementById('zona-crear').hidden === false);
+    // 2. Abrir el formulario de torneo nuevo (se entra por la dirección)
+    await navegar(marco, '../ajustes.html?nuevo=1');
+    d = marco.contentDocument;
+    w = marco.contentWindow;
+    await esperar(300);
+    ok('el enlace "Crear torneo" abre el formulario nuevo', d.getElementById('zona-crear').hidden === false);
     ok('el formulario trae 6 jugadores de partida',
        d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length === 6,
        d.querySelectorAll('#lista-jugadores-nuevo .jugador-linea').length + ' filas');
@@ -110,7 +110,7 @@ marcoEl.onload = async function ejecutarPrueba() {
     await esperar(1600);
 
     const urlAhora = marco.contentWindow.location.pathname;
-    ok('tras crear lleva a la clasificación', /index\.html$/.test(urlAhora), urlAhora);
+    ok('tras crear lleva a la clasificación', /clasificacion\.html$/.test(urlAhora), urlAhora);
     const hayToast = !!marco.contentDocument.getElementById('toast');
     ok('avisa de que el torneo se creó', hayToast,
        hayToast ? marco.contentDocument.getElementById('toast').textContent : 'sin aviso');

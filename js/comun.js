@@ -17,6 +17,57 @@ function configurarComun(torneo, alCambiar) {
   alCambiarComun = alCambiar || (() => {});
 }
 
+/* ==========================================================================
+   TORNEO ACTIVO — que cada página sepa en qué torneo está
+   --------------------------------------------------------------------------
+   Antes, todas las páginas cargaban el PRIMER torneo de la lista, así que al
+   cambiar de pantalla te podía llevar a otro torneo distinto. Ahora el torneo
+   viaja en la dirección (?torneo=...) y además se recuerda en el navegador.
+   ========================================================================== */
+
+const CLAVE_TORNEO_ACTIVO = 'torneo-activo';
+
+function torneoDeURL() {
+  return new URLSearchParams(window.location.search).get('torneo');
+}
+
+function recordarTorneo(id) {
+  try { localStorage.setItem(CLAVE_TORNEO_ACTIVO, id); } catch (e) {}
+}
+
+function torneoRecordado() {
+  try { return localStorage.getItem(CLAVE_TORNEO_ACTIVO); } catch (e) { return null; }
+}
+
+/* Decide con qué torneo abrir la página:
+   1º el que venga en la dirección, 2º el último que se usó, 3º el primero */
+function elegirTorneoInicial(torneos) {
+  const deUrl = torneoDeURL();
+  if (deUrl && torneos.some(t => t.id === deUrl)) return deUrl;
+
+  const recordado = torneoRecordado();
+  if (recordado && torneos.some(t => t.id === recordado)) return recordado;
+
+  return torneos.length ? torneos[0].id : null;
+}
+
+/* Pone el ?torneo= en los enlaces del menú lateral (y de la barra de arriba),
+   para que al cambiar de página NO se pierda el torneo */
+function enlacesConTorneo(torneoId) {
+  if (!torneoId) return;
+  document.querySelectorAll('[data-pagina]').forEach(a => {
+    a.href = a.dataset.pagina + '?torneo=' + encodeURIComponent(torneoId);
+  });
+}
+
+/* Escribe el nombre del torneo en la barra de arriba */
+function pintarNombreTorneo(torneo) {
+  const caja = $('#nombre-torneo');
+  if (!caja || !torneo) return;
+  const estado = torneo.estado === 'finalizado' ? ' · finalizado' : '';
+  caja.innerHTML = `<span class="emoji-torneo">🏆</span> ${torneo.nombre}${estado}`;
+}
+
 /* ------------------------------------------------- ventanita de resultado */
 function abrirModal(idPartido) {
   partidoEnEdicion = torneoComun.partidos.find(p => p.id === idPartido);

@@ -94,6 +94,8 @@ body {
   padding: 20px 26px 40px;
   align-items: start;
 }
+/* Páginas sin menú lateral (por ejemplo "Mis torneos") */
+.layout-simple { display: block; max-width: 1240px; }
 
 /* ---------- Sidebar ---------- */
 .sidebar { position: sticky; top: 78px; }
@@ -349,6 +351,37 @@ body {
 }
 .pastilla.nube { color: var(--neon); background: var(--neon-suave); border: 1px solid var(--neon); }
 .pastilla.local { color: var(--aviso); background: rgba(255,176,32,.12); border: 1px solid rgba(255,176,32,.45); }
+
+/* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */
+.rejilla-torneos {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px; margin-top: 22px;
+}
+.tarjeta-torneo {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--linea); border-radius: var(--radio);
+  padding: 18px 20px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: border-color .15s ease, transform .1s ease;
+}
+.tarjeta-torneo:hover { border-color: rgba(0,230,118,.5); transform: translateY(-2px); }
+.tarjeta-torneo.finalizado { opacity: .8; }
+.tarjeta-torneo h3 {
+  font-family: var(--fuente-numeros); font-size: 24px; font-weight: 800;
+  letter-spacing: .03em; text-transform: uppercase; margin: 0 0 2px; color: #fff;
+}
+.tarjeta-torneo .datos { color: var(--muted); font-size: 15px; display: block; margin-bottom: 12px; }
+.tarjeta-torneo .datos b { color: var(--texto); font-weight: 700; }
+.tarjeta-torneo .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+
+/* Nombre del torneo en la barra de arriba */
+.nombre-torneo {
+  font-family: var(--fuente-numeros); font-size: 20px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--texto);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px;
+}
+.nombre-torneo .emoji-torneo { font-size: 17px; }
+@media (max-width: 1200px) { .nombre-torneo { max-width: 260px; font-size: 17px; } }
 
 /* ---------- Ventanita de apuntar el resultado ---------- */
 .modal-fondo {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Partidos · Torneo eFootball</title>
+  <title>Clasificación · Torneo eFootball</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
 </head>
@@ -17,7 +17,7 @@
 
     <div class="topbar-centro">
       <span class="nombre-torneo" id="nombre-torneo">—</span>
-      <span class="badge-jornada" id="progreso">—</span>
+      <span class="badge-jornada" id="badge-jornada">—</span>
     </div>
 
     <div class="topbar-derecha">
@@ -31,42 +31,46 @@
 
     <aside class="sidebar">
       <nav>
-        <a class="nav-item" data-pagina="clasificacion.html" href="clasificacion.html">🏆 <span class="texto">Clasificación</span></a>
-        <a class="nav-item activo" data-pagina="partidos.html" href="partidos.html">📅 <span class="texto">Partidos</span></a>
+        <a class="nav-item activo" data-pagina="clasificacion.html" href="clasificacion.html">🏆 <span class="texto">Clasificación</span></a>
+        <a class="nav-item" data-pagina="partidos.html" href="partidos.html">📅 <span class="texto">Partidos</span></a>
         <span class="nav-item proximo" title="Próximamente">🏟️ <span class="texto">Eliminatorias · pronto</span></span>
         <span class="nav-item proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
         <a class="nav-item" data-pagina="ajustes.html" href="ajustes.html">⚙️ <span class="texto">Ajustes</span></a>
         <a class="nav-item" href="index.html">🗂️ <span class="texto">Mis torneos</span></a>
       </nav>
       <div class="sidebar-pie">
-        <b>Apuntar resultados</b><br>Pulsa <b>Apuntar</b> en cualquier partido: se abre la ventanita con los dos marcadores. Los jugados se pueden editar.
+        <b>Apuntar resultados</b><br>En la página <b>Partidos</b>: pulsa <b>Apuntar</b> en cualquier partido y sale la ventanita con los dos marcadores.
       </div>
     </aside>
 
     <main class="contenido">
 
-      <div class="resumen" id="resumen-partidos"></div>
+      <div class="resumen" id="resumen"></div>
 
-      <section class="panel">
-        <p class="panel-titulo">Todos los partidos
-          <b id="contador-partidos"></b>
-          <button class="btn-mini-ir" id="btn-nuevo-partido" title="Añadir un partido de liga o un amistoso">+ Añadir partido</button>
-        </p>
+      <div class="rejilla-2">
 
-        <div class="tabs">
-          <div class="tab activo" data-filtro="todos">Todos</div>
-          <div class="tab" data-filtro="pendientes">Pendientes</div>
-          <div class="tab" data-filtro="jugados">Jugados</div>
-          <div class="tab" data-filtro="proximos">Solo la jornada en curso</div>
+        <section class="panel" id="clasificacion">
+          <p class="panel-titulo">Clasificación <b id="aviso-clasificados"></b></p>
+          <table class="tabla" id="tabla-clasificacion"></table>
+        </section>
+
+        <div class="columna">
+          <section class="panel">
+            <p class="panel-titulo">Eliminatorias <b id="etiqueta-eliminatorias">si acabara hoy</b></p>
+            <div id="lista-eliminatorias"></div>
+          </section>
+
+          <section class="panel">
+            <p class="panel-titulo">Últimos resultados <b>se pueden corregir</b></p>
+            <div id="lista-ultimos"></div>
+          </section>
         </div>
 
-        <div id="lista-partidos" class="lista-doble"></div>
-      </section>
-
+      </div>
     </main>
   </div>
 
-  <!-- Ventanita para apuntar el resultado (igual que en la clasificación) -->
+  <!-- Ventanita para apuntar el resultado -->
   <div class="modal-fondo" id="modal-fondo" hidden>
     <div class="modal">
       <p class="panel-titulo">Apuntar resultado</p>
@@ -107,42 +111,6 @@
     </div>
   </div>
 
-  <!-- Ventanita para añadir un partido nuevo (de liga o amistoso) -->
-  <div class="modal-fondo" id="modal-nuevo" hidden>
-    <div class="modal">
-      <p class="panel-titulo">Añadir partido</p>
-
-      <div class="campo-form">
-        <label>Jugador local</label>
-        <select id="np-local"></select>
-      </div>
-
-      <div class="campo-form" style="margin-top:12px">
-        <label>Jugador visitante</label>
-        <select id="np-visitante"></select>
-      </div>
-
-      <div class="campo-form" style="margin-top:12px">
-        <label>Tipo de partido</label>
-        <select id="np-tipo">
-          <option value="liga">De liga · cuenta para la clasificación</option>
-          <option value="amistoso">Amistoso · no cuenta en la clasificación</option>
-        </select>
-      </div>
-
-      <div class="campo-form" id="np-jornada-caja" style="margin-top:12px">
-        <label>Jornada</label>
-        <input type="number" id="np-jornada" min="1" value="1">
-        <p class="pista">Ponla en una jornada que ya exista o crea una nueva.</p>
-      </div>
-
-      <div class="fila-2" style="margin-top:16px">
-        <button class="btn btn-gol" id="np-guardar">Añadir partido</button>
-        <button class="btn btn-ghost" id="np-cancelar">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/config-nube.js"></script>
@@ -150,6 +118,6 @@
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
   <script src="js/comun.js"></script>
-  <script src="js/partidos.js"></script>
+  <script src="js/clasificacion.js"></script>
 </body>
 </html>

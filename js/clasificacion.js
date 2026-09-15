@@ -1,47 +1,42 @@
 /* ==========================================================================
-   PANTALLA: CLASIFICACIÓN (portada)
+   PANTALLA: CLASIFICACIÓN
    Resumen + tabla de clasificación + eliminatorias + últimos resultados.
-   La lista completa de partidos vive en su propia página (partidos.html).
+   El torneo viene en la dirección (?torneo=...) o del último que se usó.
    ========================================================================== */
 
 let torneoActual = null;
 
-async function arrancarIndex() {
+async function arrancarClasificacion() {
   try {
     const torneos = await Store.iniciar();
-    torneoActual = Store.torneo(torneos[0].id);
+
+    const idInicial = elegirTorneoInicial(torneos);
+    if (!idInicial) {   // no hay torneos: a la lista para crear uno
+      window.location.href = 'index.html';
+      return;
+    }
+
+    torneoActual = Store.torneo(idInicial);
+    recordarTorneo(torneoActual.id);
 
     configurarComun(torneoActual, () => pintarTodo());
-    pintarSelectorTorneo(torneos);
     pintarModoDatos();
+    pintarNombreTorneo(torneoActual);
+    enlacesConTorneo(torneoActual.id);
     pintarTodo();
     engancharIndex();
 
-    // Aviso si venimos de crear un torneo (redirige aquí al crearlo)
+    // Aviso si venimos de crear un torneo
     const creado = new URLSearchParams(window.location.search).get('creado');
     if (creado) {
       avisar(`Torneo "${creado}" creado 🎉`, false, 6000);
-      window.history.replaceState({}, '', 'index.html');
+      window.history.replaceState({}, '', 'clasificacion.html?torneo=' + encodeURIComponent(torneoActual.id));
     }
   } catch (e) {
     console.error(e);
     avisar('No se pudo conectar con la nube: ' + e.message, true);
   }
   window.__listo = true;
-}
-
-function pintarSelectorTorneo(torneos) {
-  const sel = $('#selector-torneo');
-  sel.innerHTML = '';
-  torneos.forEach(t => {
-    const o = el('option', null, t.nombre + (t.estado === 'finalizado' ? ' (finalizado)' : ''));
-    o.value = t.id;
-    if (t.id === torneoActual.id) o.selected = true;
-    sel.appendChild(o);
-  });
-  const nuevo = el('option', null, '＋ Crear torneo nuevo…');
-  nuevo.value = '__nuevo__';
-  sel.appendChild(nuevo);
 }
 
 function pintarTodo() {
@@ -160,7 +155,6 @@ function pintarEliminatorias() {
   const FASES_FINALES = ['semifinal', 'final', 'tercer_puesto'];
   const generadas = torneoActual.partidos.filter(p => FASES_FINALES.includes(p.fase));
 
-  // Si ya están generadas, se muestran los cruces de verdad (con botón para apuntar)
   if (generadas.length) {
     etiqueta.textContent = 'en juego';
 
@@ -175,7 +169,6 @@ function pintarEliminatorias() {
     return;
   }
 
-  // Si no, se enseña cómo quedarían los cruces hoy
   etiqueta.textContent = 'si acabara hoy';
 
   const clasificacion = calcularClasificacion(torneoActual);
@@ -216,29 +209,18 @@ function pintarUltimos() {
     return;
   }
 
-  // Con botón para poder corregir un resultado mal apuntado
   jugados.forEach(p => caja.appendChild(filaDePartido(p)));
 }
 
 /* ------------------------------------------------------------- eventos */
 function engancharIndex() {
-  $('#selector-torneo').onchange = (e) => {
-    if (e.target.value === '__nuevo__') {
-      window.location.href = 'ajustes.html?nuevo=1';
-      return;
-    }
-    torneoActual = Store.torneo(e.target.value);
-    configurarComun(torneoActual, () => pintarTodo());
-    pintarTodo();
-  };
-
   engancharModal();
   engancharRefrescar(() => {
     torneoActual = Store.torneo(torneoActual.id);
     configurarComun(torneoActual, () => pintarTodo());
-    pintarSelectorTorneo(Store.cache);
+    pintarNombreTorneo(torneoActual);
     pintarTodo();
   });
 }
 
-document.addEventListener('DOMContentLoaded', arrancarIndex);
+document.addEventListener('DOMContentLoaded', arrancarClasificacion);

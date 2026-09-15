@@ -21,11 +21,17 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
 ## Qué se puede hacer
 
+- **Mis torneos** (página de inicio): la lista de todos los torneos en tarjetas. Desde ahí
+  se entra a la clasificación, a los partidos o a los ajustes de cada uno, y se crean
+  torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así
+  que al pasar de Partidos a Clasificación ya no se cambia de torneo solo
 - **Apuntar un resultado**: botón *Apuntar* en cualquier partido → ventanita con los dos
   marcadores → Guardar. La clasificación, las eliminatorias y el resumen se recalculan solos
 - **Ajustes** (menú lateral): crear un torneo nuevo, cambiar jugadores (emoji y color),
   formato, vueltas, cuántos clasifican, 3º y 4º puesto, puntos por victoria/empate/derrota
   y el orden de los desempates (con flechitas ↑↓)
+- **Añadir partido**: en Partidos, botón *+ Añadir partido* para meter un partido de liga
+  (con su jornada) o un amistoso (no cuenta para la clasificación)
 - **Eliminatorias**: cuando acaba la liguilla, un botón genera las semifinales; después,
   la final (y el 3º puesto si está activado). Si un partido de eliminatoria acaba en
   empate, pasa el que mejor quedó en la liguilla
@@ -35,7 +41,8 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
 ```
 Torneo-Efootball/
-├── index.html            Clasificación: resumen, tabla, eliminatorias, últimos resultados
+├── index.html            Mis torneos: la lista de torneos y el botón de crear uno nuevo
+├── clasificacion.html    Clasificación: resumen, tabla, eliminatorias, últimos resultados
 ├── partidos.html         Todos los partidos: filtros, por jornadas, apuntar/editar
 ├── ajustes.html          Crear torneos y configurarlo todo
 ├── css/estilos.css       Todo el estilo (tema oscuro + verde neón)
@@ -44,9 +51,10 @@ Torneo-Efootball/
 │   ├── config-nube.js    URL y clave pública de Supabase (son públicas a propósito)
 │   ├── modelo.js         Las reglas: calendario, clasificación, eliminatorias, fases
 │   ├── store.js          Única puerta de los datos (nube o navegador)
-│   ├── comun.js          Piezas compartidas: ventanita de resultado, avisos, filas
+│   ├── comun.js          Piezas compartidas: torneo activo, ventanita, avisos, filas
 │   ├── datos-prueba.js   Datos de mentira por si no hay conexión
-│   ├── index.js          Lógica de la clasificación
+│   ├── torneos.js        Lógica de la lista de torneos
+│   ├── clasificacion.js  Lógica de la clasificación
 │   ├── partidos.js       Lógica de la página de partidos
 │   └── ajustes.js        Lógica de la pantalla de ajustes
 ├── docs/                 Diseño + tests + el SQL de la base de datos
@@ -54,15 +62,21 @@ Torneo-Efootball/
 └── assets/               Capturas de prueba
 ```
 
+**Cómo viaja el torneo entre páginas:** todas las páginas de un torneo llevan `?torneo=<id>`
+en la dirección. Si no viene, se usa el último torneo abierto (guardado en el navegador) y,
+si tampoco hay, el primero de la lista. Los enlaces del menú lateral arrastran el `?torneo=`
+solos (`enlacesConTorneo()` en `js/comun.js`).
+
 ## Comprobar que todo funciona
 
 | Test | Cómo | Qué comprueba |
 |---|---|---|
 | Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores |
+| Navegación | abrir `docs/prueba-navegacion.html` | Que al cambiar de página NO se cambia de torneo solo |
 | Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita apunta un resultado, el progreso sube y el borrado deja el partido pendiente |
 | Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo con su calendario, se configura y se borra |
 
-Los tres deben terminar en **✅ TODO CORRECTO**. Las dos pruebas de navegador **se limpian
+Los cuatro deben terminar en **✅ TODO CORRECTO**. Las tres pruebas de navegador **se limpian
 solas**: dejan el torneo como estaba al terminar.
 
 ## Estado por fases

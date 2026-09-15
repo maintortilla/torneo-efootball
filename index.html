@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torneo eFootball · Clasificación</title>
+  <title>Mis torneos · Torneo eFootball</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
 </head>
@@ -16,112 +16,38 @@
     </div>
 
     <div class="topbar-centro">
-      <select class="selector-torneo" id="selector-torneo" title="Elegir torneo"></select>
-      <span class="badge-jornada" id="badge-jornada">—</span>
+      <span class="nombre-torneo" id="cuenta-torneos"></span>
     </div>
 
     <div class="topbar-derecha">
       <span class="nota" id="nota-guardado"></span>
-      <button class="btn-mini-ir" id="btn-refrescar" title="Traer lo que hayan apuntado los demás">🔄 Refrescar</button>
     </div>
   </header>
 
-  <div class="layout">
-
-    <!-- Navegación lateral -->
-    <aside class="sidebar">
-      <nav>
-        <a class="nav-item activo" href="index.html">🏆 <span class="texto">Clasificación</span></a>
-        <a class="nav-item" href="partidos.html">📅 <span class="texto">Partidos</span></a>
-        <span class="nav-item proximo" title="Próximamente">🏟️ <span class="texto">Eliminatorias · pronto</span></span>
-        <span class="nav-item proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
-        <a class="nav-item" href="ajustes.html">⚙️ <span class="texto">Ajustes</span></a>
-      </nav>
-      <div class="sidebar-pie">
-        <b>Apuntar resultados</b><br>En la página <b>Partidos</b>: pulsa <b>Apuntar</b> en cualquier partido y sale la ventanita con los dos marcadores.
-      </div>
-    </aside>
-
-    <!-- Contenido -->
+  <div class="layout layout-simple">
     <main class="contenido">
 
-      <div class="resumen" id="resumen"></div>
+      <header class="panel-cabecera">
+        <h2>Mis <em>torneos</em></h2>
+        <p>Elige un torneo para ver su clasificación, sus partidos o cambiar sus ajustes. Puedes tener todos los que quieras.</p>
+      </header>
 
-      <div class="rejilla-2">
-
-        <!-- Clasificación -->
-        <section class="panel" id="clasificacion">
-          <p class="panel-titulo">Clasificación <b id="aviso-clasificados"></b></p>
-          <table class="tabla" id="tabla-clasificacion"></table>
-        </section>
-
-        <!-- Eliminatorias y últimos resultados -->
-        <div class="columna">
-          <section class="panel">
-            <p class="panel-titulo">Eliminatorias <b id="etiqueta-eliminatorias">si acabara hoy</b></p>
-            <div id="lista-eliminatorias"></div>
-          </section>
-
-          <section class="panel">
-            <p class="panel-titulo">Últimos resultados <b>se pueden corregir</b></p>
-            <div id="lista-ultimos"></div>
-          </section>
-        </div>
-
+      <div class="zona-acciones">
+        <button class="btn btn-gol" id="btn-nuevo-torneo">Crear torneo nuevo</button>
       </div>
+
+      <div class="rejilla-torneos" id="lista-torneos"></div>
+
     </main>
   </div>
 
-  <!-- Ventanita para apuntar el resultado -->
-  <div class="modal-fondo" id="modal-fondo" hidden>
-    <div class="modal">
-      <p class="panel-titulo">Apuntar resultado</p>
-
-      <div class="marcador">
-        <div class="equipo local">
-          <span class="avatar" id="modal-av-local">🟢</span>
-          <span class="nombre" id="modal-nom-local">Leo</span>
-        </div>
-        <span class="vs">—</span>
-        <div class="equipo visitante">
-          <span class="avatar" id="modal-av-visit">🔵</span>
-          <span class="nombre" id="modal-nom-visit">Javi</span>
-        </div>
-      </div>
-
-      <div class="marcador">
-        <div class="contador">
-          <button class="btn-paso" data-modal-paso="local" data-delta="-1">−</button>
-          <span class="cifra" id="modal-cifra-local">0</span>
-          <button class="btn-paso" data-modal-paso="local" data-delta="1">+</button>
-        </div>
-        <span class="vs">:</span>
-        <div class="contador">
-          <button class="btn-paso" data-modal-paso="visitante" data-delta="-1">−</button>
-          <span class="cifra" id="modal-cifra-visit">0</span>
-          <button class="btn-paso" data-modal-paso="visitante" data-delta="1">+</button>
-        </div>
-      </div>
-
-      <p class="nota" id="modal-nota"></p>
-
-      <div class="fila-2" style="margin-top:16px">
-        <button class="btn btn-gol" id="modal-guardar">Guardar ✅</button>
-        <button class="btn btn-ghost" id="modal-cancelar">Cancelar</button>
-      </div>
-      <button class="btn btn-ghost btn-ancho" id="modal-borrar" style="margin-top:10px">Borrar el resultado y dejarlo pendiente</button>
-    </div>
-  </div>
-
-  <!-- Librería de Supabase (solo en modo nube; si no carga, la web sigue en local) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script src="js/config.js"></script>
   <script src="js/config-nube.js"></script>
   <script src="js/modelo.js"></script>
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
   <script src="js/comun.js"></script>
-  <script src="js/index.js"></script>
+  <script src="js/torneos.js"></script>
 </body>
 </html>
