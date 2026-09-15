@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: la ruleta de emparejamientos</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  h1 { font-size:20px; color:#00E676; }
+  iframe { border:1px solid #223; background:#0A1017; width:1400px; height:600px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba de la ruleta 🎰</h1>
+<p>Crea su propio torneo de prueba, sortea cruces, los apunta y borra el torneo al terminar.
+   No toca los torneos de verdad.</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando… (la ruleta gira de verdad, tarda un poco)</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK   ] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos = 250) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(250); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const ESPERA_GIRO = 4200;   // la rueda gira 3,6 s
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+  let idTorneo = null;
+  let nombreTorneo = null;
+
+  try {
+    await esperarListo(marco);
+    let w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    // 1. Torneo de prueba propio: 4 jugadores, sin partidos
+    nombreTorneo = 'PRUEBA RULETA ' + Date.now().toString(36).slice(-5);
+    const emojis = ['🔵', '🟡', '🔴', '🟣'];
+    const colores = ['#00E676', '#FFD400', '#FF4D5E', '#B388FF'];
+    const jugadores = ['Ana', 'Beto', 'Cris', 'Dani'].map((n, i) => ({
+      id: w.nuevoId('j'), nombre: n, emoji: emojis[i], color: colores[i]
+    }));
+
+    const nuevo = w.crearTorneoNuevo(nombreTorneo, jugadores);
+    await w.Store.crearTorneo(nuevo);
+    idTorneo = nuevo.id;
+    ok('el torneo de prueba se crea sin ningún partido', nuevo.partidos.length === 0,
+       nuevo.partidos.length + ' partidos · ' + jugadores.length + ' jugadores');
+
+    // 2. A sus partidos
+    await navegar(marco, '../partidos.html?torneo=' + idTorneo);
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+
+    ok('la página avisa de que el torneo no tiene partidos',
+       /no tiene partidos|Sin partidos/i.test(d.getElementById('resumen-partidos').textContent + d.getElementById('lista-partidos').textContent),
+       d.getElementById('resumen-partidos').textContent.trim().slice(0, 40));
+    ok('el botón de la ruleta está arriba', !!d.getElementById('btn-ruleta'));
+
+    // 3. Abrir la ruleta
+    d.getElementById('btn-ruleta').click();
+    await esperar(250);
+    ok('la ventana de la ruleta se abre', d.getElementById('modal-ruleta').hidden === false);
+    const sectores = d.querySelectorAll('#ruleta-rueda .ruleta-emoji');
+    ok('la rueda tiene un sector por jugador', sectores.length === 4, sectores.length + ' sectores');
+
+    // 4. Primer giro: sale el jugador de casa
+    d.getElementById('ruleta-girar').click();
+    await esperar(ESPERA_GIRO);
+    const local = d.getElementById('ruleta-nom-local').textContent.trim();
+    ok('tras girar ya hay un jugador que juega en casa',
+       local && local !== 'sin sortear', 'local: ' + local);
+    ok('todavía no se puede apuntar (falta el rival)',
+       d.getElementById('ruleta-guardar').disabled === true);
+
+    // 5. Segundo giro: sale el rival
+    d.getElementById('ruleta-girar').click();
+    await esperar(ESPERA_GIRO);
+    const visit = d.getElementById('ruleta-nom-visit').textContent.trim();
+    ok('tras el segundo giro hay rival', visit && visit !== 'sin sortear', 'visitante: ' + visit);
+    ok('el rival es distinto del local', visit !== local, local + ' vs ' + visit);
+    ok('ya se puede apuntar el partido', d.getElementById('ruleta-guardar').disabled === false);
+
+    const jornadaElegida = Number(d.getElementById('ruleta-jornada').value);
+
+    // 6. Apuntar el partido
+    d.getElementById('ruleta-guardar').click();
+    await esperar(2500);
+    const trasGuardar = w.Store.torneo(idTorneo);
+    ok('el partido sorteado queda apuntado en el torneo', trasGuardar.partidos.length === 1,
+       trasGuardar.partidos.length + ' partido(s)');
+    ok('el partido va a la jornada elegida', trasGuardar.partidos[0] && Number(trasGuardar.partidos[0].jornada) === jornadaElegida,
+       'jornada ' + (trasGuardar.partidos[0] ? trasGuardar.partidos[0].jornada : '—'));
+    ok('la ventana de la ruleta se cierra al apuntar', d.getElementById('modal-ruleta').hidden === true);
+    ok('el partido aparece en la lista',
+       d.getElementById('lista-partidos').textContent.includes(local) && d.getElementById('lista-partidos').textContent.includes(visit),
+       local + ' vs ' + visit);
+
+    // 7. La ruleta no debe repetir el cruce que ya está apuntado
+    const cruceAntes = [trasGuardar.partidos[0].localId, trasGuardar.partidos[0].visitanteId].sort().join('|');
+    d.getElementById('btn-ruleta').click();
+    await esperar(250);
+
+    let repetido = false;
+    for (let intento = 0; intento < 2 && !repetido; intento++) {
+      d.getElementById('ruleta-girar').click();
+      await esperar(ESPERA_GIRO);
+      const l = d.getElementById('ruleta-nom-local').textContent.trim();
+      d.getElementById('ruleta-girar').click();
+      await esperar(ESPERA_GIRO);
+      const v = d.getElementById('ruleta-nom-visit').textContent.trim();
+
+      const idL = jugadores.find(j => j.nombre === l);
+      const idV = jugadores.find(j => j.nombre === v);
+      const cruceAhora = [idL ? idL.id : l, idV ? idV.id : v].sort().join('|');
+      repetido = (cruceAhora === cruceAntes);
+    }
+    ok('la ruleta no vuelve a ofrecer el cruce ya apuntado', !repetido,
+       repetido ? 'volvió a salir el mismo cruce' : 'salió un cruce nuevo');
+
+    // 8. Y con «permitir repetir» sí puede salir
+    d.getElementById('ruleta-repetir').checked = true;
+    const candidatosConRepetir = w.candidatosRuleta(w.Store.torneo(idTorneo), {
+      yaElegidos: [], localId: trasGuardar.partidos[0].localId, permitirRepetir: true
+    });
+    ok('con «permitir repetir» el cruce vuelve a estar disponible',
+       candidatosConRepetir.some(j => j.id === trasGuardar.partidos[0].visitanteId),
+       candidatosConRepetir.map(j => j.nombre).join(', '));
+
+    d.getElementById('ruleta-cerrar').click();
+    await esperar(200);
+
+    // 9. Recoger: se borra el torneo de prueba
+    await w.Store.borrarTorneo(idTorneo);
+    const sigue = w.Store.cache.some(t => t.id === idTorneo);
+    ok('el torneo de prueba se borra al terminar (no se ensucia nada)', !sigue);
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+    // Si algo falla, al menos se intenta limpiar
+    try { await marco.contentWindow.Store.borrarTorneo(idTorneo); } catch (e2) {}
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

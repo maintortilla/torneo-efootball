@@ -48,6 +48,20 @@ function pintarResumenPartidos() {
     .reduce((s, p) => s + p.golesLocal + p.golesVisitante, 0);
   const media = jugados ? (goles / jugados).toFixed(1) : '0.0';
 
+  const caja = $('#resumen-partidos');
+  caja.innerHTML = '';
+
+  // Torneo recién creado: aún no hay ningún partido
+  if (!liga.length) {
+    caja.appendChild(el('div', 'dato',
+      `<span class="etiqueta">Sin partidos todavía</span>
+       <small style="font-size:15px;color:var(--texto);white-space:normal">
+         Este torneo se monta jornada a jornada: pulsa <b>🎰 Ruleta</b> para sortear
+         el primer cruce, o <b>+ Añadir partido</b> para ponerlo a mano.
+       </small>`));
+    return;
+  }
+
   const estado = estadoDeFases(torneoActual);
   const textosEstado = {
     liga: `${estado.pendientes} partidos para acabar la liguilla`,
@@ -58,8 +72,6 @@ function pintarResumenPartidos() {
     terminado: 'Torneo terminado 🏆'
   };
 
-  const caja = $('#resumen-partidos');
-  caja.innerHTML = '';
   [
     { etiqueta: 'Partidos jugados', valor: jugados + '/' + liga.length, extra: pendientes + ' pendientes' },
     { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', verde: true },
@@ -109,7 +121,10 @@ function pintarLista() {
   $('#contador-partidos').textContent = (liga.length + eliminatorias.length + amistosos.length) + ' en pantalla';
 
   if (!liga.length && !eliminatorias.length && !amistosos.length) {
-    caja.appendChild(el('div', 'vacio', 'No hay partidos en esta vista 👀'));
+    const sinNada = !torneoActual.partidos.length;
+    caja.appendChild(el('div', 'vacio', sinNada
+      ? 'Este torneo aún no tiene partidos.<br>Pulsa <b>🎰 Ruleta</b> arriba para sortear el primero, o <b>+ Añadir partido</b> para montarlo a mano.'
+      : 'No hay partidos en esta vista 👀'));
     return;
   }
 
@@ -167,11 +182,8 @@ function abrirModalNuevoPartido() {
     visit.value = torneoActual.jugadores[1].id;
   }
 
-  // Jornada por defecto: la que está en curso; si no, una nueva al final
-  const pendientes = torneoActual.partidos.filter(p => p.fase === 'liga' && !p.jugado);
-  const jornadas = torneoActual.partidos.filter(p => p.jornada).map(p => p.jornada);
-  const ultima = jornadas.length ? Math.max.apply(null, jornadas) : 0;
-  $('#np-jornada').value = pendientes.length ? pendientes[0].jornada : (ultima + 1);
+  // Jornada por defecto: la primera que aún no esté completa
+  $('#np-jornada').value = jornadaSugerida(torneoActual);
 
   $('#np-tipo').value = 'liga';
   actualizarTipoPartido();

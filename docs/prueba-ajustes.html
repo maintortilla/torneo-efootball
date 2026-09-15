@@ -119,7 +119,7 @@ marcoEl.onload = async function ejecutarPrueba() {
     const creado = marco.contentWindow.Store.cache.find(t => t.nombre === NOMBRE_PRUEBA);
     ok('el torneo se creó con 4 jugadores', creado && creado.jugadores.length === 4,
        creado ? creado.jugadores.map(j => j.nombre).join(', ') : '—');
-    ok('la liguilla se generó con 6 partidos', creado && creado.partidos.length === 6,
+    ok('el torneo se crea SIN partidos (los cruces se montan a mano)', creado && creado.partidos.length === 0,
        creado ? creado.partidos.length + ' partidos' : '—');
 
     // 5. Volver a ajustes de ese torneo y cambiar la puntuación

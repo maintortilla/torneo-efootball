@@ -12,10 +12,16 @@ const fuente = archivos.map(f => fs.readFileSync(path.join(raiz, f), 'utf8')).jo
 const vm = require('vm');
 vm.runInThisContext(fuente + `
 ;globalThis.__api = { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
-  calcularClasificacion, calcularGoleadores, generarCalendario, generarEliminatorias };`);
+  calcularClasificacion, calcularGoleadores, generarCalendario, generarEliminatorias,
+  estadoDeFases, crearTorneoNuevo, clavePareja, parejaYaExiste, partidosDeJornada,
+  jugadorYaJuegaEnJornada, siguienteJornada, jornadaSugerida, candidatosRuleta,
+  elegirAlAzar, nuevoPartidoLiga };`);
 const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
         calcularClasificacion, calcularGoleadores, generarCalendario,
-        generarEliminatorias } = globalThis.__api;
+        generarEliminatorias, estadoDeFases, crearTorneoNuevo, clavePareja,
+        parejaYaExiste, partidosDeJornada, jugadorYaJuegaEnJornada,
+        siguienteJornada, jornadaSugerida, candidatosRuleta, elegirAlAzar,
+        nuevoPartidoLiga } = globalThis.__api;
 
 const torneo = JSON.parse(JSON.stringify(TORNEO_PRUEBA));
 aplicarResultadosEjemplo(torneo);
@@ -107,6 +113,55 @@ console.log('\n=== FORMATOS ALTERNATIVOS (configurabilidad) ===');
   const repetidos = Object.values(cruces).some(v => v > 1);
   if (repetidos) { fallos++; console.log(`[FALLO] ${n} jugadores → hay cruces repetidos`); }
 });
+
+console.log('\n=== RULETA (jornadas a jornada) ===');
+
+// El torneo nuevo nace sin partidos: los cruces se montan a mano
+const tRuleta = crearTorneoNuevo('Prueba ruleta', [
+  { id: 'j1', nombre: 'Ana',  emoji: '🔵', color: '#00E676' },
+  { id: 'j2', nombre: 'Beto', emoji: '🟡', color: '#FFD400' },
+  { id: 'j3', nombre: 'Cris', emoji: '🔴', color: '#FF4D5E' },
+  { id: 'j4', nombre: 'Dani', emoji: '🟣', color: '#B388FF' }
+]);
+comprobar('un torneo nuevo nace SIN partidos', tRuleta.partidos.length === 0, tRuleta.partidos.length + ' partidos');
+comprobar('el torneo nuevo conserva sus jugadores', tRuleta.jugadores.length === 4);
+
+// Sorteo: al empezar pueden salir todos; el azar se puede fijar para probarlo
+comprobar('al empezar a sortear pueden salir todos', candidatosRuleta(tRuleta, {}).length === 4);
+const primero = elegirAlAzar(candidatosRuleta(tRuleta, {}), 0);
+comprobar('el sorteo con azar 0 saca al primero de la lista', primero && primero.nombre === 'Ana', primero && primero.nombre);
+
+const segundos = candidatosRuleta(tRuleta, { yaElegidos: ['j1'], localId: 'j1' });
+comprobar('no se puede sortear contra uno mismo', !segundos.some(j => j.id === 'j1'), segundos.length + ' rivales posibles');
+
+// Apuntamos un cruce: ya no debe volver a salir
+tRuleta.partidos.push(nuevoPartidoLiga('j1', 'j2', 1));
+comprobar('el cruce apuntado se detecta (dé igual el orden)',
+  parejaYaExiste(tRuleta, 'j1', 'j2') && parejaYaExiste(tRuleta, 'j2', 'j1'));
+
+const trasApuntar = candidatosRuleta(tRuleta, { yaElegidos: ['j1'], localId: 'j1' });
+comprobar('la ruleta ya NO ofrece el cruce repetido',
+  trasApuntar.length === 2 && !trasApuntar.some(j => j.id === 'j2'),
+  trasApuntar.map(j => j.nombre).join(', '));
+
+const conRepetir = candidatosRuleta(tRuleta, { yaElegidos: ['j1'], localId: 'j1', permitirRepetir: true });
+comprobar('con «permitir repetir» sí vuelve a aparecer', conRepetir.length === 3, conRepetir.map(j => j.nombre).join(', '));
+
+// La jornada sugerida: con 4 jugadores son 2 partidos por jornada
+tRuleta.partidos.push(nuevoPartidoLiga('j3', 'j4', 1));
+comprobar('la jornada sugerida pasa a la 2 cuando la 1 está llena', jornadaSugerida(tRuleta) === 2, 'jornada ' + jornadaSugerida(tRuleta));
+comprobar('se sabe si alguien ya juega en una jornada',
+  jugadorYaJuegaEnJornada(tRuleta, 'j1', 1) && !jugadorYaJuegaEnJornada(tRuleta, 'j1', 2));
+comprobar('la jornada siguiente a la última es la 2', siguienteJornada(tRuleta) === 2, 'jornada ' + siguienteJornada(tRuleta));
+comprobar('los partidos de una jornada se cuentan bien', partidosDeJornada(tRuleta, 1).length === 2, partidosDeJornada(tRuleta, 1).length + ' en la jornada 1');
+
+// Un torneo vacío no debe romper nada
+const tVacio = crearTorneoNuevo('Vacío', [{ id: 'a', nombre: 'Uno', emoji: '⚪' }, { id: 'b', nombre: 'Dos', emoji: '⚪' }]);
+const clasVacia = calcularClasificacion(tVacio);
+comprobar('la clasificación sale a cero con el torneo vacío',
+  clasVacia.length === 2 && clasVacia.every(f => f.pts === 0 && f.pj === 0));
+comprobar('el estado de fases dice que no hay calendario',
+  estadoDeFases(tVacio).paso === 'sin_calendario', estadoDeFases(tVacio).paso);
 
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);

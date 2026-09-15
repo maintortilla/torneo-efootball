@@ -21,6 +21,11 @@ Luego entra en http://127.0.0.1:8765 (F5 para recargar).
 
 ## Qué se puede hacer
 
+- **🎰 Ruleta de emparejamientos**: los torneos nuevos nacen **sin ningún partido**. En la
+  página Partidos pulsas *Ruleta* y giras: el primer jugador que sale juega en casa y el
+  segundo es el rival. La ruleta **no repite cruces** ya apuntados (hay una casilla para
+  permitirlo) y el partido se apunta en la jornada que elijas. Las jornadas se van montando
+  **poco a poco**; también puedes poner los cruces a mano con *+ Añadir partido*
 - **Mis torneos** (página de inicio): la lista de todos los torneos en tarjetas. Desde ahí
   se entra a la clasificación, a los partidos o a los ajustes de cada uno, y se crean
   torneos nuevos. **Cada página recuerda en qué torneo estás** (queda en la dirección), así
@@ -56,6 +61,7 @@ Torneo-Efootball/
 │   ├── torneos.js        Lógica de la lista de torneos
 │   ├── clasificacion.js  Lógica de la clasificación
 │   ├── partidos.js       Lógica de la página de partidos
+│   ├── ruleta.js         La ruleta que sortea los emparejamientos
 │   └── ajustes.js        Lógica de la pantalla de ajustes
 ├── docs/                 Diseño + tests + el SQL de la base de datos
 ├── tools/                Scripts de apoyo (creación del proyecto de Supabase)
@@ -71,10 +77,11 @@ solos (`enlacesConTorneo()` en `js/comun.js`).
 
 | Test | Cómo | Qué comprueba |
 |---|---|---|
-| Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores |
+| Modelo | `node docs/verificar-modelo.js` | Calendario, puntos, desempates, eliminatorias, formatos de 4 a 10 jugadores y la lógica de la ruleta |
+| Ruleta | abrir `docs/prueba-ruleta.html` | Que la ruleta sortea, no repite cruces y apunta el partido en su jornada (monta un torneo de prueba y lo borra) |
 | Navegación | abrir `docs/prueba-navegacion.html` | Que al cambiar de página NO se cambia de torneo solo |
 | Flujo | abrir `docs/prueba-flujo.html` | Que la ventanita apunta un resultado, el progreso sube y el borrado deja el partido pendiente |
-| Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo con su calendario, se configura y se borra |
+| Ajustes | abrir `docs/prueba-ajustes.html` | Que se crea un torneo (sin partidos), se configura y se borra |
 
 Los cuatro deben terminar en **✅ TODO CORRECTO**. Las tres pruebas de navegador **se limpian
 solas**: dejan el torneo como estaba al terminar.

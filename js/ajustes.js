@@ -279,21 +279,29 @@ function pintarPistaPartidos() {
   const porJugador = (n - 1) * vueltas;
   $('#pista-partidos-nuevo').textContent = n < 2
     ? 'Añade al menos 2 jugadores'
-    : `${total} partidos en total · ${porJugador} por jugador`;
+    : `Si os enfrentáis todos contra todos saldrían ${total} partidos (${porJugador} por jugador). Los cruces los vais sorteando con la ruleta 🎰`;
 
   if (torneoActual) {
     const jugadores = torneoActual.jugadores.length;
     const v = Number($('#edit-vueltas').value);
     const t = (jugadores * (jugadores - 1) / 2) * v;
-    $('#pista-partidos-edit').textContent = `${t} partidos en total · ${(jugadores - 1) * v} por jugador`;
+    $('#pista-partidos-edit').textContent = `Si os enfrentáis todos contra todos saldrían ${t} partidos (${(jugadores - 1) * v} por jugador)`;
   }
 }
 
 function pintarCalendarioAviso() {
+  const liga = torneoActual.partidos.filter(p => p.fase === 'liga');
   const jugados = torneoActual.partidos.filter(p => p.jugado).length;
+
+  if (!liga.length) {
+    $('#aviso-calendario').innerHTML =
+      'Este torneo no trae calendario: los cruces los vais montando <b>jornada a jornada</b> en la página Partidos (con la ruleta 🎰 o a mano). El botón de abajo es solo si algún día queréis que la web reparta <b>todos</b> los cruces de golpe.';
+    return;
+  }
+
   $('#aviso-calendario').innerHTML = jugados
-    ? `⚠️ Hay <b>${jugados}</b> partidos con resultado. Regenerar el calendario los borraría todos.`
-    : 'Todavía no hay resultados: regenerar el calendario no rompe nada.';
+    ? `⚠️ Hay <b>${jugados}</b> partidos con resultado. Generar el calendario completo tiraría los cruces actuales y sus resultados.`
+    : `Hay <b>${liga.length}</b> cruces apuntados sin resultado. Generar el calendario completo los reemplazaría por el reparto clásico.`;
 }
 
 /* ------------------------------------------------------------- creación */
@@ -349,14 +357,14 @@ async function guardarCambios() {
   if (nuevosJugadores.length < 2) { avisar('Hacen falta al menos 2 jugadores 👥', true); return; }
 
   const jugadoresCambiados = nuevosJugadores.length !== torneoActual.jugadores.length;
-  const vueltasAntes = cfg.vueltas;
   const vueltasAhora = Number($('#edit-vueltas').value);
-  const formatoCambiado = jugadoresCambiados || String(vueltasAntes) !== String(vueltasAhora);
+  const formatoCambiado = jugadoresCambiados || String(cfg.vueltas) !== String(vueltasAhora);
 
-  if (formatoCambiado && hayResultados(torneoActual)) {
+  // Los cruces ya no se regeneran solos: solo hay que actuar si se quita gente
+  if (jugadoresCambiados && hayResultados(torneoActual)) {
     const seguro = confirm(
-      'Has cambiado el número de jugadores o de vueltas.\n\n' +
-      'Eso obliga a rehacer el calendario y se PERDERÁN todos los resultados apuntados.\n\n' +
+      'Has cambiado el número de jugadores y ya hay resultados apuntados.\n\n' +
+      'Los partidos de los jugadores que quites se borrarán (los demás cruces se quedan como están).\n\n' +
       '¿Seguro que quieres seguir?'
     );
     if (!seguro) return;
@@ -375,7 +383,16 @@ async function guardarCambios() {
   cfg.puntosDerrota = Number($('#edit-pts-d').value);
   cfg.desempates = desempates.slice();
 
-  if (formatoCambiado) regenerarCalendario(torneoActual);
+  // Al quitar jugadores se van con ellos sus partidos (si no, quedarían cruces
+  // con un jugador que ya no está). Los cruces montados NO se tocan.
+  if (jugadoresCambiados) {
+    const idsValidos = nuevosJugadores.map(j => j.id);
+    const antes = torneoActual.partidos.length;
+    torneoActual.partidos = torneoActual.partidos.filter(p =>
+      idsValidos.includes(p.localId) && idsValidos.includes(p.visitanteId));
+    const quitados = antes - torneoActual.partidos.length;
+    if (quitados) avisar(`Se han quitado ${quitados} partidos de jugadores que ya no están 🧹`, false, 4500);
+  }
 
   const boton = $('#btn-guardar');
   boton.disabled = true;
@@ -397,16 +414,38 @@ async function guardarCambios() {
 /* ------------------------------------------------- regenerar y eliminar */
 async function regenerar() {
   if (hayResultados(torneoActual)) {
-    const seguro = confirm('Regenerar el calendario BORRARÁ todos los resultados apuntados.\n\n¿Continuar?');
+    const seguro = confirm('Generar el calendario completo BORRARÁ todos los resultados apuntados.\n\n¿Continuar?');
     if (!seguro) return;
   }
   regenerarCalendario(torneoActual);
   try {
     await Store.guardarTorneo(torneoActual, 'reemplazar');
     cargarTorneo(torneoActual.id);
-    avisar('Calendario regenerado 🗓️');
+    avisar('Calendario completo generado: todos los cruces repartidos 🗓️');
   } catch (e) {
-    avisar('No se pudo regenerar: ' + e.message, true);
+    avisar('No se pudo generar: ' + e.message, true);
+  }
+}
+
+/* Deja el torneo sin ningún partido, para montarlo a mano con la ruleta */
+async function vaciarPartidos() {
+  const total = torneoActual.partidos.length;
+  if (!total) { avisar('Este torneo ya está sin partidos: monta las jornadas con la ruleta 🎰'); return; }
+
+  const jugados = torneoActual.partidos.filter(p => p.jugado).length;
+  const seguro = confirm(
+    'Se van a BORRAR los ' + total + ' partidos del torneo (también las eliminatorias)' +
+    (jugados ? ', incluidos ' + jugados + ' con resultado ya apuntado' : '') + '.\n\n' +
+    'Después podrás ir montando las jornadas a mano con la ruleta 🎰.\n\n¿Seguro?');
+  if (!seguro) return;
+
+  torneoActual.partidos = [];
+  try {
+    await Store.guardarTorneo(torneoActual, 'reemplazar');
+    cargarTorneo(torneoActual.id);
+    avisar('Torneo vaciado: monta la primera jornada con la ruleta 🎰', false, 5000);
+  } catch (e) {
+    avisar('No se pudo vaciar: ' + e.message, true);
   }
 }
 
@@ -470,6 +509,7 @@ function engancharAjustes() {
   $('#btn-guardar').onclick = guardarCambios;
   $('#btn-regenerar').onclick = regenerar;
   $('#btn-generar-ronda').onclick = generarRonda;
+  $('#btn-vaciar').onclick = vaciarPartidos;
   $('#btn-borrar').onclick = borrarTorneo;
 }
 

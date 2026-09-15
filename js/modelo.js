@@ -268,10 +268,102 @@ function calcularStatsJugador(torneo, jugadorId) {
 }
 
 /* =========================================================================
+   RULETA DE EMPAREJAMIENTOS (jornadas a mano)
+   -------------------------------------------------------------------------
+   El torneo nace SIN partidos: los cruces se sortean o se apuntan a mano
+   jornada a jornada. Aquí vive la lógica del sorteo, que es pura.
+   ========================================================================= */
+
+/* Clave de una pareja, dé igual quién fue local (para saber si ya existe) */
+function clavePareja(aId, bId) {
+  return [aId, bId].sort().join('|');
+}
+
+/* ¿Estos dos ya tienen un partido apuntado (jugado o pendiente) en la liga? */
+function parejaYaExiste(torneo, aId, bId) {
+  const clave = clavePareja(aId, bId);
+  return torneo.partidos.some(p =>
+    p.fase === 'liga' && clavePareja(p.localId, p.visitanteId) === clave);
+}
+
+/* Los partidos de liga de una jornada concreta */
+function partidosDeJornada(torneo, jornada) {
+  return torneo.partidos.filter(p => p.fase === 'liga' && Number(p.jornada) === Number(jornada));
+}
+
+/* ¿Este jugador ya tiene partido en esa jornada? (para avisar, no para prohibir) */
+function jugadorYaJuegaEnJornada(torneo, jugadorId, jornada) {
+  return partidosDeJornada(torneo, jornada)
+    .some(p => p.localId === jugadorId || p.visitanteId === jugadorId);
+}
+
+/* ¿Cuál sería la jornada siguiente a la última que hay? */
+function siguienteJornada(torneo) {
+  const liga = torneo.partidos.filter(p => p.fase === 'liga');
+  if (!liga.length) return 1;
+  return Math.max(...liga.map(p => Number(p.jornada) || 1)) + 1;
+}
+
+/* En qué jornada apetece apuntar el siguiente partido: la primera que aún no
+   tenga todos los cruces posibles (con 6 jugadores, 3 partidos por jornada). */
+function jornadaSugerida(torneo) {
+  const porJornada = Math.max(1, Math.floor(torneo.jugadores.length / 2));
+  let j = 1;
+  while (partidosDeJornada(torneo, j).length >= porJornada) j++;
+  return j;
+}
+
+/* A quién puede tocarle el turno en la ruleta:
+   - nadie elegido aún  → todos los jugadores
+   - ya hay un local    → los demás, quitando los cruces ya apuntados
+     (salvo que se permita repetir)
+   Nunca se ofrece a quien ya ha salido en este mismo sorteo. */
+function candidatosRuleta(torneo, opciones) {
+  const o = opciones || {};
+  const yaElegidos = o.yaElegidos || [];
+
+  let candidatos = torneo.jugadores.filter(j => !yaElegidos.includes(j.id));
+
+  if (o.localId && !o.permitirRepetir) {
+    candidatos = candidatos.filter(j => !parejaYaExiste(torneo, o.localId, j.id));
+  }
+  return candidatos;
+}
+
+/* Elige uno al azar de la lista. El número (0 a 1) se puede pasar para poder
+   probarlo; si no, se usa el azar de verdad. */
+function elegirAlAzar(lista, azar) {
+  if (!lista.length) return null;
+  const n = (typeof azar === 'number') ? azar : Math.random();
+  const i = Math.max(0, Math.min(lista.length - 1, Math.floor(n * lista.length)));
+  return lista[i];
+}
+
+/* Un partido de liga nuevo y vacío, listo para apuntarle el resultado */
+function nuevoPartidoLiga(localId, visitanteId, jornada) {
+  return {
+    id: nuevoId('p'),
+    fase: 'liga',
+    jornada: Number(jornada) || 1,
+    localId: localId,
+    visitanteId: visitanteId,
+    golesLocal: 0,
+    golesVisitante: 0,
+    jugado: false,
+    goles: [],
+    stats: null,
+    fecha: null
+  };
+}
+
+/* =========================================================================
    TORNEO NUEVO Y FASES FINALES (Fase 3)
    ========================================================================= */
 
-/* Monta un torneo nuevo desde cero y le genera el calendario */
+/* Monta un torneo nuevo desde cero.
+   Nace SIN partidos: los cruces se montan jornada a jornada (con la ruleta o a
+   mano). Si algún día se quiere el calendario entero de golpe, están
+   generarCalendario() y regenerarCalendario(). */
 function crearTorneoNuevo(nombre, jugadores, configPersonalizada) {
   const config = Object.assign(
     JSON.parse(JSON.stringify(CONFIG_DEFECTO)),
@@ -288,7 +380,6 @@ function crearTorneoNuevo(nombre, jugadores, configPersonalizada) {
     partidos: []
   };
 
-  torneo.partidos = generarCalendario(torneo.jugadores, config);
   return torneo;
 }
 

@@ -29,7 +29,7 @@ async function arrancarClasificacion() {
     // Aviso si venimos de crear un torneo
     const creado = new URLSearchParams(window.location.search).get('creado');
     if (creado) {
-      avisar(`Torneo "${creado}" creado 🎉`, false, 6000);
+      avisar(`Torneo "${creado}" creado 🎉 Sortea la primera jornada con la ruleta 🎰`, false, 6000);
       window.history.replaceState({}, '', 'clasificacion.html?torneo=' + encodeURIComponent(torneoActual.id));
     }
   } catch (e) {

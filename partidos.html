@@ -55,6 +55,7 @@
       <section class="panel">
         <p class="panel-titulo">Todos los partidos
           <b id="contador-partidos"></b>
+          <button class="btn-mini-ir ruleta" id="btn-ruleta" title="Sortear quién juega contra quién">🎰 Ruleta</button>
           <button class="btn-mini-ir" id="btn-nuevo-partido" title="Añadir un partido de liga o un amistoso">+ Añadir partido</button>
         </p>
 
@@ -148,6 +149,54 @@
     </div>
   </div>
 
+  <!-- Ventanita de la ruleta: sortear quién juega contra quién -->
+  <div class="modal-fondo" id="modal-ruleta" hidden>
+    <div class="modal modal-ancho">
+      <p class="panel-titulo">🎰 Ruleta de emparejamientos</p>
+
+      <div class="ruleta-caja">
+        <span class="ruleta-flecha">▼</span>
+        <div class="ruleta-rueda" id="ruleta-rueda"></div>
+        <span class="ruleta-centro" id="ruleta-centro">🎰</span>
+      </div>
+
+      <div class="ruleta-elegidos">
+        <div class="ruleta-elegido local">
+          <span class="avatar" id="ruleta-av-local">·</span>
+          <span class="nombre vacio" id="ruleta-nom-local">sin sortear</span>
+        </div>
+        <span class="vs">vs</span>
+        <div class="ruleta-elegido visitante">
+          <span class="nombre vacio" id="ruleta-nom-visit">sin sortear</span>
+          <span class="avatar" id="ruleta-av-visit">·</span>
+        </div>
+      </div>
+
+      <p class="nota" id="ruleta-nota"></p>
+
+      <div class="fila-2" style="margin-top:12px">
+        <button class="btn btn-gol" id="ruleta-girar">GIRAR 🎡</button>
+        <button class="btn btn-ghost" id="ruleta-otra">Otra vez</button>
+      </div>
+
+      <div class="form-rejilla" style="margin-top:14px">
+        <div class="campo-form">
+          <label>Jornada en la que se apunta</label>
+          <select id="ruleta-jornada"></select>
+        </div>
+        <div class="campo-form">
+          <label>Repetir cruces</label>
+          <label class="casilla"><input type="checkbox" id="ruleta-repetir"> Permitir repetir un cruce ya apuntado</label>
+        </div>
+      </div>
+
+      <div class="fila-2" style="margin-top:16px">
+        <button class="btn btn-gol" id="ruleta-guardar" disabled>Apuntar el partido</button>
+        <button class="btn btn-ghost" id="ruleta-cerrar">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/config-nube.js"></script>
@@ -155,6 +204,7 @@
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
   <script src="js/comun.js"></script>
+  <script src="js/ruleta.js"></script>
   <script src="js/partidos.js"></script>
 </body>
 </html>
