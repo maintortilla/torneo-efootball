@@ -302,6 +302,14 @@ body {
   padding: 20px 12px; border: 1px dashed var(--linea); border-radius: 12px;
 }
 
+/* ---------- Pastilla del modo de datos (nube / local) ---------- */
+.pastilla {
+  display: inline-block; padding: 6px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.pastilla.nube { color: var(--neon); background: var(--neon-suave); border: 1px solid var(--neon); }
+.pastilla.local { color: var(--aviso); background: rgba(255,176,32,.12); border: 1px solid rgba(255,176,32,.45); }
+
 /* ---------- Ventanita de apuntar el resultado ---------- */
 .modal-fondo {
   position: fixed; inset: 0; z-index: 100;

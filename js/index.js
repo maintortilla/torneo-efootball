@@ -7,16 +7,34 @@
 
 let torneoActual;
 let filtroPartidos = 'todos';
-let partidoEnEdicion = null;                  // partido que se está apuntando
-let marcadorEdit = { local: 0, visitante: 0 }; // marcador de la ventanita
+let partidoEnEdicion = null;                    // partido que se está apuntando
+let marcadorEdit = { local: 0, visitante: 0 };  // marcador de la ventanita
 
-function arrancarIndex() {
-  const torneos = Store.iniciar();
-  torneoActual = Store.torneo(torneos[0].id);
+async function arrancarIndex() {
+  try {
+    const torneos = await Store.iniciar();
+    torneoActual = Store.torneo(torneos[0].id);
 
-  pintarSelectorTorneo(torneos);
-  pintarTodo();
-  engancharIndex();
+    pintarSelectorTorneo(torneos);
+    pintarTodo();
+    pintarModoDatos();
+    engancharIndex();
+  } catch (e) {
+    // Si la nube falla (sin internet, configuración mal), avisamos sin romper la web
+    console.error(e);
+    avisar('No se pudo conectar con la nube: ' + e.message, true);
+  }
+  window.__listo = true;   // aviso para las pruebas automáticas
+}
+
+/* ¿Estamos leyendo del navegador o de la nube? */
+function pintarModoDatos() {
+  const caja = $('#nota-guardado');
+  if (!caja) return;
+  const nube = Store.modo() === 'nube';
+  caja.innerHTML = nube
+    ? '<span class="pastilla nube">☁️ Datos en la nube: todos veis lo mismo</span>'
+    : '<span class="pastilla local">💾 Modo local: los datos están solo en este PC</span>';
 }
 
 function pintarSelectorTorneo(torneos) {
@@ -45,7 +63,6 @@ function pintarResumen() {
   const goles = jugados.reduce((s, p) => s + p.golesLocal + p.golesVisitante, 0);
   const media = jugados.length ? (goles / jugados.length).toFixed(1) : '0.0';
 
-  // Partido más abultado
   let goleada = null;
   jugados.forEach(p => {
     const dif = Math.abs(p.golesLocal - p.golesVisitante);
@@ -59,7 +76,6 @@ function pintarResumen() {
     textoGoleada = `${l.nombre} ${goleada.p.golesLocal}-${goleada.p.golesVisitante} ${v.nombre}`;
   }
 
-  // Jornada actual: la primera con partidos pendientes
   const pendientes = torneoActual.partidos.filter(p => !p.jugado && p.fase === 'liga');
   const jornadaActual = pendientes.length ? pendientes[0].jornada : null;
   $('#badge-jornada').textContent = pendientes.length
@@ -205,7 +221,7 @@ function pintarEliminatorias() {
       `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> partidos de liguilla: esto es cómo quedarían los cruces <b>si acabara hoy</b>.</span>`));
   }
 
-  cruces.forEach((c, i) => {
+  cruces.forEach(c => {
     const local = jugador(torneoActual, c.localId);
     const visit = jugador(torneoActual, c.visitanteId);
     const fila = el('div', 'partido-fila pendiente');
@@ -269,8 +285,6 @@ function abrirModal(idPartido) {
 function pintarModal() {
   $('#modal-cifra-local').textContent = marcadorEdit.local;
   $('#modal-cifra-visit').textContent = marcadorEdit.visitante;
-
-  // El botón de borrar solo tiene sentido si el partido ya tenía resultado
   $('#modal-borrar').hidden = !partidoEnEdicion.jugado;
 }
 
@@ -279,7 +293,7 @@ function cerrarModal() {
   partidoEnEdicion = null;
 }
 
-function guardarModal() {
+async function guardarModal() {
   if (!partidoEnEdicion) return;
 
   const i = torneoActual.partidos.findIndex(p => p.id === partidoEnEdicion.id);
@@ -288,13 +302,25 @@ function guardarModal() {
   torneoActual.partidos[i].jugado = true;
   torneoActual.partidos[i].fecha = new Date().toISOString().slice(0, 10);
 
-  Store.guardarTorneo(torneoActual);
-  cerrarModal();
-  pintarTodo();
-  avisar('Resultado guardado ✅');
+  // Guardamos (en la nube o en el navegador, según el modo)
+  const boton = $('#modal-guardar');
+  boton.disabled = true;
+  boton.textContent = 'Guardando...';
+  try {
+    await Store.guardarTorneo(torneoActual);
+    cerrarModal();
+    pintarTodo();
+    avisar('Resultado guardado ✅');
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo guardar: ' + e.message, true);
+  } finally {
+    boton.disabled = false;
+    boton.textContent = 'Guardar ✅';
+  }
 }
 
-function borrarResultado() {
+async function borrarResultado() {
   if (!partidoEnEdicion) return;
 
   const i = torneoActual.partidos.findIndex(p => p.id === partidoEnEdicion.id);
@@ -303,18 +329,45 @@ function borrarResultado() {
   torneoActual.partidos[i].golesVisitante = 0;
   torneoActual.partidos[i].fecha = null;
 
-  Store.guardarTorneo(torneoActual);
-  cerrarModal();
-  pintarTodo();
-  avisar('Resultado borrado: el partido vuelve a estar pendiente 🧹');
+  try {
+    await Store.guardarTorneo(torneoActual);
+    cerrarModal();
+    pintarTodo();
+    avisar('Resultado borrado: el partido vuelve a estar pendiente 🧹');
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo borrar: ' + e.message, true);
+  }
 }
 
-/* ------------------------------------------------------------- eventos */
+/* --------------------------------------------------------------- eventos */
 function engancharIndex() {
   $('#selector-torneo').onchange = (e) => {
     torneoActual = Store.torneo(e.target.value);
     pintarTodo();
   };
+
+  // Refrescar: trae los datos que hayan apuntado los demás
+  const refrescar = $('#btn-refrescar');
+  if (refrescar) {
+    refrescar.onclick = async () => {
+      refrescar.disabled = true;
+      refrescar.textContent = '⏳';
+      try {
+        await Store.recargar();
+        torneoActual = Store.torneo(torneoActual.id);
+        pintarSelectorTorneo(Store.cache);
+        pintarTodo();
+        avisar('Datos puestos al día 🔄');
+      } catch (e) {
+        console.error(e);
+        avisar('No se pudo refrescar: ' + e.message, true);
+      } finally {
+        refrescar.disabled = false;
+        refrescar.textContent = '🔄 Refrescar';
+      }
+    };
+  }
 
   $$('[data-filtro]').forEach(t => {
     t.onclick = () => {
@@ -324,7 +377,6 @@ function engancharIndex() {
     };
   });
 
-  // Contadores de la ventanita
   $$('[data-modal-paso]').forEach(b => {
     b.onclick = () => {
       const lado = b.dataset.modalPaso;
@@ -338,7 +390,6 @@ function engancharIndex() {
   $('#modal-cancelar').onclick = cerrarModal;
   $('#modal-borrar').onclick = borrarResultado;
 
-  // Cerrar con Escape o pinchando fuera de la caja
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('#modal-fondo').hidden) cerrarModal();
   });
@@ -363,7 +414,7 @@ function avisar(texto, esError) {
   t.style.border = '1px solid ' + (esError ? '#FF4D5E' : '#00E676');
   t.style.color = esError ? '#FF4D5E' : '#00E676';
   clearTimeout(temporizadorAviso);
-  temporizadorAviso = setTimeout(() => t.remove(), 2400);
+  temporizadorAviso = setTimeout(() => t.remove(), esError ? 5200 : 2400);
 }
 
 document.addEventListener('DOMContentLoaded', arrancarIndex);

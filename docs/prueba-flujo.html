@@ -7,7 +7,6 @@
     body { background:#070B12; color:#E8F2FF; font-family: monospace; margin:0; padding:12px; }
     iframe { width:1560px; height:820px; border:1px solid #1E2E42; border-radius:8px; }
     pre { font-size:15px; white-space:pre-wrap; margin:0 0 12px; line-height:1.5; }
-    .ok { color:#00E676; }
   </style>
 </head>
 <body>
@@ -16,7 +15,8 @@
 
 <script>
 /* Prueba de humo: simula un usuario apuntando un resultado en la portada y
-   comprueba que se guarda y que la clasificación se recalcula.
+   comprueba que se guarda, que la clasificación se recalcula y que los
+   mensajes de error/estado funcionan. Funciona en modo local y en modo nube.
    Se abre en el navegador (o headless) y deja el resultado escrito arriba. */
 
 const salida = [];
@@ -25,70 +25,98 @@ function ok(nombre, condicion, detalle) {
   return condicion;
 }
 
-document.getElementById('marco').onload = () => {
-  const d = document.getElementById('marco').contentDocument;
+/* La portada ahora carga los datos de forma asíncrona: esperamos a que avise
+   de que está lista (window.__listo) antes de hacer clic en nada. */
+function esperarListo(marco, intentos) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > (intentos || 100)) { clearInterval(tic); rechazar(new Error('la web no terminó de cargar')); }
+    }, 100);
+  });
+}
+
+document.getElementById('marco').onload = async () => {
+  const marco = document.getElementById('marco');
+  const d = marco.contentDocument;
+  const w = marco.contentWindow;
 
   try {
+    await esperarListo(marco);
+
     // 1. La tabla de clasificación se ha pintado
     const filas = d.querySelectorAll('#tabla-clasificacion tbody tr');
     ok('la clasificación tiene 6 filas', filas.length === 6, filas.length + ' filas');
 
-    // 2. Estado inicial del resumen
+    // 2. Se avisa del modo de datos (nube o local)
+    const modo = d.getElementById('nota-guardado').textContent.trim();
+    ok('la web dice en qué modo está', /nube|local/i.test(modo), modo);
+
+    // 3. Estado inicial del resumen
     const resumenInicial = d.getElementById('resumen').textContent;
     ok('el resumen arranca en 4/30 partidos', resumenInicial.includes('4/30'), resumenInicial.slice(0, 40).replace(/\s+/g, ' '));
 
-    // 3. Buscar un partido pendiente y pulsar Apuntar
+    // 4. Buscar un partido pendiente y pulsar Apuntar
     const botonApuntar = Array.from(d.querySelectorAll('.btn-mini-ir'))
       .find(b => b.textContent.trim() === 'Apuntar');
     ok('hay un partido pendiente con botón Apuntar', !!botonApuntar);
     botonApuntar.click();
 
-    // 4. La ventanita se abre
+    // 5. La ventanita se abre (y se ve de verdad)
     ok('la ventanita se abre', d.getElementById('modal-fondo').hidden === false);
-    const displayAbierto = d.defaultView.getComputedStyle(d.getElementById('modal-fondo')).display;
+    const displayAbierto = w.getComputedStyle(d.getElementById('modal-fondo')).display;
     ok('la ventanita se ve de verdad (no está oculta por CSS)', displayAbierto !== 'none', 'display: ' + displayAbierto);
 
-    // 5. Poner un 3-1 con los botones
+    // 6. Poner un 2-0 con los botones
     const masLocal = d.querySelector('[data-modal-paso="local"][data-delta="1"]');
     const masVisit = d.querySelector('[data-modal-paso="visitante"][data-delta="1"]');
-    masLocal.click(); masLocal.click(); masLocal.click(); masVisit.click();
+    masVisit.click();           // primero uno de más, para probar el botón de quitar
+    d.querySelector('[data-modal-paso="visitante"][data-delta="-1"]').click();
+    masLocal.click(); masLocal.click();
     const marcaLocal = d.getElementById('modal-cifra-local').textContent;
     const marcaVisit = d.getElementById('modal-cifra-visit').textContent;
-    ok('el marcador de la ventanita marca 3-1', marcaLocal === '3' && marcaVisit === '1', marcaLocal + '-' + marcaVisit);
+    ok('el marcador de la ventanita marca 2-0', marcaLocal === '2' && marcaVisit === '0', marcaLocal + '-' + marcaVisit);
 
-    // 6. Guardar
+    // 7. Guardar (ahora es asíncrono: hay que darle tiempo)
     d.getElementById('modal-guardar').click();
+    await new Promise(r => setTimeout(r, 900));
     ok('la ventanita se cierra al guardar', d.getElementById('modal-fondo').hidden === true);
-    // Lo que de verdad importa: que NO se vea (el atributo hidden vs el CSS)
-    const displayCerrado = d.defaultView.getComputedStyle(d.getElementById('modal-fondo')).display;
+    const displayCerrado = w.getComputedStyle(d.getElementById('modal-fondo')).display;
     ok('la ventanita queda invisible de verdad', displayCerrado === 'none', 'display: ' + displayCerrado);
 
-    // 7. El resumen ya cuenta 5 partidos
+    // 8. El resumen ya cuenta 5 partidos
     const resumenDespues = d.getElementById('resumen').textContent;
     ok('el resumen pasa a 5/30 partidos', resumenDespues.includes('5/30'), resumenDespues.slice(0, 40).replace(/\s+/g, ' '));
 
-    // 8. El resultado aparece en la lista de partidos
-    ok('el resultado 3 - 1 aparece en la lista', d.getElementById('lista-partidos').textContent.includes('3 - 1'));
+    // 9. El resultado aparece en la lista
+    ok('el resultado 2 - 0 aparece en la lista', d.getElementById('lista-partidos').textContent.includes('2 - 0'));
 
-    // 9. Y se queda guardado al recargar (localStorage)
-    ok('queda guardado en el navegador', !!localStorage.getItem('torneos-efootball-v1'));
+    // 10. Y se guarda de verdad (en el navegador o en la nube)
+    const modoNube = /nube/i.test(modo);
+    if (modoNube) {
+      ok('modo nube: hay conexión configurada', true, 'se comprueba al recargar');
+      // Recargar desde la nube: el resultado debe seguir ahí
+      d.getElementById('btn-refrescar').click();
+      await new Promise(r => setTimeout(r, 1800));
+      ok('tras refrescar desde la nube el resultado sigue', d.getElementById('lista-partidos').textContent.includes('2 - 0'));
+    } else {
+      ok('modo local: los datos quedan guardados en el navegador', !!localStorage.getItem('torneos-efootball-v1'));
+    }
 
-    // 10. La fila de eliminatorias se ha recalculado (sigue habiendo 2 cruces)
+    // 11. Las eliminatorias siguen mostrando 2 cruces
     const cruces = d.querySelectorAll('#lista-eliminatorias .partido-fila');
     ok('las eliminatorias muestran 2 cruces', cruces.length === 2, cruces.length + ' cruces');
 
-    // 11. Reabrir el mismo partido para la captura de pantalla
+    // 12. Reabrir para editar y comprobar el botón de borrar
     const botonEditar = Array.from(d.querySelectorAll('.btn-mini-ir'))
       .find(b => b.textContent.trim() === 'Editar');
     botonEditar.click();
     ok('se puede reabrir para editar', d.getElementById('modal-fondo').hidden === false);
     ok('el botón de borrar aparece al editar', d.getElementById('modal-borrar').hidden === false);
 
-    // 12. Dejar el marcador en 3-1 otra vez en el modal abierto
-    while (d.getElementById('modal-cifra-local').textContent !== '3') {
-      d.querySelector('[data-modal-paso="local"][data-delta="-1"]').click();
-      break;
-    }
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   }

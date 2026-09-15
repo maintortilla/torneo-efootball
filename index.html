@@ -20,7 +20,8 @@
     </div>
 
     <div class="topbar-derecha">
-      <span class="nota" id="nota-guardado">Los cambios se guardan solos</span>
+      <span class="nota" id="nota-guardado"></span>
+      <button class="btn-mini-ir" id="btn-refrescar" title="Traer lo que hayan apuntado los demás">🔄 Refrescar</button>
     </div>
   </header>
 
@@ -122,7 +123,12 @@
     </div>
   </div>
 
+  <!-- Librería de Supabase (solo hace falta en modo nube; si no carga, la web
+       sigue funcionando con los datos del navegador) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script src="js/config.js"></script>
+  <script src="js/config-nube.js"></script>
   <script src="js/modelo.js"></script>
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
