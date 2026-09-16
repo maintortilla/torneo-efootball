@@ -20,6 +20,8 @@
 const salida = [];
 function ok(titulo, bien, extra) {
   salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  // Se pinta según avanza: si alguna comprobación se queda colgada, se ve dónde
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
 }
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
@@ -34,11 +36,18 @@ function esperarListo(marco, intentos = 200) {
   });
 }
 
+const erroresJS = [];   // se acumulan los errores de JavaScript de cada pantalla
+
+function recogerErrores(marco) {
+  const w = marco.contentWindow;
+  (w && w.__erroresJS ? w.__erroresJS : []).forEach(e => erroresJS.push(e));
+}
+
 function navegar(marco, url) {
   return new Promise((resolver, rechazar) => {
     const alCargar = async () => {
       marco.removeEventListener('load', alCargar);
-      try { await esperarListo(marco); await esperar(150); resolver(); }
+      try { await esperarListo(marco); await esperar(150); recogerErrores(marco); resolver(); }
       catch (e) { rechazar(e); }
     };
     marco.addEventListener('load', alCargar);
@@ -68,13 +77,29 @@ marcoEl.onload = async function ejecutarPrueba() {
        d.querySelectorAll('#lista-torneos .tarjeta-torneo').length === torneos.length,
        d.querySelectorAll('#lista-torneos .tarjeta-torneo').length + ' tarjetas');
 
-    if (torneos.length < 2) {
-      salida.push('[AVISO] Hacen falta 2 torneos para probar el cambio; esta prueba se salta el resto.');
-      return terminar();
+    recogerErrores(marco);
+
+    if (w.Store.cache.length < 2) {
+      // Se crea el segundo torneo directamente en el almacén del navegador, para
+      // que esta prueba NO se salte la mitad (antes avisaba "hacen falta 2 torneos"
+      // y terminaba en verde) y para que NUNCA pueda tocar la nube.
+      const CLAVE = 'torneos-efootball-v1';
+      const guardados = JSON.parse(localStorage.getItem(CLAVE) || '[]');
+      if (guardados.length < 2 && guardados[0]) {
+        const copia = JSON.parse(JSON.stringify(guardados[0]));
+        copia.id = 't-prueba-navegacion-2';
+        copia.nombre = copia.nombre + ' (segundo)';
+        guardados.push(copia);
+        localStorage.setItem(CLAVE, JSON.stringify(guardados));
+      }
+      await navegar(marco, '../index.html');
+      d = marco.contentDocument;
+      w = marco.contentWindow;
     }
 
-    const A = torneos[0];
-    const B = torneos[1];
+    const lista = w.Store.cache;
+    const A = lista[0];
+    const B = lista[1];
     recordadoAntes = localStorage.getItem('torneo-activo');
 
     // 1. Entrar a los partidos del torneo A por la dirección
@@ -123,6 +148,38 @@ marcoEl.onload = async function ejecutarPrueba() {
     nombre = (d.getElementById('nombre-torneo') || {}).textContent || '';
     ok('Ajustes abre el mismo torneo', nombre.includes(B.nombre), 'muestra: ' + nombre.trim());
 
+    // 8. El panel de "cara a cara" de la clasificación
+    await navegar(marco, '../clasificacion.html?torneo=' + B.id);
+    d = marco.contentDocument;
+    const selA = d.getElementById('cara-a');
+    const selB = d.getElementById('cara-b');
+    ok('la clasificación trae el panel de cara a cara', Boolean(selA) && Boolean(selB), 'panel presente');
+    ok('los desplegables traen a los jugadores del torneo',
+       selA.options.length === B.jugadores.length && selB.options.length === B.jugadores.length,
+       selA.options.length + ' jugadores en la lista');
+
+    selA.value = B.jugadores[0].id;
+    selA.dispatchEvent(new Event('change'));
+    await esperar(200);
+    const cajaCara = d.getElementById('lista-cara');
+    ok('al elegir dos jugadores sale el resumen del cara a cara',
+       cajaCara.textContent.includes(B.jugadores[0].nombre) ||
+       cajaCara.textContent.toLowerCase().includes('empate') ||
+       cajaCara.textContent.includes('victoria'),
+       'pinta: ' + cajaCara.textContent.trim().slice(0, 60));
+
+    // 9. Elegir el mismo jugador en los dos lados no rompe nada
+    selB.value = selA.value;
+    selB.dispatchEvent(new Event('change'));
+    await esperar(150);
+    ok('si eliges el mismo jugador avisa en vez de romperse',
+       /diferentes/i.test(d.getElementById('lista-cara').textContent),
+       d.getElementById('lista-cara').textContent.trim().slice(0, 40));
+
+    // 10. Ninguna pantalla debe haber dado error de JavaScript
+    ok('ninguna pantalla ha dado error de JavaScript',
+       erroresJS.length === 0, erroresJS.slice(0, 3).join(' | ') || 'sin errores');
+
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   } finally {
@@ -132,9 +189,12 @@ marcoEl.onload = async function ejecutarPrueba() {
 
   function terminar() {
     const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
-    document.getElementById('resultado').textContent =
-      salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
-    document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+    const avisos = salida.filter(l => l.startsWith('[AVISO')).length;
+    const estado = fallos ? '❌ ' + fallos + ' fallos'
+                 : avisos ? '⚠️ PRUEBA INCOMPLETA: ' + avisos + ' apartado(s) sin probar'
+                 : '✅ PRUEBA COMPLETA: TODO CORRECTO';
+    document.getElementById('resultado').textContent = salida.join('\n') + '\n\n' + estado;
+    document.title = fallos === 0 && avisos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
   }
 };
 </script>

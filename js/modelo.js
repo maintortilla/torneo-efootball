@@ -162,6 +162,44 @@ function generarCalendario(jugadores, config) {
 }
 
 /* -------------------------------------------------------------------------
+   CARA A CARA — el historial entre dos jugadores
+   Solo cuenta los partidos YA JUGADOS entre ellos, y lo devuelve todo desde el
+   punto de vista del jugador A (los goles son "de A" aunque jugara fuera).
+   ------------------------------------------------------------------------- */
+function caraACara(torneo, idA, idB) {
+  const entreEllos = (torneo.partidos || [])
+    .filter(p => p.jugado &&
+      ((p.localId === idA && p.visitanteId === idB) ||
+       (p.localId === idB && p.visitanteId === idA)))
+    .sort((a, b) => (a.jornada || 0) - (b.jornada || 0));
+
+  const res = { total: entreEllos.length, ganaA: 0, ganaB: 0, empates: 0,
+                golesA: 0, golesB: 0, partidos: [] };
+
+  entreEllos.forEach(p => {
+    const esALocal = p.localId === idA;
+    const golesA = Number(esALocal ? p.golesLocal : p.golesVisitante) || 0;
+    const golesB = Number(esALocal ? p.golesVisitante : p.golesLocal) || 0;
+
+    res.golesA += golesA;
+    res.golesB += golesB;
+    if (golesA > golesB) res.ganaA++;
+    else if (golesB > golesA) res.ganaB++;
+    else res.empates++;
+
+    res.partidos.push({
+      id: p.id, jornada: p.jornada, fase: p.fase,
+      localId: p.localId, visitanteId: p.visitanteId,
+      golesLocal: Number(p.golesLocal) || 0,
+      golesVisitante: Number(p.golesVisitante) || 0,
+      esALocal, golesA, golesB
+    });
+  });
+
+  return res;
+}
+
+/* -------------------------------------------------------------------------
    CLASIFICACIÓN: se calcula solo con los partidos ya jugados.
    Los puntos salen de la configuración del torneo (3/1/0 por defecto).
    El orden final respeta los desempates configurados.

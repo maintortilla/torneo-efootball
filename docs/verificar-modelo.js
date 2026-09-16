@@ -15,7 +15,7 @@ vm.runInThisContext(fuente + `
   calcularClasificacion, calcularGoleadores, generarCalendario, generarEliminatorias,
   estadoDeFases, crearTorneoNuevo, clavePareja, parejaYaExiste, partidosDeJornada,
   jugadorYaJuegaEnJornada, siguienteJornada, jornadaSugerida, candidatosRuleta,
-  elegirAlAzar, nuevoPartidoLiga,
+  elegirAlAzar, nuevoPartidoLiga, caraACara,
   nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo, asegurarCodigos,
   buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO };`);
 const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
@@ -24,7 +24,8 @@ const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
         parejaYaExiste, partidosDeJornada, jugadorYaJuegaEnJornada,
         siguienteJornada, jornadaSugerida, candidatosRuleta, elegirAlAzar,
         nuevoPartidoLiga, nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo,
-        asegurarCodigos, buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO } = globalThis.__api;
+        asegurarCodigos, buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO,
+        caraACara } = globalThis.__api;
 
 const torneo = JSON.parse(JSON.stringify(TORNEO_PRUEBA));
 aplicarResultadosEjemplo(torneo);
@@ -294,6 +295,42 @@ comprobar('con 2 vueltas las jornadas van de la 1 a la 10 (sin repetirse)',
 // Y si alguien escribe más de 4, se limita
 const ps9 = generarCalendario(seisJug, Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: 9 }));
 comprobar('si se pide más de 4 vueltas, se queda en 4 (60 partidos)', ps9.length === 60, ps9.length + ' partidos');
+
+console.log('\n=== CARA A CARA ===');
+
+const juego = (localId, visitanteId, gl, gv, jugado = true) => ({
+  id: 'c' + Math.random().toString(36).slice(2, 7), fase: 'liga', jornada: 1,
+  localId, visitanteId, golesLocal: gl, golesVisitante: gv, jugado
+});
+
+let cara = caraACara({ partidos: [] }, 'a', 'b');
+comprobar('sin enfrentamientos sale todo a cero',
+  cara.total === 0 && cara.ganaA === 0 && cara.ganaB === 0, 'total ' + cara.total);
+
+cara = caraACara({ partidos: [juego('a', 'b', 3, 1)] }, 'a', 'b');
+comprobar('cuenta la victoria y los goles del primero',
+  cara.total === 1 && cara.ganaA === 1 && cara.golesA === 3 && cara.golesB === 1,
+  `${cara.golesA} - ${cara.golesB}`);
+
+cara = caraACara({ partidos: [juego('a', 'b', 3, 1)] }, 'b', 'a');
+comprobar('mirándolo al revés, gana el otro',
+  cara.ganaB === 1 && cara.golesA === 1 && cara.golesB === 3, `${cara.golesA} - ${cara.golesB}`);
+
+cara = caraACara({ partidos: [juego('b', 'a', 0, 2)] }, 'a', 'b');
+comprobar('los goles se cuentan a favor del primero aunque juegue fuera',
+  cara.ganaA === 1 && cara.golesA === 2 && cara.golesB === 0, `${cara.golesA} - ${cara.golesB}`);
+
+cara = caraACara({ partidos: [juego('a', 'b', 2, 2)] }, 'a', 'b');
+comprobar('los empates se cuentan aparte',
+  cara.empates === 1 && cara.ganaA === 0 && cara.ganaB === 0, cara.empates + ' empates');
+
+cara = caraACara({ partidos: [juego('a', 'b', 1, 0), juego('b', 'a', 3, 1)] }, 'a', 'b');
+comprobar('con ida y vuelta suma los dos partidos',
+  cara.total === 2 && cara.ganaA === 1 && cara.ganaB === 1 && cara.golesA === 2 && cara.golesB === 3,
+  `${cara.golesA}-${cara.golesB} en ${cara.total} partidos`);
+
+cara = caraACara({ partidos: [juego('a', 'b', 0, 0, false), juego('a', 'c', 5, 0)] }, 'a', 'b');
+comprobar('los partidos sin jugar y los de otros rivales no cuentan', cara.total === 0, 'total ' + cara.total);
 
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);

@@ -64,6 +64,7 @@ function pintarTodo() {
   pintarResumen();
   pintarClasificacion();
   pintarEliminatorias();
+  pintarCaraACara();
   pintarUltimos();
 }
 
@@ -178,6 +179,91 @@ function formaHTML(forma) {
   }).join('') + '</span>';
 }
 
+/* ------------------------------------------- cara a cara (dos jugadores) */
+function pintarCaraACara() {
+  const selA = $('#cara-a');
+  const selB = $('#cara-b');
+  const caja = $('#lista-cara');
+  if (!selA || !selB || !caja) return;
+
+  const etiqueta = $('#etiqueta-cara');
+  const jugadores = torneoActual.jugadores || [];
+
+  // Los desplegables se rellenan solo la primera vez (o si cambia el torneo)
+  if (selA.options.length !== jugadores.length) {
+    const antesA = selA.value;
+    const antesB = selB.value;
+    selA.innerHTML = '';
+    selB.innerHTML = '';
+    jugadores.forEach(j => {
+      const o1 = el('option', null, `${j.emoji} ${j.nombre}`); o1.value = j.id; selA.appendChild(o1);
+      const o2 = el('option', null, `${j.emoji} ${j.nombre}`); o2.value = j.id; selB.appendChild(o2);
+    });
+    const existe = id => jugadores.some(j => j.id === id);
+    selA.value = existe(antesA) ? antesA : (jugadores[0] || {}).id;
+
+    // Por defecto, el segundo será alguien con quien YA haya jugado el primero
+    // (así el panel enseña un cara a cara de verdad desde el primer momento)
+    if (!existe(antesB) || antesB === selA.value) {
+      const yaJugo = otro => (torneoActual.partidos || []).some(p => p.jugado &&
+        ((p.localId === selA.value && p.visitanteId === otro) ||
+         (p.visitanteId === selA.value && p.localId === otro)));
+      const rival = jugadores.find(j => j.id !== selA.value && yaJugo(j.id));
+      selB.value = (rival || jugadores.find(j => j.id !== selA.value) || {}).id;
+    }
+  }
+
+  caja.innerHTML = '';
+
+  if (jugadores.length < 2) {
+    etiqueta.textContent = '—';
+    caja.appendChild(el('div', 'vacio', 'Hacen falta al menos 2 jugadores.'));
+    return;
+  }
+
+  if (selA.value === selB.value) {
+    etiqueta.textContent = 'elige dos distintos';
+    caja.appendChild(el('div', 'vacio', 'Elige dos jugadores diferentes 🙂'));
+    return;
+  }
+
+  const A = jugador(torneoActual, selA.value);
+  const B = jugador(torneoActual, selB.value);
+  const r = caraACara(torneoActual, A.id, B.id);
+
+  etiqueta.textContent = r.total ? r.total + (r.total === 1 ? ' partido' : ' partidos') : 'sin jugar aún';
+
+  if (!r.total) {
+    caja.appendChild(el('div', 'vacio',
+      `Todavía no se han enfrentado ${A.emoji} ${A.nombre} y ${B.emoji} ${B.nombre} 🥊`));
+    return;
+  }
+
+  const plural = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
+
+  caja.appendChild(el('div', 'cara-resumen',
+    `<span class="cara-lado">
+       <b>${A.emoji} ${A.nombre}</b>
+       <span class="cara-linea">${plural(r.ganaA, 'victoria', 'victorias')}</span>
+       <span class="cara-goles">${plural(r.golesA, 'gol', 'goles')}</span>
+     </span>
+     <span class="cara-centro">${plural(r.empates, 'empate', 'empates')}</span>
+     <span class="cara-lado der">
+       <b>${B.emoji} ${B.nombre}</b>
+       <span class="cara-linea">${plural(r.ganaB, 'victoria', 'victorias')}</span>
+       <span class="cara-goles">${plural(r.golesB, 'gol', 'goles')}</span>
+     </span>`));
+
+  r.partidos.forEach(p => {
+    const local = jugador(torneoActual, p.localId);
+    const visit = jugador(torneoActual, p.visitanteId);
+    caja.appendChild(el('div', 'cara-fila',
+      `<span class="quien">${local.emoji} ${local.nombre}</span>
+       <span class="marcador-mini">${p.golesLocal} - ${p.golesVisitante}</span>
+       <span class="quien der">${visit.emoji} ${visit.nombre}</span>`));
+  });
+}
+
 /* ------------------------------------------- eliminatorias */
 function pintarEliminatorias() {
   const caja = $('#lista-eliminatorias');
@@ -246,6 +332,12 @@ function pintarUltimos() {
 /* ------------------------------------------------------------- eventos */
 function engancharIndex() {
   engancharModal();
+
+  // Cara a cara: al cambiar cualquiera de los dos jugadores, se repinta
+  const selA = $('#cara-a');
+  const selB = $('#cara-b');
+  if (selA) selA.onchange = pintarCaraACara;
+  if (selB) selB.onchange = pintarCaraACara;
   // (El botón de actualizar lo engancha arrancarClasificacion con engancharActualizar)
 }
 
