@@ -14,30 +14,40 @@ const COLORES = ['#00E676','#4DA3FF','#FFD54F','#FF4D5E','#B388FF','#FFA24D','#9
 /* ---------------------------------------------------------------- arranque */
 async function arrancarAjustes() {
   pintarSelectorTema();      // el aspecto se puede cambiar aunque falle la conexión
+
+  let torneosOk = false;
   try {
     await arrancarCandado(); // sin entrar, los ajustes se ven pero no se tocan
     torneos = await Store.iniciar();
+    torneosOk = true;
     await darCodigosQueFalten();   // a los torneos viejos, sin código, se les pone uno
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    window.__listo = true;
+    return;
+  }
+
+  try {
     pintarModoDatos();
 
     const quiereNuevo = new URLSearchParams(window.location.search).get('nuevo') === '1';
-    if (quiereNuevo || !torneos.length) {
+    if (quiereNuevo || !torneosOk || !torneos.length) {
       abrirCrear();
     } else {
       cargarTorneo(elegirTorneoInicial(torneos));
     }
+
+    // Botón de actualizar: vuelve a leer la nube y recarga el formulario
+    engancharActualizar(() => {
+      torneos = Store.cache;
+      if (torneoActual) cargarTorneo(torneoActual.id);
+    });
   } catch (e) {
-    console.error(e);
-    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    console.error('Fallo al dibujar los ajustes:', e);
+    avisar('La página ha fallado al dibujarse: ' + e.message, true, 6000);
   }
   window.__listo = true;
-}
-
-function pintarModoDatos() {
-  const nube = Store.modo() === 'nube';
-  $('#nota-guardado').innerHTML = nube
-    ? '<span class="pastilla nube">☁️ Datos en la nube</span>'
-    : '<span class="pastilla local">💾 Modo local</span>';
 }
 
 /* ------------------------------------------------- aspecto de la web (temas) */
@@ -426,10 +436,6 @@ async function guardarCambios() {
     if (!seguro) return;
   }
 
-  // Aplicar los cambios
-  torneoActual.nombre = nombre;
-  torneoActual.estado = $('#edit-estado').value;
-  torneoActual.jugadores = nuevosJugadores;
   cfg.vueltas = vueltasAhora;
   cfg.clasificados = Number($('#edit-clasificados').value);
   cfg.partidoTercerPuesto = $('#edit-tercero').checked;
@@ -439,21 +445,47 @@ async function guardarCambios() {
   cfg.puntosDerrota = Number($('#edit-pts-d').value);
   cfg.desempates = desempates.slice();
 
-  // Al quitar jugadores se van con ellos sus partidos (si no, quedarían cruces
-  // con un jugador que ya no está). Los cruces montados NO se tocan.
-  if (jugadoresCambiados) {
-    const idsValidos = nuevosJugadores.map(j => j.id);
-    const antes = torneoActual.partidos.length;
-    torneoActual.partidos = torneoActual.partidos.filter(p =>
-      idsValidos.includes(p.localId) && idsValidos.includes(p.visitanteId));
-    const quitados = antes - torneoActual.partidos.length;
-    if (quitados) avisar(`Se han quitado ${quitados} partidos de jugadores que ya no están 🧹`, false, 4500);
-  }
-
   const boton = $('#btn-guardar');
   boton.disabled = true;
   boton.textContent = 'Guardando...';
+
   try {
+    /* ----------------------------------------------------------------------
+       IMPORTANTE: se vuelve a leer la nube ANTES de guardar.
+       Esta página puede llevar horas abierta. Si subiéramos nuestra copia tal
+       cual, machacaríamos los resultados que hayan apuntado los demás mientras
+       tanto (era el fallo: "apunto algo y desaparece solo"). Leyendo primero,
+       solo cambiamos lo que es nuestro (nombre, config, jugadores).
+       ---------------------------------------------------------------------- */
+    const frescos = await Store.recargar();
+    const fresco = (frescos || []).find(t => t.id === torneoActual.id);
+
+    // Si alguien ha borrado el torneo mientras lo editábamos, no lo resucitamos
+    if (!fresco) throw new Error('ese torneo ya no existe (¿lo ha borrado alguien?)');
+
+    // Los partidos que hay AHORA en la nube, no los de nuestra copia vieja
+    let partidosFrescos = (fresco.partidos || []).slice();
+
+    // Al quitar jugadores se van con ellos sus partidos (si no, quedarían cruces
+    // con alguien que ya no está). Los cruces montados NO se tocan.
+    if (jugadoresCambiados) {
+      const idsValidos = nuevosJugadores.map(j => j.id);
+      const antes = partidosFrescos.length;
+      partidosFrescos = partidosFrescos.filter(p =>
+        idsValidos.includes(p.localId) && idsValidos.includes(p.visitanteId));
+      const quitados = antes - partidosFrescos.length;
+      if (quitados) avisar(`Se han quitado ${quitados} partidos de jugadores que ya no están 🧹`, false, 4500);
+    }
+
+    // Lo que dice el formulario manda, pero sobre los datos frescos
+    torneoActual = Object.assign(fresco, {
+      nombre: nombre,
+      estado: $('#edit-estado').value,
+      jugadores: nuevosJugadores,
+      partidos: partidosFrescos,
+      config: cfg
+    });
+
     await Store.guardarTorneo(torneoActual, formatoCambiado ? 'reemplazar' : null);
     torneos = Store.cache;
     cargarTorneo(torneoActual.id);

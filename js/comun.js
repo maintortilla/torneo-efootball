@@ -149,7 +149,8 @@ async function guardarModal() {
   boton.disabled = true;
   boton.textContent = 'Guardando...';
   try {
-    await Store.guardarTorneo(torneoComun);
+    // Se guarda SOLO este partido: así no se pisan los resultados que apunten los demás
+    await Store.guardarPartido(torneoComun.id, torneoComun.partidos[i]);
     cerrarModal();
     alCambiarComun();
     avisar('Resultado guardado ✅');
@@ -172,7 +173,8 @@ async function borrarResultado() {
   torneoComun.partidos[i].fecha = null;
 
   try {
-    await Store.guardarTorneo(torneoComun);
+    // Igual que al guardar: solo se toca este partido
+    await Store.guardarPartido(torneoComun.id, torneoComun.partidos[i]);
     cerrarModal();
     alCambiarComun();
     avisar('Resultado borrado: el partido vuelve a estar pendiente 🧹');
@@ -198,11 +200,13 @@ async function eliminarPartido() {
   if (!seguro) return;
 
   const copia = torneoComun.partidos.slice();
-  torneoComun.partidos = torneoComun.partidos.filter(p => p.id !== partidoEnEdicion.id);
+  const idQuitado = partidoEnEdicion.id;
+  torneoComun.partidos = torneoComun.partidos.filter(p => p.id !== idQuitado);
 
   try {
-    // 'reemplazar': en la nube hay que rehacer los partidos para que el borrado cuente
-    await Store.guardarTorneo(torneoComun, 'reemplazar');
+    // Se quita SOLO ese partido de la nube (antes había que rehacerlos TODOS,
+    // y eso se llevaba por delante los que otra persona hubiera apuntado entre medias)
+    await Store.borrarPartido(torneoComun.id, idQuitado);
     cerrarModal();
     alCambiarComun();
     avisar(`Partido ${local.nombre} vs ${visit.nombre} eliminado 🗑️`);

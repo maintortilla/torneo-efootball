@@ -5,15 +5,26 @@
    ========================================================================== */
 
 async function arrancarTorneos() {
+  /* Se distingue "no hay conexión" de "algo ha fallado al dibujar": así el aviso
+     no engaña (antes cualquier error decía "no se pudo conectar con la nube"). */
+  let torneos;
   try {
     await arrancarCandado();
-    const torneos = await Store.iniciar();
+    torneos = await Store.iniciar();
     await darCodigosQueFalten();     // a los torneos viejos, sin código, se les pone uno
-    pintarModoDatos();
-    pintarTorneos(torneos);
   } catch (e) {
     console.error(e);
     avisar('No se pudo conectar con la nube: ' + e.message, true);
+    window.__listo = true;
+    return;
+  }
+
+  try {
+    pintarModoDatos();
+    pintarTorneos(torneos);
+  } catch (e) {
+    console.error('Fallo al dibujar la lista de torneos:', e);
+    avisar('La página ha fallado al dibujarse: ' + e.message, true, 6000);
   }
   window.__listo = true;
 }

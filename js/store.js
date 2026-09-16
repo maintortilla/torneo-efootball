@@ -65,6 +65,29 @@ const StoreLocal = {
     return torneos;
   },
 
+  /* Guarda SOLO un partido dentro del torneo guardado (no toca los demás) */
+  async guardarPartido(partido, torneoId) {
+    const torneos = (this.leer() || []);
+    const t = torneos.find(x => x.id === torneoId);
+    if (t) {
+      const i = t.partidos.findIndex(p => p.id === partido.id);
+      if (i >= 0) t.partidos[i] = partido; else t.partidos.push(partido);
+      this.guardar(torneos);
+    }
+    return partido;
+  },
+
+  /* Quita UN partido (los demás se quedan como estaban) */
+  async borrarPartido(partidoId, torneoId) {
+    const torneos = (this.leer() || []);
+    const t = torneos.find(x => x.id === torneoId);
+    if (t) {
+      t.partidos = t.partidos.filter(p => p.id !== partidoId);
+      this.guardar(torneos);
+    }
+    return true;
+  },
+
   async reiniciarDemo() {
     localStorage.removeItem(CLAVE_LOCAL);
     return this.iniciar();
@@ -159,6 +182,23 @@ const StoreNube = {
     return torneo;
   },
 
+  /* Guarda SOLO un partido. Es lo que evita que dos personas se pisen los
+     resultados: cada uno escribe su fila y no el torneo entero. */
+  async guardarPartido(partido, torneoId) {
+    const c = this.conectar();
+    const r = await c.from(NUBE_CONFIG.tablas.partidos).upsert(partidoAFila(partido, torneoId));
+    if (r.error) throw new Error('No se pudo guardar el partido: ' + r.error.message);
+    return partido;
+  },
+
+  /* Quita UN partido de la nube (los demás no se tocan) */
+  async borrarPartido(partidoId) {
+    const c = this.conectar();
+    const r = await c.from(NUBE_CONFIG.tablas.partidos).delete().eq('id', partidoId);
+    if (r.error) throw new Error('No se pudo quitar el partido: ' + r.error.message);
+    return true;
+  },
+
   async reiniciarDemo() {
     throw new Error('En modo nube el borrado se hará desde los ajustes del torneo (Fase 3)');
   },
@@ -178,6 +218,25 @@ const StoreNube = {
    (En la web: localId, golesLocal... En la base de datos: local_id, goles_local)
    ========================================================================== */
 
+/* Una fila de la tabla `partidos` a partir de un partido de la web.
+   Se usa al guardar el torneo entero Y al guardar un partido suelto.
+   OJO con el nombre: `filaDePartido` ya existe en comun.js (la que PINTA una fila
+   en pantalla). Si se llaman igual, la última en cargarse anula a la otra. */
+function partidoAFila(p, torneoId) {
+  return {
+    id: p.id,
+    torneo_id: torneoId,
+    fase: p.fase || 'liga',
+    jornada: p.jornada,
+    local_id: p.localId,
+    visitante_id: p.visitanteId,
+    goles_local: Number(p.golesLocal) || 0,
+    goles_visitante: Number(p.golesVisitante) || 0,
+    jugado: Boolean(p.jugado),
+    fecha: p.fecha || null
+  };
+}
+
 function torneoAFilas(t) {
   return {
     torneo: {
@@ -192,18 +251,7 @@ function torneoAFilas(t) {
     futbolistas: (t.futbolistas || []).map(f => ({
       id: f.id, torneo_id: t.id, nombre: f.nombre
     })),
-    partidos: (t.partidos || []).map(p => ({
-      id: p.id,
-      torneo_id: t.id,
-      fase: p.fase || 'liga',
-      jornada: p.jornada,
-      local_id: p.localId,
-      visitante_id: p.visitanteId,
-      goles_local: Number(p.golesLocal) || 0,
-      goles_visitante: Number(p.golesVisitante) || 0,
-      jugado: Boolean(p.jugado),
-      fecha: p.fecha || null
-    }))
+    partidos: (t.partidos || []).map(p => partidoAFila(p, t.id))
   };
 }
 
@@ -277,6 +325,40 @@ const Store = {
   /* Volver a leer de la nube (para ver lo que han apuntado los demás) */
   async recargar() {
     return this.iniciar();
+  },
+
+  /* ==========================================================================
+     GUARDAR UN SOLO PARTIDO
+     --------------------------------------------------------------------------
+     Antes, apuntar un resultado subía el torneo ENTERO (todos los partidos tal
+     y como los tuviera ese navegador en pantalla). Si dos personas apuntaban en
+     el mismo rato, la segunda pisaba el resultado de la primera.
+
+     Ahora se guarda solo la fila del partido que ha cambiado: así cada uno
+     escribe lo suyo y no toca lo de los demás.
+     ========================================================================== */
+  async guardarPartido(torneoId, partido) {
+    const motor = this.elegirMotor();
+    await motor.guardarPartido(partido, torneoId);
+
+    // Y la copia en memoria, para que la pantalla no se quede con la vieja
+    const t = this.cache.find(x => x.id === torneoId);
+    if (t) {
+      if (!t.partidos) t.partidos = [];
+      const i = t.partidos.findIndex(p => p.id === partido.id);
+      if (i >= 0) t.partidos[i] = partido; else t.partidos.push(partido);
+    }
+    return partido;
+  },
+
+  /* Quitar un solo partido (sin tocar los demás) */
+  async borrarPartido(torneoId, partidoId) {
+    const motor = this.elegirMotor();
+    await motor.borrarPartido(partidoId);
+
+    const t = this.cache.find(x => x.id === torneoId);
+    if (t && t.partidos) t.partidos = t.partidos.filter(p => p.id !== partidoId);
+    return true;
   },
 
   /* Crea un torneo nuevo (lo deja guardado y en memoria) */

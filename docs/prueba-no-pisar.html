@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: dos personas apuntando a la vez no se pisan</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:18px; }
+  h1 { font-size:19px; color:#00E676; }
+  iframe { border:1px solid #223; width:900px; height:220px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba: apuntar un resultado NO pisa el de los demás</h1>
+<p>Monta un torneo de prueba en la nube, simula a dos personas apuntando a la vez y comprueba
+   que los dos resultados sobreviven. Al final borra su torneo de prueba.</p>
+<iframe id="marco" src="../index.html?nube=1"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const marco = document.getElementById('marco');
+
+function esperarListo(intentos = 200) {
+  return new Promise(r => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); r(true); } else if (++n > intentos) { clearInterval(tic); r(false); }
+    }, 100);
+  });
+}
+
+marco.onload = async function ejecutar() {
+  marco.onload = null;
+
+  const sufijo = Date.now().toString(36);
+  const ID = 'zz-nopisar-' + sufijo;
+  let w = marco.contentWindow;
+  let creado = false;
+
+  try {
+    await esperarListo();
+    w = marco.contentWindow;
+    const Store = w.Store;
+
+    ok('la prueba habla con la nube de verdad', Store.modo() === 'nube', Store.modo());
+
+    // ---------------------------------------------------------------- montar
+    const jugadores = [
+      { id: ID + '-a', nombre: 'Prueba A', emoji: '⚪', color: '#888888' },
+      { id: ID + '-b', nombre: 'Prueba B', emoji: '⚫', color: '#444444' },
+      { id: ID + '-c', nombre: 'Prueba C', emoji: '🔘', color: '#AAAAAA' }
+    ];
+    const partidos = [
+      { id: ID + '-p1', fase: 'liga', jornada: 1, localId: jugadores[0].id, visitanteId: jugadores[1].id,
+        golesLocal: 0, golesVisitante: 0, jugado: false, goles: [], stats: null, fecha: null },
+      { id: ID + '-p2', fase: 'liga', jornada: 1, localId: jugadores[1].id, visitanteId: jugadores[2].id,
+        golesLocal: 0, golesVisitante: 0, jugado: false, goles: [], stats: null, fecha: null }
+    ];
+    const torneo = {
+      id: ID, nombre: 'ZZ PRUEBA NO PISAR (borrar)', estado: 'en_curso',
+      config: { codigo: 'ZZZZZZ', vueltas: 1, clasificados: 2, puntosVictoria: 3, puntosEmpate: 1,
+                puntosDerrota: 0, desempates: ['diferenciaGoles'], tiposGol: [], formato: 'liguilla' },
+      jugadores, futbolistas: [], partidos
+    };
+    await Store.crearTorneo(torneo);
+    creado = true;
+    ok('se ha montado el torneo de prueba (2 partidos pendientes)', true, ID);
+    ok('el torneo está en la lista en memoria', Store.cache.some(t => t.id === ID),
+       Store.cache.length + ' torneos en memoria');
+
+    // ------------------------------------------------- persona A apunta el 1º
+    // (Una copia "vieja" del torneo, como la tendría un segundo navegador abierto antes)
+    const copiaVieja = JSON.parse(JSON.stringify(torneo));
+
+    const p1 = Store.cache.find(t => t.id === ID).partidos.find(p => p.id === ID + '-p1');
+    p1.golesLocal = 3; p1.golesVisitante = 1; p1.jugado = true;
+    await Store.guardarPartido(ID, p1);
+    ok('A apunta el partido 1 (3-1)', true, '3-1');
+
+    // ------------------------------------ persona B apunta el 2º SIN recargar
+    // B sigue con su copia de antes: el partido 1 le aparece como 0-0 pendiente
+    const p2Viejo = copiaVieja.partidos.find(p => p.id === ID + '-p2');
+    p2Viejo.golesLocal = 2; p2Viejo.golesVisitante = 2; p2Viejo.jugado = true;
+    await Store.guardarPartido(ID, p2Viejo);
+    ok('B apunta el partido 2 (2-2) con datos viejos', true, '2-2');
+
+    // ------------------------------------------------------- ¿sobrevivió el 1º?
+    await Store.recargar();
+    let enNube = Store.cache.find(t => t.id === ID).partidos;
+    const r1 = enNube.find(p => p.id === ID + '-p1');
+    const r2 = enNube.find(p => p.id === ID + '-p2');
+    ok('EL RESULTADO DE A SIGUE AHÍ (esto es lo que se perdía antes)',
+       r1.jugado && r1.golesLocal === 3 && r1.golesVisitante === 1,
+       r1.golesLocal + '-' + r1.golesVisitante + (r1.jugado ? '' : ' (¡perdido!)'));
+    ok('y el de B también', r2.jugado && r2.golesLocal === 2 && r2.golesVisitante === 2,
+       r2.golesLocal + '-' + r2.golesVisitante);
+
+    // ------------------- y ahora la demostración del fallo VIEJO, para comparar
+    // Con el sistema antiguo (subir el torneo entero) el resultado de A se perdía:
+    copiaVieja.partidos[0].golesLocal = 0; copiaVieja.partidos[0].golesVisitante = 0;
+    copiaVieja.partidos[0].jugado = false;
+    await Store.guardarTorneo(copiaVieja);          // ← así se guardaba antes
+    await Store.recargar();
+    enNube = Store.cache.find(t => t.id === ID).partidos;
+    const r1viejo = enNube.find(p => p.id === ID + '-p1');
+    ok('(demostración) con el sistema VIEJO el resultado de A sí se perdía',
+       !r1viejo.jugado, 'guardando el torneo entero el 3-1 vuelve a 0-0 y pendiente');
+  } catch (e) {
+    ok('La prueba se ha cortado', false, e.message);
+    salida.push('    traza: ' + String(e.stack || '').split('\n').slice(0, 4).join(' | '));
+    salida.push('    Store.cache tiene ' + (() => {
+      try { return marco.contentWindow.Store.cache.length + ' torneos'; } catch (x) { return 'error'; }
+    })());
+  }
+
+  // --------------------------------------------------------------- limpieza
+  try {
+    if (creado) {
+      await marco.contentWindow.Store.borrarTorneo(ID);
+      await marco.contentWindow.Store.recargar();
+      const queda = marco.contentWindow.Store.cache.some(t => t.id === ID);
+      ok('limpieza: el torneo de prueba se ha borrado', !queda, queda ? '¡SIGUE AHÍ!' : 'fuera');
+    }
+  } catch (e) {
+    ok('limpieza', false, e.message + ' (revisar el torneo ' + ID + ')');
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' +
+    (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = 'prueba-lista';
+};
+</script>
+</body>
+</html>

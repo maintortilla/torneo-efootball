@@ -8,10 +8,20 @@ let torneoActual = null;
 let filtroPartidos = 'todos';
 
 async function arrancarPartidos() {
+  /* Si falla la conexión se dice; si falla el dibujado, se dice también.
+     (Antes todo iba junto y los fallos de código se contaban como "no hay nube"). */
+  let torneos;
   try {
     await arrancarCandado();     // ¿esta web pide contraseña para apuntar?
-    const torneos = await Store.iniciar();
+    torneos = await Store.iniciar();
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    window.__listo = true;
+    return;
+  }
 
+  try {
     const idInicial = elegirTorneoInicial(torneos);
     if (!idInicial) {   // no hay torneos: a la lista
       window.location.href = 'index.html';
@@ -28,8 +38,8 @@ async function arrancarPartidos() {
     pintarTodoPartidos();
     engancharPartidos();
   } catch (e) {
-    console.error(e);
-    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    console.error('Fallo al dibujar los partidos:', e);
+    avisar('La página ha fallado al dibujarse: ' + e.message, true, 6000);
   }
   window.__listo = true;
 }
@@ -228,7 +238,8 @@ async function guardarNuevoPartido() {
   const boton = $('#np-guardar');
   boton.disabled = true;
   try {
-    await Store.guardarTorneo(torneoActual);
+    // Solo se guarda el partido nuevo (no todo el torneo): así no se pisa nada de los demás
+    await Store.guardarPartido(torneoActual.id, nuevo);
     cerrarModalNuevo();
     pintarTodoPartidos();
     avisar(tipo === 'amistoso'

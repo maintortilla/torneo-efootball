@@ -256,7 +256,8 @@ async function guardarPartidoRuleta() {
   boton.disabled = true;
   boton.textContent = 'Apuntando...';
   try {
-    await Store.guardarTorneo(torneo);
+    // Solo se guarda el partido que ha salido en la ruleta
+    await Store.guardarPartido(torneo.id, partido);
     cerrarRuleta();
     if (typeof pintarTodoPartidos === 'function') pintarTodoPartidos();
     const l = jugador(torneo, localId), v = jugador(torneo, visitId);

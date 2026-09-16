@@ -7,10 +7,22 @@
 let torneoActual = null;
 
 async function arrancarClasificacion() {
+  /* Dos bloques separados a propósito: si falla la CONEXIÓN se dice eso, y si
+     falla el DIBUJADO se dice eso. Antes todo iba junto y cualquier error
+     acababa contando "no se pudo conectar con la nube" (así se escondían los
+     fallos de verdad). */
+  let torneos;
   try {
     await arrancarCandado();     // ¿esta web pide contraseña para apuntar?
-    const torneos = await Store.iniciar();
+    torneos = await Store.iniciar();
+  } catch (e) {
+    console.error(e);
+    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    window.__listo = true;
+    return;
+  }
 
+  try {
     const idInicial = elegirTorneoInicial(torneos);
     if (!idInicial) {   // no hay torneos: a la lista para crear uno
       window.location.href = 'index.html';
@@ -42,8 +54,8 @@ async function arrancarClasificacion() {
       window.history.replaceState({}, '', 'clasificacion.html?torneo=' + encodeURIComponent(torneoActual.id));
     }
   } catch (e) {
-    console.error(e);
-    avisar('No se pudo conectar con la nube: ' + e.message, true);
+    console.error('Fallo al dibujar la clasificación:', e);
+    avisar('La página ha fallado al dibujarse: ' + e.message, true, 6000);
   }
   window.__listo = true;
 }
