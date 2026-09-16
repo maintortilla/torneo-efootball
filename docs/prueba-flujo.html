@@ -178,20 +178,25 @@ document.getElementById('marco').onload = async () => {
 
     ok('el menú de arriba a la derecha ya no existe', !d.getElementById('btn-menu'));
 
-    // El botón de actualizar SÍ está: vuelve a leer la nube sin recargar la página
+    // El botón de actualizar: solo tiene sentido con los datos en la nube
     const botonAct = d.getElementById('btn-actualizar');
-    ok('la barra de arriba tiene el botón de actualizar',
-       Boolean(botonAct) && /Actualizar/.test(botonAct.textContent));
+    ok('el botón de actualizar sale cuando los datos están en la nube',
+       modoNube ? (Boolean(botonAct) && /Actualizar/.test(botonAct.textContent)) : !botonAct,
+       modoNube ? 'está en la barra (modo nube)' : 'no sale en modo local, y es correcto');
     ok('el botón de refrescar viejo sigue fuera', !d.getElementById('btn-refrescar'));
 
-    // Y funciona: al pulsarlo vuelve a leer la nube (solo lee, no escribe nada)
-    const filasAntes = d.querySelectorAll('#lista-partidos .partido-fila').length;
-    botonAct.click();
-    await esperar(3000);
-    const filasDespues = d.querySelectorAll('#lista-partidos .partido-fila').length;
-    ok('al pulsar Actualizar la lista se repinta sin romperse',
-       filasAntes > 0 && filasDespues === filasAntes,
-       filasAntes + ' → ' + filasDespues + ' partidos');
+    // Y funciona: al pulsarlo vuelve a leer (solo lee, no escribe nada)
+    if (botonAct) {
+      const filasAntes = d.querySelectorAll('#lista-partidos .partido-fila').length;
+      botonAct.click();
+      await esperar(3000);
+      const filasDespues = d.querySelectorAll('#lista-partidos .partido-fila').length;
+      ok('al pulsar Actualizar la lista se repinta sin romperse',
+         filasAntes > 0 && filasDespues === filasAntes,
+         filasAntes + ' → ' + filasDespues + ' partidos');
+    } else {
+      ok('sin botón de actualizar no hay nada que pulsar', true, 'omitido en modo local');
+    }
 
     // 14. Los filtros de partidos: cada uno con su color
     const colorFiltro = f => d.defaultView.getComputedStyle(d.querySelector('.tab[data-filtro="' + f + '"]')).color;

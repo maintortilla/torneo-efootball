@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Diagnóstico: crear un torneo</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:ui-monospace,monospace; padding:18px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h2 style="color:#00E676;font-size:17px">Diagnóstico: crear un torneo contra la nube</h2>
+<pre id="resultado">Ejecutando…</pre>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/config-nube.js"></script>
+<script src="../js/modelo.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/candado.js"></script>
+<script src="../js/comun.js"></script>
+<script>
+/* Captura CUALQUIER error suelto para que no se escape */
+const erroresSuelto = [];
+window.addEventListener('error', e => erroresSuelto.push('window.onerror: ' + e.message));
+window.addEventListener('unhandledrejection', e =>
+  erroresSuelto.push('promesa rechazada: ' + (e.reason && (e.reason.message || e.reason))));
+
+const salida = [];
+const di = (t, v) => salida.push('  ' + t + ': ' + v);
+
+(async () => {
+  let torneoPrueba = null;
+
+  // 1. ¿Se puede leer de la nube?
+  try {
+    const torneos = await Store.iniciar();
+    di('lectura de la nube', 'OK — ' + torneos.length + ' torneos');
+    di('modo', Store.modo());
+    di('config nube', NUBE_CONFIG.url + ' | clave ' + String(NUBE_CONFIG.anonKey).slice(0, 22) + '…');
+
+    // 2. ¿Y los códigos? (es lo nuevo que toqué hoy)
+    try {
+      const cambiados = asegurarCodigos(Store.cache);
+      di('asegurarCodigos', 'OK — ' + cambiados.length + ' cambiados');
+      di('códigos actuales', Store.cache.map(t => t.id + '=' + codigoDeTorneo(t)).join('  '));
+    } catch (e) {
+      di('asegurarCodigos', 'FALLO → ' + (e.message || e));
+    }
+
+    // 3. Crear un torneo de prueba, como hace el botón
+    const nombre = 'ZZ DIAGNOSTICO ' + Date.now().toString(36);
+    try {
+      const jugadores = [
+        { id: 'zz-' + Date.now().toString(36) + '-a', nombre: 'Uno', emoji: '⚪', color: '#888' },
+        { id: 'zz-' + Date.now().toString(36) + '-b', nombre: 'Dos', emoji: '⚪', color: '#888' }
+      ];
+      torneoPrueba = crearTorneoNuevo(nombre, jugadores, { vueltas: 2, clasificados: 2 }, []);
+      di('crearTorneoNuevo', 'OK — código ' + torneoPrueba.config.codigo);
+
+      await Store.crearTorneo(torneoPrueba);
+      di('Store.crearTorneo', 'OK — guardado en la nube');
+    } catch (e) {
+      di('Store.crearTorneo', 'FALLO → ' + (e && e.message ? e.message : String(e)));
+      di('detalle del error', JSON.stringify(e && e.details ? {
+        message: e.message, details: e.details, hint: e.hint, code: e.code
+      } : { message: String(e && e.message), tipo: typeof e }));
+    }
+  } catch (e) {
+    di('lectura de la nube', 'FALLO → ' + (e && e.message ? e.message : String(e)));
+    di('detalle del error', JSON.stringify(e && e.details ? {
+      message: e.message, details: e.details, hint: e.hint, code: e.code
+    } : { message: String(e && e.message), tipo: typeof e }));
+  }
+
+  // 4. Limpiar: fuera el torneo de prueba
+  if (torneoPrueba) {
+    try {
+      await Store.borrarTorneo(torneoPrueba.id);
+      di('limpieza', 'torneo de prueba borrado');
+    } catch (e) {
+      di('limpieza', 'NO se pudo borrar → ' + (e.message || e) + ' (id ' + torneoPrueba.id + ')');
+    }
+  }
+
+  if (erroresSuelto.length) salida.push('ERRORES SUELTOS:\n    ' + erroresSuelto.join('\n    '));
+
+  document.getElementById('resultado').textContent = salida.join('\n');
+  document.title = 'diag-lista';
+})();
+</script>
+</body>
+</html>

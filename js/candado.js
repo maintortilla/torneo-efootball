@@ -28,9 +28,13 @@ const CANDADO = {
   listo: false         // ¿ya hemos preguntado a Supabase si había sesión?
 };
 
-/* ¿Esta web pide contraseña? (solo en modo nube y si está encendido) */
+/* ¿Esta web pide contraseña? (solo en modo nube y si está encendido)
+   En las pruebas se puede encender aunque el modo sea local: así el candado se
+   prueba sin tocar la nube de verdad. */
 function candadoActivo() {
-  return nubeConfigurada() && Boolean(NUBE_CONFIG.candado && NUBE_CONFIG.candado.activo);
+  const quiere = Boolean(NUBE_CONFIG.candado && NUBE_CONFIG.candado.activo);
+  if (typeof enModoPrueba === 'function' && enModoPrueba()) return quiere;
+  return nubeConfigurada() && quiere;
 }
 
 /* ¿Puede escribir quien está mirando la web? */

@@ -75,8 +75,10 @@ marco.onload = async () => {
        candado.estado().activo === false, String(candado.estado().activo));
     ok('sin candado no hay botón de entrar en la barra',
        !d.querySelector('.btn-sesion'));
+    // Ojo: el texto depende del partido ("Apuntar" si está pendiente, "Editar" si ya
+    // tiene resultado), así que se aceptan los dos: lo importante es que NO sea el candado.
     ok('sin candado los partidos se pueden apuntar',
-       textoBotonFila() === 'Apuntar' && !filaConCandado(),
+       /Apuntar|Editar/i.test(textoBotonFila()) && !filaConCandado(),
        textoBotonFila());
     ok('sin candado la ruleta está a la vista', vis('#btn-ruleta'));
 
@@ -145,7 +147,7 @@ marco.onload = async () => {
        botonDentro ? botonDentro.textContent.trim() : '(no hay)');
 
     ok('vuelven los botones de apuntar en los partidos (la lista se repinta)',
-       textoBotonFila() === 'Apuntar' && !filaConCandado(),
+       /Apuntar|Editar/i.test(textoBotonFila()) && !filaConCandado(),
        textoBotonFila());
 
     ok('vuelve la ruleta y el añadir partido', vis('#btn-ruleta') && vis('#btn-nuevo-partido'));

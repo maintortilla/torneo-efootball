@@ -47,8 +47,39 @@ const NUBE_CONFIG = {
   }
 };
 
+/* ==========================================================================
+   MODO PRUEBA — los tests NUNCA tocan la nube de verdad
+   --------------------------------------------------------------------------
+   Cuando la web se abre DENTRO de una página de pruebas (docs/prueba-*.html),
+   se fuerza el MODO LOCAL: los datos van al navegador del test, no a Supabase.
+   Así un test no puede crear ni borrar los torneos de nadie.
+
+   (Pasó: un test de la pantalla de Ajustes creó torneos de prueba y borró el
+   torneo real de Leo mientras se ejecutaba la batería de pruebas.)
+
+   Un test que necesite la nube de verdad puede pedirla con `?nube=1`, y ese
+   test se encarga de limpiar lo que haya creado.
+
+   El candado sí se puede probar en local (`Candado.encender(true)`): se
+   comprueba a propósito sin nube, porque solo esconde botones.
+   ========================================================================== */
+function modoPruebaLocal() {
+  try {
+    const busqueda = String(window.location.search || '');
+    if (/(^|[?&])nube=1(&|$)/.test(busqueda)) return false;   // lo pide a propósito
+    if (/(^|[?&])local=1(&|$)/.test(busqueda)) return true;
+
+    if (window.parent && window.parent !== window &&
+        /\/docs\/prueba-/.test(String(window.parent.location.href))) {
+      return true;
+    }
+  } catch (e) { /* si no se puede mirar, no forzamos nada */ }
+  return false;
+}
+
 /* ¿Está configurada la nube? (si no, la web tira del navegador) */
 function nubeConfigurada() {
+  if (modoPruebaLocal()) return false;
   return Boolean(NUBE_CONFIG.url && NUBE_CONFIG.anonKey &&
                  String(NUBE_CONFIG.url).startsWith('http'));
 }
@@ -56,4 +87,9 @@ function nubeConfigurada() {
 /* Texto corto para que la web pueda avisar en qué modo está */
 function modoDatos() {
   return nubeConfigurada() ? 'nube' : 'local';
+}
+
+/* ¿Estamos en el navegador de un test? (para avisarlo por consola) */
+function enModoPrueba() {
+  return modoPruebaLocal();
 }
