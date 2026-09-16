@@ -8,6 +8,7 @@ async function arrancarTorneos() {
   try {
     await arrancarCandado();
     const torneos = await Store.iniciar();
+    await darCodigosQueFalten();     // a los torneos viejos, sin código, se les pone uno
     pintarModoDatos();
     pintarTorneos(torneos);
   } catch (e) {
@@ -15,6 +16,32 @@ async function arrancarTorneos() {
     avisar('No se pudo conectar con la nube: ' + e.message, true);
   }
   window.__listo = true;
+}
+
+/* ==========================================================================
+   ENTRAR CON UN CÓDIGO — "me han pasado el código del torneo, entro directo"
+   ========================================================================== */
+function entrarConCodigo() {
+  const campo = $('#codigo-a-buscar');
+  if (!campo) return;
+
+  const texto = campo.value.trim();
+  if (!texto) {
+    avisar('Escribe el código del torneo 🎫', true);
+    campo.focus();
+    return;
+  }
+
+  const torneo = buscarTorneoPorCodigo(Store.cache, texto);
+
+  if (!torneo) {
+    avisar('Ese código no es de ningún torneo 🤔 Revisa que esté bien escrito', true, 5200);
+    campo.select();
+    return;
+  }
+
+  recordarTorneo(torneo.id);
+  window.location.href = 'clasificacion.html?torneo=' + encodeURIComponent(torneo.id);
 }
 
 function pintarTorneos(torneos) {
@@ -58,6 +85,15 @@ function pintarTorneos(torneos) {
 document.addEventListener('DOMContentLoaded', () => {
   arrancarTorneos();
   engancharActualizar(() => pintarTorneos(Store.cache));
+
+  // Caja del código: botón y tecla Intro
+  const btn = $('#btn-buscar-codigo');
+  const campo = $('#codigo-a-buscar');
+  if (btn) btn.onclick = entrarConCodigo;
+  if (campo) {
+    campo.addEventListener('keydown', (e) => { if (e.key === 'Enter') entrarConCodigo(); });
+  }
+
   const boton = $('#btn-nuevo-torneo');
   if (boton) boton.onclick = () => { window.location.href = 'ajustes.html?nuevo=1'; };
 });

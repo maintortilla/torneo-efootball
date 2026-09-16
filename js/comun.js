@@ -351,3 +351,42 @@ function engancharActualizar(alActualizar) {
     }
   };
 }
+
+/* ==========================================================================
+   CÓDIGO DEL TORNEO — compartir por código (tipo código de sala de un juego)
+   ========================================================================== */
+
+/* A los torneos creados antes de que existiera el código se les pone uno.
+   Devuelve cuántos se han cambiado. Se llama al arrancar (Mis torneos, Ajustes). */
+async function darCodigosQueFalten() {
+  const cambiados = asegurarCodigos(Store.cache);
+  for (const t of cambiados) {
+    try {
+      await Store.guardarTorneo(t);
+    } catch (e) {
+      console.warn('No se pudo guardar el código del torneo', t.nombre, e);
+    }
+  }
+  return cambiados.length;
+}
+
+/* El enlace directo a un torneo, listo para pegar en WhatsApp */
+function enlaceDelTorneo(id) {
+  const carpeta = window.location.pathname.replace(/[^/]*$/, '');
+  return window.location.origin + carpeta + 'clasificacion.html?torneo=' + encodeURIComponent(id);
+}
+
+/* Copiar al portapapeles, con aviso. Si el navegador no deja (o no hay https),
+   se enseña el texto para copiarlo a mano en vez de quedarse en silencio. */
+async function copiarAlPortapapeles(texto, mensajeOk) {
+  if (!texto) return false;
+  try {
+    await navigator.clipboard.writeText(texto);
+    avisar(mensajeOk || 'Copiado ✅');
+    return true;
+  } catch (e) {
+    console.warn('No se pudo copiar al portapapeles:', e);
+    avisar('No se pudo copiar solo. Copia esto a mano: ' + texto, true, 9000);
+    return false;
+  }
+}

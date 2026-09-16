@@ -17,6 +17,80 @@ function nuevoId(prefijo) {
 }
 
 /* -------------------------------------------------------------------------
+   CÓDIGO DE TORNEO — la "llave" corta para entrar en un torneo
+   Se le pasa a alguien ("entra al torneo con el código K7M2QX") y en la página
+   "Mis torneos" lo escribe para caer directo en ese torneo, sin enlaces largos.
+   Sin letras ni números que se confundan al dictar o al copiar a mano:
+   fuera la O, el 0, la I, la L y el 1.
+   ------------------------------------------------------------------------- */
+const ALFABETO_CODIGO = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const LARGO_CODIGO = 6;
+
+/* Genera un código nuevo evitando los que ya existen.
+   `azar` (un número de 0 a 1) se puede fijar para las pruebas. */
+function nuevoCodigoTorneo(usados, azar) {
+  const yaEstan = (usados || []).map(c => normalizarCodigo(c));
+  for (let intento = 0; intento < 500; intento++) {
+    let codigo = '';
+    for (let i = 0; i < LARGO_CODIGO; i++) {
+      const r = azar === undefined ? Math.random() : azar;
+      codigo += ALFABETO_CODIGO[Math.floor(r * ALFABETO_CODIGO.length)];
+    }
+    if (!yaEstan.includes(codigo)) return codigo;
+  }
+  return null;   // imposible en la práctica; mejor null que un repetido
+}
+
+/* Deja el texto en limpio para comparar: mayúsculas y sin espacios ni guiones.
+   Así "k7m2-qx " y "K7M2QX" son el mismo código. */
+function normalizarCodigo(texto) {
+  return String(texto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/* El código de un torneo (los torneos creados antes de esto no tienen) */
+function codigoDeTorneo(torneo) {
+  return normalizarCodigo(torneo && torneo.config ? torneo.config.codigo : '');
+}
+
+/* A los torneos que no tengan código se les pone uno (una sola vez).
+   Devuelve SOLO los que han cambiado, para guardarlos. */
+function asegurarCodigos(torneos) {
+  const usados = (torneos || []).map(codigoDeTorneo).filter(Boolean);
+  const cambiados = [];
+
+  (torneos || []).forEach(t => {
+    if (!t.config) t.config = {};
+    if (!codigoDeTorneo(t)) {
+      t.config.codigo = nuevoCodigoTorneo(usados);
+      if (t.config.codigo) usados.push(t.config.codigo);
+      cambiados.push(t);
+    }
+  });
+
+  return cambiados;
+}
+
+/* Busca un torneo por su código, por su id, por su nombre, o pegando el enlace
+   entero (cómodo: si alguien manda la dirección, vale tal cual). */
+function buscarTorneoPorCodigo(torneos, texto) {
+  const limpio = normalizarCodigo(texto);
+  if (!limpio) return null;
+
+  // Si han pegado la dirección entera con ?torneo=..., se saca de ahí
+  const enUrl = String(texto || '').match(/[?&]torneo=([^&\s]+)/);
+  if (enUrl) {
+    const idUrl = decodeURIComponent(enUrl[1]);
+    const porId = (torneos || []).find(t => t.id === idUrl);
+    if (porId) return porId;
+  }
+
+  return (torneos || []).find(t =>
+    codigoDeTorneo(t) === limpio ||
+    normalizarCodigo(t.id) === limpio ||
+    normalizarCodigo(t.nombre) === limpio) || null;
+}
+
+/* -------------------------------------------------------------------------
    CALENDARIO: reparte todos contra todos sin repetir ni dejarse ninguno.
    Usa el "método del círculo": uno se queda fijo y los demás van rotando.
    Si el torneo es a ida y vuelta (config.vueltas = 2), se repite la segunda
@@ -370,11 +444,14 @@ function nuevoPartidoLiga(localId, visitanteId, jornada) {
    Nace SIN partidos: los cruces se montan jornada a jornada (con la ruleta o a
    mano). Si algún día se quiere el calendario entero de golpe, están
    generarCalendario() y regenerarCalendario(). */
-function crearTorneoNuevo(nombre, jugadores, configPersonalizada) {
+function crearTorneoNuevo(nombre, jugadores, configPersonalizada, codigosUsados) {
   const config = Object.assign(
     JSON.parse(JSON.stringify(CONFIG_DEFECTO)),
     configPersonalizada || {}
   );
+
+  // Cada torneo nace con su código para poder entrar con él (tipo código de sala)
+  if (!config.codigo) config.codigo = nuevoCodigoTorneo(codigosUsados);
 
   const torneo = {
     id: nuevoId('t'),

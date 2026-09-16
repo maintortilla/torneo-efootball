@@ -37,6 +37,19 @@
         <button class="btn btn-gol solo-edicion" id="btn-nuevo-torneo">Crear torneo nuevo</button>
       </div>
 
+      <!-- Entrar en un torneo con su código (tipo código de sala de un juego) -->
+      <div class="caja-codigo">
+        <div>
+          <span class="etiqueta-codigo">🎫 ¿Te han pasado un código de torneo?</span>
+          <small>Escríbelo aquí y entras directo. Si te han mandado el enlace entero, pégalo y también vale.</small>
+        </div>
+        <div class="caja-codigo-forma">
+          <input id="codigo-a-buscar" type="text" placeholder="K7M2QX" maxlength="60"
+                 autocomplete="off" spellcheck="false" aria-label="Código del torneo">
+          <button class="btn btn-gol" id="btn-buscar-codigo">Entrar</button>
+        </div>
+      </div>
+
       <div class="rejilla-torneos" id="lista-torneos"></div>
 
     </main>

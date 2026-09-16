@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: entrar en un torneo con su código</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  h1 { font-size:20px; color:#00E676; }
+  iframe { border:1px solid #223; background:#0A1017; width:1400px; height:560px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba del código de torneo (entrar directo)</h1>
+<p>Comprueba la caja de "Mis torneos", que un código malo avisa, y que uno bueno lleva al torneo.
+   No crea ni borra torneos: solo lee.</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos = 200) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      const w = marco.contentWindow;
+      if (w && w.__listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(150); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;   // que no se repita en cada navegación
+  const marco = marcoEl;
+
+  try {
+    await esperarListo(marco);
+    let d = marco.contentDocument;
+    let w = marco.contentWindow;
+
+    // ------------------------------------------------------------------ 1
+    // La caja para meter el código está en "Mis torneos"
+    const campo = d.getElementById('codigo-a-buscar');
+    const boton = d.getElementById('btn-buscar-codigo');
+    ok('existe la caja para meter el código', Boolean(campo));
+    ok('existe el botón de entrar', Boolean(boton) && /Entrar/i.test(boton.textContent),
+       boton ? boton.textContent.trim() : 'sin botón');
+
+    // ------------------------------------------------------------------ 2
+    // Todos los torneos tienen ya su código (a los viejos se les pone solo)
+    const torneos = w.Store.cache;
+    ok('hay torneos cargados', torneos.length >= 1, torneos.length + ' torneo(s)');
+
+    const codigos = torneos.map(t => w.codigoDeTorneo(t));
+    ok('todos los torneos tienen código de 6 caracteres',
+       codigos.length > 0 && codigos.every(c => c.length === 6), codigos.join(', '));
+    ok('ningún código usa letras que se confunden (sin O, 0, I, L, 1)',
+       codigos.every(c => !/[O0IL1]/.test(c)), codigos.join(', '));
+    ok('dos torneos no comparten código', new Set(codigos).size === codigos.length, codigos.join(', '));
+
+    // ------------------------------------------------------------------ 3
+    // Un código que no existe: avisa y NO navega
+    campo.value = 'ZZZZZZ';
+    boton.click();
+    await esperar(700);
+    ok('un código que no existe NO te saca de la página',
+       /index\.html/.test(marco.contentWindow.location.pathname),
+       marco.contentWindow.location.pathname);
+    const aviso = marco.contentDocument.getElementById('toast');
+    ok('y avisa de que ese código no es de ningún torneo',
+       Boolean(aviso) && /código/i.test(aviso.textContent),
+       aviso ? aviso.textContent.trim() : 'sin aviso');
+
+    // ------------------------------------------------------------------ 4
+    // Un código bueno (en minúsculas y con espacios, que también vale) lleva al torneo
+    const objetivo = torneos[0];
+    const suCodigo = w.codigoDeTorneo(objetivo);
+    d.getElementById('codigo-a-buscar').value = '  ' + suCodigo.toLowerCase() + ' ';
+
+    const boton2 = marco.contentDocument.getElementById('btn-buscar-codigo');
+    boton2.click();
+    await esperar(2500);
+    await esperarListo(marco, 100);
+
+    const wFinal = marco.contentWindow;
+    const dFinal = marco.contentDocument;
+    ok('el código bueno lleva a la clasificación de ese torneo',
+       /clasificacion\.html/.test(wFinal.location.pathname), wFinal.location.pathname);
+    ok('y es EL torneo del código, no otro',
+       wFinal.location.search.includes(encodeURIComponent(objetivo.id)),
+       wFinal.location.search + '  (esperado: ' + objetivo.id + ')');
+
+    const nombrePintado = dFinal.getElementById('nombre-torneo');
+    ok('la página muestra el nombre de ese torneo',
+       Boolean(nombrePintado) && nombrePintado.textContent.includes(objetivo.nombre),
+       nombrePintado ? nombrePintado.textContent.trim() : 'sin nombre');
+
+    // ------------------------------------------------------------------ 5
+    // En Ajustes se ve el código para copiarlo
+    await navegar(marco, '../ajustes.html?torneo=' + encodeURIComponent(objetivo.id));
+    const dAj = marco.contentDocument;
+    const cajaCodigo = dAj.getElementById('codigo-torneo');
+    ok('en Ajustes se ve el código del torneo', Boolean(cajaCodigo), cajaCodigo ? cajaCodigo.textContent : '—');
+    ok('el código que enseña Ajustes es el del torneo',
+       Boolean(cajaCodigo) && cajaCodigo.textContent.trim() === suCodigo,
+       (cajaCodigo ? cajaCodigo.textContent.trim() : '?') + '  (esperado: ' + suCodigo + ')');
+    ok('está el botón de copiar el código', Boolean(dAj.getElementById('btn-copiar-codigo')));
+    ok('está el botón de copiar el enlace', Boolean(dAj.getElementById('btn-copiar-enlace')));
+
+    // El enlace que se copia lleva al torneo
+    const enlace = marco.contentWindow.enlaceDelTorneo(objetivo.id);
+    ok('el enlace copiable apunta a la clasificación de ese torneo',
+       /clasificacion\.html\?torneo=/.test(enlace) && enlace.includes(objetivo.id), enlace);
+  } catch (e) {
+    ok('La prueba se ha cortado', false, e.message);
+  }
+
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' +
+    (salida.some(l => l.startsWith('[FALLO]')) ? '❌ HAY FALLOS' : '✅ PRUEBA COMPLETA: TODO CORRECTO');
+  document.title = 'prueba-lista';
+};
+</script>
+</body>
+</html>

@@ -17,6 +17,7 @@ async function arrancarAjustes() {
   try {
     await arrancarCandado(); // sin entrar, los ajustes se ven pero no se tocan
     torneos = await Store.iniciar();
+    await darCodigosQueFalten();   // a los torneos viejos, sin código, se les pone uno
     pintarModoDatos();
 
     const quiereNuevo = new URLSearchParams(window.location.search).get('nuevo') === '1';
@@ -69,6 +70,28 @@ function pintarSelectorTema() {
   });
 }
 
+/* ------------------------------------------ el código del torneo (invitar) */
+function pintarCodigoTorneo() {
+  const caja = $('#codigo-torneo');
+  if (!caja) return;
+
+  const codigo = torneoActual ? codigoDeTorneo(torneoActual) : '';
+  caja.textContent = codigo || '—';
+
+  const btnCodigo = $('#btn-copiar-codigo');
+  const btnEnlace = $('#btn-copiar-enlace');
+
+  if (btnCodigo) {
+    btnCodigo.onclick = () => copiarAlPortapapeles(codigo,
+      codigo ? 'Código copiado: ' + codigo + ' 🎫' : '');
+  }
+  if (btnEnlace) {
+    btnEnlace.onclick = () => copiarAlPortapapeles(
+      torneoActual ? enlaceDelTorneo(torneoActual.id) : '',
+      'Enlace copiado: pásalo por WhatsApp 🔗');
+  }
+}
+
 /* ------------------------------------------------------- abrir / cerrar */
 function abrirCrear() {
   torneoActual = null;
@@ -113,6 +136,7 @@ function cargarTorneo(id) {
   pintarDesempates();
   pintarFases();
   pintarPistaPartidos();
+  pintarCodigoTorneo();
   pintarCalendarioAviso();
 
   // Que la página recuerde este torneo y los enlaces del menú lo arrastren
@@ -358,7 +382,7 @@ async function crearTorneo() {
     puntosDerrota: Number($('#nuevo-pts-d').value)
   };
 
-  const torneo = crearTorneoNuevo(nombre, jugadores, config);
+  const torneo = crearTorneoNuevo(nombre, jugadores, config, (torneos || []).map(codigoDeTorneo));
 
   const boton = $('#btn-crear');
   boton.disabled = true;

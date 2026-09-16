@@ -15,13 +15,16 @@ vm.runInThisContext(fuente + `
   calcularClasificacion, calcularGoleadores, generarCalendario, generarEliminatorias,
   estadoDeFases, crearTorneoNuevo, clavePareja, parejaYaExiste, partidosDeJornada,
   jugadorYaJuegaEnJornada, siguienteJornada, jornadaSugerida, candidatosRuleta,
-  elegirAlAzar, nuevoPartidoLiga };`);
+  elegirAlAzar, nuevoPartidoLiga,
+  nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo, asegurarCodigos,
+  buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO };`);
 const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
         calcularClasificacion, calcularGoleadores, generarCalendario,
         generarEliminatorias, estadoDeFases, crearTorneoNuevo, clavePareja,
         parejaYaExiste, partidosDeJornada, jugadorYaJuegaEnJornada,
         siguienteJornada, jornadaSugerida, candidatosRuleta, elegirAlAzar,
-        nuevoPartidoLiga } = globalThis.__api;
+        nuevoPartidoLiga, nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo,
+        asegurarCodigos, buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO } = globalThis.__api;
 
 const torneo = JSON.parse(JSON.stringify(TORNEO_PRUEBA));
 aplicarResultadosEjemplo(torneo);
@@ -177,6 +180,63 @@ comprobar('la clasificación sale a cero con el torneo vacío',
   clasVacia.length === 2 && clasVacia.every(f => f.pts === 0 && f.pj === 0));
 comprobar('el estado de fases dice que no hay calendario',
   estadoDeFases(tVacio).paso === 'sin_calendario', estadoDeFases(tVacio).paso);
+
+console.log('\n=== CÓDIGO DE TORNEO (para entrar directo) ===');
+
+const cod1 = nuevoCodigoTorneo();
+comprobar('el código tiene 6 caracteres', cod1.length === 6, cod1);
+comprobar('el código solo usa letras y números que no se confunden (sin O, 0, I, L, 1)',
+  !/[O0IL1]/.test(cod1), cod1);
+comprobar('todos los caracteres salen del alfabeto previsto',
+  [...cod1].every(c => ALFABETO_CODIGO.includes(c)), cod1);
+
+// No repite un código que ya esté en uso
+const todosIguales = nuevoCodigoTorneo([cod1], 0.0001);   // con azar fijo saldría el mismo
+comprobar('nunca devuelve un código que ya esté en uso', todosIguales !== cod1, todosIguales);
+comprobar('con azar fijo el código es siempre el mismo (repetible)',
+  nuevoCodigoTorneo([], 0) === nuevoCodigoTorneo([], 0), nuevoCodigoTorneo([], 0));
+
+// Se compara en limpio: da igual mayúsculas, espacios y guiones
+comprobar('el código se limpia para compararlo (" k7m2-qx " = K7M2QX)',
+  normalizarCodigo(' k7m2-qx ') === 'K7M2QX', normalizarCodigo(' k7m2-qx '));
+
+// Un torneo nuevo nace con su código
+const tCod = crearTorneoNuevo('Torneo con código', [{ id: 'a', nombre: 'Uno' }]);
+comprobar('un torneo nuevo nace con código', codigoDeTorneo(tCod).length === 6, codigoDeTorneo(tCod));
+const tCod2 = crearTorneoNuevo('Otro', [{ id: 'b', nombre: 'Dos' }], null, [codigoDeTorneo(tCod)]);
+comprobar('dos torneos nuevos no comparten código', codigoDeTorneo(tCod2) !== codigoDeTorneo(tCod),
+  codigoDeTorneo(tCod) + ' / ' + codigoDeTorneo(tCod2));
+
+// Los torneos viejos (sin código) reciben uno, y los que ya lo tienen no cambian
+const viejos = [
+  { id: 't-viejo-1', nombre: 'Viejo uno', config: {} },
+  { id: 't-viejo-2', nombre: 'Viejo dos', config: { codigo: 'AAAAAA' } },
+  { id: 't-viejo-3', nombre: 'Viejo tres' }   // ni config tiene
+];
+const cambiados = asegurarCodigos(viejos);
+comprobar('a los torneos sin código se les pone uno', cambiados.length === 2, cambiados.map(t => t.id).join(', '));
+comprobar('al que ya tenía código NO se le cambia', codigoDeTorneo(viejos[1]) === 'AAAAAA', codigoDeTorneo(viejos[1]));
+comprobar('los códigos puestos a los viejos no coinciden entre sí',
+  codigoDeTorneo(viejos[0]) !== codigoDeTorneo(viejos[2]),
+  codigoDeTorneo(viejos[0]) + ' / ' + codigoDeTorneo(viejos[2]));
+comprobar('pasarlo dos veces no cambia nada la segunda vez', asegurarCodigos(viejos).length === 0);
+comprobar('un torneo sin config no revienta (se le crea)', Boolean(viejos[2].config && viejos[2].config.codigo));
+
+// Buscar por código, por id, por nombre o pegando el enlace entero
+const listaBuscar = [
+  { id: 't-uno', nombre: 'Torneo Otoño 2026', config: { codigo: 'K7M2QX' } },
+  { id: 't-dos', nombre: 'Torneo Septiembre', config: { codigo: 'PQR456' } }
+];
+comprobar('se encuentra el torneo por su código', (buscarTorneoPorCodigo(listaBuscar, 'k7m2qx') || {}).id === 't-uno');
+comprobar('se encuentra escribiéndolo con espacios y guiones',
+  (buscarTorneoPorCodigo(listaBuscar, ' K7M2-QX ') || {}).id === 't-uno');
+comprobar('se encuentra por su id interno', (buscarTorneoPorCodigo(listaBuscar, 't-dos') || {}).id === 't-dos');
+comprobar('se encuentra por el nombre del torneo',
+  (buscarTorneoPorCodigo(listaBuscar, 'torneo septiembre') || {}).id === 't-dos');
+comprobar('pegando el enlace entero también encuentra el torneo',
+  (buscarTorneoPorCodigo(listaBuscar, 'https://maintortilla.github.io/torneo-efootball/clasificacion.html?torneo=t-uno') || {}).id === 't-uno');
+comprobar('un código que no existe devuelve null', buscarTorneoPorCodigo(listaBuscar, 'ZZZZZZ') === null);
+comprobar('el campo vacío no encuentra nada', buscarTorneoPorCodigo(listaBuscar, '   ') === null);
 
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);

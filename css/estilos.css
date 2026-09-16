@@ -532,6 +532,44 @@ html[data-candado="fuera"] .btn-sesion {
 @keyframes girar { to { transform: rotate(360deg); } }
 
 /* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */
+/* ---------- Caja para entrar con un código de torneo ---------- */
+.caja-codigo {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--linea);
+  border-left: 4px solid var(--pendiente);
+  border-radius: var(--radio); padding: 15px 19px; margin-bottom: 22px;
+}
+.caja-codigo .etiqueta-codigo {
+  display: block; font-weight: 700; font-size: 16px; color: var(--texto); margin-bottom: 3px;
+}
+.caja-codigo small { color: var(--texto-2); font-size: 13.5px; }
+.caja-codigo-forma { display: flex; gap: 9px; align-items: center; }
+.caja-codigo input {
+  width: 210px; padding: 11px 14px; border-radius: 11px;
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
+  font-family: var(--fuente-numeros); font-size: 19px; font-weight: 800;
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.caja-codigo input:focus {
+  outline: none; border-color: var(--neon);
+  box-shadow: 0 0 0 3px rgba(var(--acento-rgb), .18);
+}
+.caja-codigo input::placeholder { color: var(--muted); letter-spacing: .1em; font-weight: 700; }
+
+/* ---------- El código del torneo (en Ajustes) ---------- */
+.codigo-caja {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+  background: var(--panel-2); border: 1px dashed rgba(var(--pendiente-rgb), .55);
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 6px;
+}
+.codigo-valor {
+  font-family: var(--fuente-numeros); font-size: 34px; font-weight: 800;
+  letter-spacing: .18em; color: var(--pendiente); line-height: 1;
+}
+.codigo-botones { display: flex; gap: 9px; flex-wrap: wrap; }
+
 .rejilla-torneos {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 18px; margin-top: 22px;
