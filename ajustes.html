@@ -71,8 +71,10 @@
             <div class="campo-form">
               <label>Enfrentamientos entre cada pareja</label>
               <select id="nuevo-vueltas">
-                <option value="1">Una vuelta</option>
-                <option value="2" selected>Ida y vuelta</option>
+                <option value="1">1 vuelta (1 partido por pareja)</option>
+                <option value="2" selected>2 vueltas · ida y vuelta</option>
+                <option value="3">3 vueltas (3 partidos por pareja)</option>
+                <option value="4">4 vueltas (4 partidos por pareja)</option>
               </select>
               <p class="pista" id="pista-partidos-nuevo"></p>
             </div>
@@ -184,14 +186,16 @@
 
         <section class="panel">
           <p class="panel-titulo verde">Formato y puntuación
-            <span class="ayuda" data-tip="Las vueltas son las veces que se enfrenta cada pareja. Si cambias las vueltas o el número de jugadores, hay que rehacer el calendario (te avisará antes).">?</span>
+            <span class="ayuda" data-tip="Las vueltas son las veces que se enfrenta cada pareja (de 1 a 4). En las vueltas pares se cambia el campo, así cada uno juega las mismas veces en casa. Si cambias las vueltas o el número de jugadores, hay que rehacer el calendario (te avisará antes).">?</span>
           </p>
           <div class="form-rejilla">
             <div class="campo-form">
               <label>Vueltas de la liguilla</label>
               <select id="edit-vueltas">
-                <option value="1">Una vuelta</option>
-                <option value="2">Ida y vuelta</option>
+                <option value="1">1 vuelta (1 partido por pareja)</option>
+                <option value="2">2 vueltas · ida y vuelta</option>
+                <option value="3">3 vueltas (3 partidos por pareja)</option>
+                <option value="4">4 vueltas (4 partidos por pareja)</option>
               </select>
               <p class="pista" id="pista-partidos-edit"></p>
             </div>

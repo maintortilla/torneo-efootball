@@ -132,21 +132,33 @@ function generarCalendario(jugadores, config) {
     lista.splice(1, 0, lista.pop());
   }
 
-  // Segunda vuelta (ida y vuelta): mismos cruces con los lados invertidos
-  if (config.vueltas === 2) {
-    const segunda = partidos.map(p => ({
-      ...p,
-      id: nuevoId('p'),
-      jornada: p.jornada + rondas,
-      localId: p.visitanteId,
-      visitanteId: p.localId,
-      goles: [],
-      jugado: false
-    }));
-    return partidos.concat(segunda);
+  /* Vueltas: cuántas veces se enfrenta cada pareja.
+       1 = una sola vuelta · 2 = ida y vuelta · 3 y 4 = se repiten los cruces.
+     En las vueltas PARES se cambia el campo (2ª, 4ª…) para que cada uno juegue
+     las mismas veces en casa que fuera. */
+  const vueltas = Math.max(1, Math.min(4, Number(config.vueltas) || 1));
+  const todos = [];
+
+  for (let v = 0; v < vueltas; v++) {
+    const invertir = v % 2 === 1;         // 2ª vuelta, 4ª... con los lados cambiados
+    const salto = rondas * v;             // las jornadas siguen creciendo
+
+    partidos.forEach(p => {
+      todos.push({
+        ...p,
+        id: nuevoId('p'),
+        jornada: p.jornada + salto,
+        localId: invertir ? p.visitanteId : p.localId,
+        visitanteId: invertir ? p.localId : p.visitanteId,
+        golesLocal: 0,
+        golesVisitante: 0,
+        goles: [],
+        jugado: false
+      });
+    });
   }
 
-  return partidos;
+  return todos;
 }
 
 /* -------------------------------------------------------------------------

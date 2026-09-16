@@ -127,6 +127,33 @@ marcoEl.onload = async function ejecutarPrueba() {
     d = marco.contentDocument;
     ok('se vuelve a abrir la pantalla de ajustes', d.getElementById('zona-editar').hidden === false);
 
+    // El desplegable de vueltas ofrece de 1 a 4
+    const selVueltas = d.getElementById('edit-vueltas');
+    const opcionesVueltas = Array.from(selVueltas.options).map(o => o.value);
+    ok('el selector de vueltas ofrece 1, 2, 3 y 4', opcionesVueltas.join(',') === '1,2,3,4',
+       opcionesVueltas.join(','));
+
+    // La pista de partidos: con 1 vuelta salen N, y con 3 vueltas salen 3N
+    const leerPartidos = () => Number(
+      ((marco.contentDocument.getElementById('pista-partidos-edit').textContent.match(/(\d+)\s*partidos/) || [])[1]) || 0);
+
+    const vueltasOriginal = selVueltas.value;
+    selVueltas.value = '1';
+    selVueltas.dispatchEvent(new Event('change'));
+    await esperar(200);
+    const conUna = leerPartidos();
+
+    selVueltas.value = '3';
+    selVueltas.dispatchEvent(new Event('change'));
+    await esperar(200);
+    const conTres = leerPartidos();
+
+    ok('la pista cuenta bien: con 3 vueltas salen el triple de partidos que con 1',
+       conUna > 0 && conTres === conUna * 3, `1 vuelta = ${conUna} · 3 vueltas = ${conTres}`);
+
+    // Se deja como estaba para no cambiar el torneo de nadie
+    selVueltas.value = vueltasOriginal;
+
     d.getElementById('edit-pts-v').value = '4';
     d.querySelector('#btn-guardar').click();
     await esperar(2500);

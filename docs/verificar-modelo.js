@@ -238,5 +238,62 @@ comprobar('pegando el enlace entero también encuentra el torneo',
 comprobar('un código que no existe devuelve null', buscarTorneoPorCodigo(listaBuscar, 'ZZZZZZ') === null);
 comprobar('el campo vacío no encuentra nada', buscarTorneoPorCodigo(listaBuscar, '   ') === null);
 
+console.log('\n=== VUELTAS (de 1 a 4) ===');
+
+const seisJug = [
+  { id: 'v1', nombre: 'Uno' }, { id: 'v2', nombre: 'Dos' }, { id: 'v3', nombre: 'Tres' },
+  { id: 'v4', nombre: 'Cuatro' }, { id: 'v5', nombre: 'Cinco' }, { id: 'v6', nombre: 'Seis' }
+];
+
+[1, 2, 3, 4].forEach(v => {
+  const cfg = Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: v });
+  const ps = generarCalendario(seisJug, cfg);
+
+  comprobar(`con ${v} vuelta(s) salen ${15 * v} partidos`, ps.length === 15 * v, ps.length + ' partidos');
+
+  const cuenta = {};
+  ps.forEach(p => {
+    cuenta[p.localId] = (cuenta[p.localId] || 0) + 1;
+    cuenta[p.visitanteId] = (cuenta[p.visitanteId] || 0) + 1;
+  });
+  comprobar(`con ${v} vuelta(s) cada jugador juega ${5 * v} partidos`,
+    Object.values(cuenta).every(c => c === 5 * v), Object.values(cuenta).join(','));
+
+  comprobar(`con ${v} vuelta(s) todos los partidos tienen id distinto`,
+    new Set(ps.map(p => p.id)).size === ps.length);
+
+  // En las vueltas pares se cambia el campo: cada uno juega lo mismo en casa que fuera
+  if (v % 2 === 0) {
+    const casa = {}, fuera = {};
+    ps.forEach(p => {
+      casa[p.localId] = (casa[p.localId] || 0) + 1;
+      fuera[p.visitanteId] = (fuera[p.visitanteId] || 0) + 1;
+    });
+    comprobar(`con ${v} vueltas cada uno juega las mismas veces en casa que fuera`,
+      seisJug.every(j => casa[j.id] === fuera[j.id]),
+      seisJug.map(j => j.nombre + ' ' + casa[j.id] + '/' + fuera[j.id]).join('  '));
+  }
+});
+
+// Cada cruce se repite tantas veces como vueltas
+const ps3 = generarCalendario(seisJug, Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: 3 }));
+const claveCruce = p => [p.localId, p.visitanteId].sort().join('-');
+const porCruce = {};
+ps3.forEach(p => { porCruce[claveCruce(p)] = (porCruce[claveCruce(p)] || 0) + 1; });
+comprobar('con 3 vueltas cada cruce de pareja aparece 3 veces',
+  Object.keys(porCruce).length === 15 && Object.values(porCruce).every(c => c === 3),
+  Object.keys(porCruce).length + ' cruces distintos');
+
+// Las jornadas siguen creciendo, no se repiten
+const ps2 = generarCalendario(seisJug, Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: 2 }));
+const jornadasUsadas = [...new Set(ps2.map(p => p.jornada))].sort((a, b) => a - b);
+comprobar('con 2 vueltas las jornadas van de la 1 a la 10 (sin repetirse)',
+  jornadasUsadas.length === 10 && jornadasUsadas[0] === 1 && jornadasUsadas[9] === 10,
+  'jornadas ' + jornadasUsadas.join(','));
+
+// Y si alguien escribe más de 4, se limita
+const ps9 = generarCalendario(seisJug, Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: 9 }));
+comprobar('si se pide más de 4 vueltas, se queda en 4 (60 partidos)', ps9.length === 60, ps9.length + ' partidos');
+
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);
