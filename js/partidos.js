@@ -267,7 +267,7 @@ function engancharPartidos() {
     if (e.key === 'Escape' && !$('#modal-nuevo').hidden) cerrarModalNuevo();
   });
 
-  engancharRefrescar(() => {
+  engancharActualizar(() => {
     torneoActual = Store.torneo(torneoActual.id);
     configurarComun(torneoActual, () => pintarTodoPartidos());
     pintarNombreTorneo(torneoActual);

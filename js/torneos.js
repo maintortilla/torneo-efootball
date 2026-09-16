@@ -57,6 +57,7 @@ function pintarTorneos(torneos) {
 
 document.addEventListener('DOMContentLoaded', () => {
   arrancarTorneos();
+  engancharActualizar(() => pintarTorneos(Store.cache));
   const boton = $('#btn-nuevo-torneo');
   if (boton) boton.onclick = () => { window.location.href = 'ajustes.html?nuevo=1'; };
 });

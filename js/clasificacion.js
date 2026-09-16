@@ -27,6 +27,14 @@ async function arrancarClasificacion() {
     pintarTodo();
     engancharIndex();
 
+    // Botón de actualizar: vuelve a leer la nube y repinta (sin recargar la página)
+    engancharActualizar(() => {
+      torneoActual = Store.torneo(torneoActual.id);
+      configurarComun(torneoActual, () => pintarTodo());
+      pintarNombreTorneo(torneoActual);
+      pintarTodo();
+    });
+
     // Aviso si venimos de crear un torneo
     const creado = new URLSearchParams(window.location.search).get('creado');
     if (creado) {

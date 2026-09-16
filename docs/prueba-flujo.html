@@ -177,7 +177,21 @@ document.getElementById('marco').onload = async () => {
        'clase "plegado" quitada');
 
     ok('el menú de arriba a la derecha ya no existe', !d.getElementById('btn-menu'));
-    ok('el botón de refrescar ya no está en la barra', !d.getElementById('btn-refrescar'));
+
+    // El botón de actualizar SÍ está: vuelve a leer la nube sin recargar la página
+    const botonAct = d.getElementById('btn-actualizar');
+    ok('la barra de arriba tiene el botón de actualizar',
+       Boolean(botonAct) && /Actualizar/.test(botonAct.textContent));
+    ok('el botón de refrescar viejo sigue fuera', !d.getElementById('btn-refrescar'));
+
+    // Y funciona: al pulsarlo vuelve a leer la nube (solo lee, no escribe nada)
+    const filasAntes = d.querySelectorAll('#lista-partidos .partido-fila').length;
+    botonAct.click();
+    await esperar(3000);
+    const filasDespues = d.querySelectorAll('#lista-partidos .partido-fila').length;
+    ok('al pulsar Actualizar la lista se repinta sin romperse',
+       filasAntes > 0 && filasDespues === filasAntes,
+       filasAntes + ' → ' + filasDespues + ' partidos');
 
     // 14. Los filtros de partidos: cada uno con su color
     const colorFiltro = f => d.defaultView.getComputedStyle(d.querySelector('.tab[data-filtro="' + f + '"]')).color;

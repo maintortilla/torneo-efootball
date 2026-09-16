@@ -316,23 +316,38 @@ function engancharMenuLateral() {
 
 document.addEventListener('DOMContentLoaded', engancharMenuLateral);
 
-/* -------------------------------------------------- botón de refrescar */
-function engancharRefrescar(alRefrescar) {
-  const boton = $('#btn-refrescar');
-  if (!boton) return;
+/* -------------------------------------------------- botón de actualizar */
+/* Vuelve a leer de la nube lo que hayan apuntado los demás. El botón se crea
+   solo en la barra de arriba, así vale para todas las páginas sin tocar el
+   HTML de cada una. En modo local no hay nada que actualizar, así que no sale. */
+function engancharActualizar(alActualizar) {
+  const caja = document.querySelector('.topbar-derecha');
+  if (!caja) return;
+  if (typeof Store === 'undefined' || Store.modo() !== 'nube') return;
+
+  let boton = document.getElementById('btn-actualizar');
+  if (!boton) {
+    boton = el('button', 'btn-actualizar');
+    boton.id = 'btn-actualizar';
+    boton.innerHTML = '<span class="giro">🔄</span> <span>Actualizar</span>';
+    boton.title = 'Volver a leer de la nube lo que hayan apuntado los demás';
+    caja.appendChild(boton);
+  }
+
   boton.onclick = async () => {
+    if (boton.disabled) return;
     boton.disabled = true;
-    boton.textContent = '⏳';
+    boton.classList.add('girando');
     try {
       await Store.recargar();
-      alRefrescar();
+      if (alActualizar) await alActualizar();
       avisar('Datos puestos al día 🔄');
     } catch (e) {
       console.error(e);
-      avisar('No se pudo refrescar: ' + e.message, true);
+      avisar('No se pudo actualizar: ' + e.message, true);
     } finally {
       boton.disabled = false;
-      boton.textContent = '🔄 Refrescar';
+      boton.classList.remove('girando');
     }
   };
 }

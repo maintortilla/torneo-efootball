@@ -515,6 +515,22 @@ html[data-candado="fuera"] .btn-sesion {
 .modal-candado { max-width: 470px; }
 .modal-candado .candado-error { color: var(--peligro); min-height: 19px; font-weight: 600; }
 
+/* ==========================================================================
+   BOTÓN DE ACTUALIZAR — volver a leer la nube (lo apuntado por los demás)
+   ========================================================================== */
+.btn-actualizar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
+  font-family: var(--fuente); font-weight: 700; font-size: 14.5px;
+  padding: 9px 15px; border-radius: 11px; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.btn-actualizar:hover { border-color: var(--en-curso); color: var(--en-curso); }
+.btn-actualizar[disabled] { cursor: progress; opacity: .85; }
+/* Mientras lee de la nube, el icono da vueltas */
+.btn-actualizar.girando .giro { display: inline-block; animation: girar .9s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
 /* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */
 .rejilla-torneos {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
