@@ -44,7 +44,12 @@ const StoreLocal = {
 
   async iniciar() {
     let torneos = this.leer();
-    if (!torneos || !torneos.length) {
+
+    /* Solo se estrena con el torneo de ejemplo la PRIMERA vez que se abre la web
+       en este navegador (cuando no hay nada guardado: `null`).
+       Si lo que hay es una lista VACÍA es porque el usuario ha borrado todos sus
+       torneos: se respeta, no se resucita nada (antes volvían a aparecer). */
+    if (torneos === null) {
       torneos = [aplicarResultadosEjemplo(TORNEO_PRUEBA)];
       this.guardar(torneos);
     }
@@ -110,19 +115,14 @@ const StoreNube = {
     return this.cliente;
   },
 
-  /* Trae TODOS los torneos con sus jugadores, partidos y futbolistas */
+  /* Trae TODOS los torneos con sus jugadores, partidos y futbolistas.
+
+     OJO: si no hay ningún torneo, NO se crea nada. Antes se subía aquí el torneo
+     de ejemplo, y eso hacía que al borrar el último torneo "volviera a aparecer"
+     solo (con nombres de mentira). Ahora la lista vacía se respeta y la web
+     enseña su mensaje de "todavía no hay ningún torneo". */
   async iniciar() {
-    const c = this.conectar();
-
-    let torneos = await this.traerTodo();
-
-    // Primera vez: la base de datos está vacía → se sube el torneo de prueba
-    if (!torneos.length) {
-      await this.guardarTorneo(aplicarResultadosEjemplo(TORNEO_PRUEBA));
-      torneos = await this.traerTodo();
-    }
-
-    return torneos;
+    return this.traerTodo();
   },
 
   async traerTodo() {

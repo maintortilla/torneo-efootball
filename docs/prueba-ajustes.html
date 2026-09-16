@@ -176,6 +176,28 @@ marcoEl.onload = async function ejecutarPrueba() {
        marco.contentWindow.Store.cache.length === torneosAntes,
        torneosAntes + ' → ' + marco.contentWindow.Store.cache.length);
 
+    /* 8. Borrar el ÚLTIMO torneo no debe hacer que reaparezca el de ejemplo.
+       (Esto pasaba: al quedarse sin torneos, la web volvía a crear uno solo y
+       el torneo "se quitaba un momento y volvía a aparecer".) */
+    const w2 = marco.contentWindow;
+    const idsQueQuedan = w2.Store.cache.map(t => t.id);
+    for (const id of idsQueQuedan) {
+      await w2.Store.borrarTorneo(id);
+    }
+    await w2.Store.recargar();
+    ok('al borrar todos los torneos la lista queda vacía de verdad',
+       w2.Store.cache.length === 0, w2.Store.cache.length + ' torneos');
+
+    await navegar(marco, '../index.html');
+    await esperar(800);
+    const dIdx = marco.contentDocument;
+    const tarjetasQuedan = dIdx.querySelectorAll('#lista-torneos .tarjeta-torneo').length;
+    ok('el torneo de ejemplo NO reaparece al recargar la portada',
+       tarjetasQuedan === 0, tarjetasQuedan + ' tarjetas en la lista');
+    ok('y la portada invita a crear uno nuevo',
+       /Crear torneo nuevo/i.test(dIdx.body.textContent) && /Todavía no hay/i.test(dIdx.body.textContent),
+       'mensaje de lista vacía mostrado');
+
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
   }
