@@ -154,9 +154,9 @@ document.getElementById('marco').onload = async () => {
     const sidebar = d.getElementById('sidebar');
     const botonPlegar = d.getElementById('btn-plegar');
     ok('el menú lateral existe y tiene el botón de plegar', !!sidebar && !!botonPlegar);
-    ok('el menú lateral trae "Página principal" (vuelve a la portada)',
+    ok('el menú lateral trae "Volver al menú" (vuelve a la portada)',
        !!Array.from(sidebar.querySelectorAll('a')).find(a =>
-         /página principal/i.test(a.textContent) && /index\.html/.test(a.getAttribute('href') || '')),
+         /volver al menú/i.test(a.textContent) && /index\.html/.test(a.getAttribute('href') || '')),
        Array.from(sidebar.querySelectorAll('a')).map(a => a.textContent.trim()).join(' | '));
 
     const anchoAntes = sidebar.getBoundingClientRect().width;
