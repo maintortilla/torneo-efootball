@@ -7,17 +7,26 @@ la propia web (crear torneos, jugadores, formato, puntos, desempates).
 **Es una plataforma de torneos, no un torneo:** se crean todos los que queráis, sin
 tocar código.
 
-## Cómo abrirlo
+## 🌐 La web publicada (el enlace para los amigos)
 
-**Opción rápida:** doble clic en `index.html`.
+**https://maintortilla.github.io/torneo-efootball/**
 
-**Opción recomendada:** abre la carpeta en VS Code y en su terminal:
+Ese es el enlace que se comparte. Está conectada a Supabase, así que **todos los que
+lo abran ven los mismos datos y pueden apuntar resultados**. Se publica sola: cada
+`git push` a la rama `master` la actualiza en un par de minutos (GitHub Pages).
 
-```bash
-python -m http.server 8765
-```
+El código del repositorio es público, y no pasa nada: ahí no hay ninguna contraseña
+(la clave de Supabase que aparece en `js/config-nube.js` es la *publishable*, que está
+pensada para ir en el navegador).
 
-Luego entra en http://127.0.0.1:8765 (F5 para recargar).
+## Cómo abrirlo en tu PC
+
+**Opción rápida:** doble clic en `servidor.bat` y entra en http://127.0.0.1:8765
+
+**Ojo:** no uses `python -m http.server` para trabajar. Ese servidor atiende **una
+petición a la vez** y se queda atascado cuando el navegador corta una conexión a
+medias: entonces la web "no abre" aunque el proceso siga vivo. El `servidor.bat` usa
+`tools/servidor-pruebas.py`, que es multihilo.
 
 ## Qué se puede hacer
 
