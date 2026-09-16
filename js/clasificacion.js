@@ -8,6 +8,7 @@ let torneoActual = null;
 
 async function arrancarClasificacion() {
   try {
+    await arrancarCandado();     // ¿esta web pide contraseña para apuntar?
     const torneos = await Store.iniciar();
 
     const idInicial = elegirTorneoInicial(torneos);
@@ -234,3 +235,9 @@ function engancharIndex() {
 }
 
 document.addEventListener('DOMContentLoaded', arrancarClasificacion);
+
+/* Al entrar o salir del candado, se repinta (los botones de los últimos
+   resultados cambian entre "Apuntar" y "🔑 entrar") */
+document.addEventListener('candado-cambiado', () => {
+  if (torneoActual) pintarTodo();
+});

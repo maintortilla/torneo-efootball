@@ -70,6 +70,9 @@ function pintarNombreTorneo(torneo) {
 
 /* ------------------------------------------------- ventanita de resultado */
 function abrirModal(idPartido) {
+  // Sin entrar (modo mirar) no se abre: se invita a entrar con la contraseña
+  if (!dentroDelCandado()) { pedirEntrarParaEscribir(); return; }
+
   partidoEnEdicion = torneoComun.partidos.find(p => p.id === idPartido);
   if (!partidoEnEdicion) return;
 
@@ -234,7 +237,15 @@ function filaDePartido(p) {
     <span class="quien der ${ganaVisit ? 'gana' : ''}">${visit.nombre} ${visit.emoji}</span>`;
 
   const boton = el('button', 'btn-mini-ir', p.jugado ? 'Editar' : 'Apuntar');
-  boton.onclick = () => abrirModal(p.id);
+  if (dentroDelCandado()) {
+    boton.onclick = () => abrirModal(p.id);
+  } else {
+    // Modo mirar: en vez de editar, el botón invita a entrar
+    boton.textContent = '🔑';
+    boton.title = 'Entra con la contraseña del grupo para apuntar';
+    boton.classList.add('btn-candado');
+    boton.onclick = pedirEntrarParaEscribir;
+  }
   fila.appendChild(boton);
 
   return fila;
@@ -244,10 +255,18 @@ function filaDePartido(p) {
 function pintarModoDatos() {
   const caja = $('#nota-guardado');
   if (!caja) return;
+
   const nube = Store.modo() === 'nube';
-  caja.innerHTML = nube
+  const datos = nube
     ? '<span class="pastilla nube">☁️ Datos en la nube</span>'
     : '<span class="pastilla local">💾 Modo local</span>';
+
+  // Si hay candado y no se ha entrado, se avisa de que solo se puede mirar
+  const mirando = (typeof candadoActivo === 'function' && candadoActivo() && !dentroDelCandado())
+    ? '<span class="pastilla mirando" title="Entra con la contraseña del grupo para apuntar resultados">👀 Solo lectura</span>'
+    : '';
+
+  caja.innerHTML = datos + mirando;
 }
 
 /* ---------------------------------------------------- aviso flotante (toast) */

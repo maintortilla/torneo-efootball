@@ -88,8 +88,8 @@
 
           <div id="lista-jugadores-nuevo"></div>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-add-jugador-nuevo">Añadir jugador</button>
-            <button class="btn btn-ghost" id="btn-autocompletar">Asignar colores y emojis</button>
+            <button class="btn btn-ghost solo-edicion" id="btn-add-jugador-nuevo">Añadir jugador</button>
+            <button class="btn btn-ghost solo-edicion" id="btn-autocompletar">Asignar colores y emojis</button>
           </div>
         </div>
 
@@ -125,7 +125,7 @@
         </div>
 
         <div class="zona-acciones" style="margin-top:22px">
-          <button class="btn btn-gol" id="btn-crear">Crear el torneo</button>
+          <button class="btn btn-gol solo-edicion" id="btn-crear">Crear el torneo</button>
           <button class="btn btn-ghost" id="btn-cancelar-crear">Cancelar</button>
         </div>
       </section>
@@ -163,7 +163,7 @@
             <b id="cuenta-jugadores"></b></p>
           <div id="lista-jugadores" style="margin-top:6px"></div>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-add-jugador">Añadir jugador</button>
+            <button class="btn btn-ghost solo-edicion" id="btn-add-jugador">Añadir jugador</button>
           </div>
         </section>
 
@@ -217,7 +217,7 @@
             <b id="estado-fases"></b></p>
           <ul class="paso-lista" id="pasos-torneo"></ul>
           <div class="zona-acciones">
-            <button class="btn btn-gol" id="btn-generar-ronda">Generar la ronda que toque</button>
+            <button class="btn btn-gol solo-edicion" id="btn-generar-ronda">Generar la ronda que toque</button>
           </div>
           <div id="lista-eliminatorias" style="margin-top:14px"></div>
         </section>
@@ -228,8 +228,8 @@
           </p>
           <p class="nota" id="aviso-calendario"></p>
           <div class="zona-acciones">
-            <button class="btn btn-ghost" id="btn-regenerar">Generar el calendario completo</button>
-            <button class="btn btn-peligro" id="btn-vaciar">Vaciar los partidos (montarlos a mano)</button>
+            <button class="btn btn-ghost solo-edicion" id="btn-regenerar">Generar el calendario completo</button>
+            <button class="btn btn-peligro solo-edicion" id="btn-vaciar">Vaciar los partidos (montarlos a mano)</button>
           </div>
         </section>
 
@@ -237,12 +237,12 @@
           <h4>Zona peligrosa</h4>
           <p class="nota">Borrar el torneo se lleva por delante sus partidos y resultados. No hay vuelta atrás.</p>
           <div class="zona-acciones">
-            <button class="btn btn-peligro" id="btn-borrar">Borrar este torneo</button>
+            <button class="btn btn-peligro solo-edicion" id="btn-borrar">Borrar este torneo</button>
           </div>
         </section>
 
         <div class="zona-acciones" style="margin-bottom:26px">
-          <button class="btn btn-gol" id="btn-guardar">Guardar los cambios</button>
+          <button class="btn btn-gol solo-edicion" id="btn-guardar">Guardar los cambios</button>
           <span class="nota" id="nota-guardar"></span>
         </div>
 
@@ -265,6 +265,7 @@
   <script src="js/modelo.js"></script>
   <script src="js/datos-prueba.js"></script>
   <script src="js/store.js"></script>
+  <script src="js/candado.js"></script>
   <script src="js/comun.js"></script>
   <script src="js/ajustes.js"></script>
 </body>

@@ -131,8 +131,34 @@ Las claves de `js/config-nube.js` **son públicas a propósito** (van en el nave
 protege los datos son las políticas de la base de datos). La contraseña de la base de datos
 y el token de administración **no** se guardan en el repositorio (`.gitignore`).
 
-Las tablas están abiertas (cualquiera con la dirección puede escribir) — es temporal,
-hasta la Fase 4 (login y permisos).
+Las tablas están abiertas (cualquiera con la dirección puede escribir) **hasta que se encienda
+el candado** (ver abajo): cuando esté puesto, solo deja escribir a quien haya entrado con la
+contraseña del grupo.
+
+## El candado 🔒 (quién puede apuntar)
+
+La web se puede mirar de dos formas:
+
+- **Sin entrar** → se ve todo (clasificación, partidos, ruleta, resumen) pero en **modo mirar**:
+  los botones que escriben no salen y cada partido ofrece un 🔑 en vez de "Apuntar".
+- **Con la contraseña del grupo** → aparecen todos los botones y se puede apuntar. Se escribe
+  una vez por PC: la sesión se queda guardada.
+
+Quién manda de verdad es la base de datos: en Supabase las políticas (RLS) dejan **leer a
+cualquiera** y **escribir solo a quien tenga sesión**, así que aunque alguien llame a la API a
+mano no puede tocar nada. Esconder botones es solo la parte visible.
+
+Se enciende y se apaga en `js/config-nube.js`:
+
+```js
+candado: {
+  activo: false,                              // ← true para pedir contraseña
+  email: 'amigos@torneo-efootball.app'        // la cuenta compartida de Supabase
+}
+```
+
+⚠️ **No encender el candado antes de crear la cuenta y las políticas**, o nadie podría escribir.
+La contraseña **no** está en el código: la valida Supabase.
 
 ## Regla importante
 

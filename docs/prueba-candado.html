@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba del candado</title>
+  <style>
+    body { background:#070B12; color:#E8F2FF; font-family: monospace; margin:0; padding:12px; }
+    iframe { width:1560px; height:820px; border:1px solid #1E2E42; border-radius:8px; }
+    pre { font-size:15px; white-space:pre-wrap; margin:0 0 12px; line-height:1.5; }
+  </style>
+</head>
+<body>
+<pre id="resultado">ejecutando prueba...</pre>
+<iframe id="marco" src="../partidos.html"></iframe>
+
+<script>
+/* ==========================================================================
+   Prueba del CANDADO
+   --------------------------------------------------------------------------
+   Comprueba las tres situaciones:
+     1. Candado apagado  → la web funciona como siempre (todo se puede tocar)
+     2. Candado puesto y sin entrar → modo MIRAR (no hay botones de escribir)
+     3. Con la contraseña puesta    → vuelven los botones de apuntar
+
+   No escribe NADA en Supabase: la "entrada" y la "salida" se simulan, así que
+   la prueba se puede repetir mil veces sin ensuciar los datos de verdad.
+   ========================================================================== */
+
+const salida = [];
+function ok(nombre, condicion, detalle) {
+  salida.push((condicion ? '[OK   ] ' : '[FALLO] ') + nombre + (detalle ? ' → ' + detalle : ''));
+  return condicion;
+}
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > (intentos || 150)) { clearInterval(tic); rechazar(new Error('la página no terminó de cargar')); }
+    }, 100);
+  });
+}
+
+const marco = document.getElementById('marco');
+
+marco.onload = async () => {
+  marco.onload = null;   // solo la primera carga
+
+  try {
+    await esperarListo(marco);
+    const w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    const vis = (sel) => {
+      const n = d.querySelector(sel);
+      return n ? w.getComputedStyle(n).display !== 'none' : false;
+    };
+    const textoBotonFila = () => {
+      const b = d.querySelector('.partido-fila .btn-mini-ir');
+      return b ? b.textContent.trim() : '(sin botón)';
+    };
+    const filaConCandado = () => {
+      const b = d.querySelector('.partido-fila .btn-mini-ir');
+      return Boolean(b && b.classList.contains('btn-candado'));
+    };
+
+    /* ---------------------------------------------- 1. candado APAGADO ---- */
+    const candado = w.Candado;
+    ok('la web expone el candado para las pruebas', Boolean(candado));
+    ok('el candado viene apagado en la configuración',
+       candado.estado().activo === false, String(candado.estado().activo));
+    ok('sin candado no hay botón de entrar en la barra',
+       !d.querySelector('.btn-sesion'));
+    ok('sin candado los partidos se pueden apuntar',
+       textoBotonFila() === 'Apuntar' && !filaConCandado(),
+       textoBotonFila());
+    ok('sin candado la ruleta está a la vista', vis('#btn-ruleta'));
+
+    /* ------------------------------------- 2. candado puesto, SIN entrar -- */
+    candado.encender(true);
+    await candado.arrancar();
+    await esperar(400);
+    d = marco.contentDocument;
+
+    ok('con el candado puesto, sin entrar se queda en modo mirar',
+       d.documentElement.dataset.candado === 'fuera',
+       String(d.documentElement.dataset.candado));
+
+    const botonSesion = d.querySelector('.btn-sesion');
+    ok('aparece el botón de entrar en la barra de arriba',
+       Boolean(botonSesion) && /Entrar/i.test(botonSesion.textContent),
+       botonSesion ? botonSesion.textContent.trim() : '(no hay)');
+
+    ok('los botones que escriben se esconden (ruleta y añadir partido)',
+       !vis('#btn-ruleta') && !vis('#btn-nuevo-partido'),
+       'ruleta=' + vis('#btn-ruleta') + ' · añadir=' + vis('#btn-nuevo-partido'));
+
+    ok('cada partido ofrece entrar en vez de apuntar',
+       filaConCandado() && textoBotonFila() === '🔑', textoBotonFila());
+
+    const pastilla = d.querySelector('#nota-guardado .pastilla.mirando');
+    ok('el menú avisa de que es solo lectura',
+       Boolean(pastilla) && /Solo lectura/i.test(pastilla.textContent),
+       pastilla ? pastilla.textContent.trim() : '(no hay)');
+
+    /* Pulsar el candado de un partido: debe abrir la ventanita de entrar */
+    d.querySelector('.partido-fila .btn-mini-ir').click();
+    await esperar(300);
+    d = marco.contentDocument;
+
+    ok('pulsar el candado abre la ventanita de entrar',
+       d.getElementById('modal-candado') && !d.getElementById('modal-candado').hidden);
+    ok('y NO abre la ventanita de apuntar resultado',
+       d.getElementById('modal-fondo').hidden);
+    ok('la ventanita pide la contraseña',
+       Boolean(d.querySelector('#modal-candado input[type="password"]')));
+
+    /* Sin escribir nada no debe dejar entrar */
+    d.getElementById('candado-entrar').click();
+    await esperar(200);
+    const errorVacio = d.getElementById('candado-error').textContent.trim();
+    ok('no deja entrar con el campo vacío',
+       /escribe/i.test(errorVacio), errorVacio || '(sin mensaje)');
+
+    d.getElementById('candado-cancelar').click();
+    await esperar(150);
+
+    /* --------------------------------------- 3. CON la contraseña puesta -- */
+    candado.ponSesion({ user: { email: 'amigos@torneo-efootball.app' } });
+    candado.aplicar();
+    await esperar(400);
+    d = marco.contentDocument;
+
+    ok('al entrar, la web pasa a modo apuntar',
+       d.documentElement.dataset.candado === 'dentro',
+       String(d.documentElement.dataset.candado));
+
+    const botonDentro = d.querySelector('.btn-sesion');
+    ok('el botón de la barra avisa de que estás dentro',
+       Boolean(botonDentro) && /Estás dentro/i.test(botonDentro.textContent),
+       botonDentro ? botonDentro.textContent.trim() : '(no hay)');
+
+    ok('vuelven los botones de apuntar en los partidos (la lista se repinta)',
+       textoBotonFila() === 'Apuntar' && !filaConCandado(),
+       textoBotonFila());
+
+    ok('vuelve la ruleta y el añadir partido', vis('#btn-ruleta') && vis('#btn-nuevo-partido'));
+
+    ok('desaparece el aviso de solo lectura',
+       !d.querySelector('#nota-guardado .pastilla.mirando'));
+
+    /* ---------------------------------------------- 4. Y al salir... ------ */
+    candado.ponSesion(null);
+    candado.aplicar();
+    await esperar(400);
+    d = marco.contentDocument;
+
+    ok('al salir vuelve el modo mirar',
+       d.documentElement.dataset.candado === 'fuera' && filaConCandado(),
+       String(d.documentElement.dataset.candado) + ' · ' + textoBotonFila());
+
+    /* ---------------------------- 5. la clasificación también lo respeta -- */
+    /* (se apaga el candado otra vez para no dejar la página en un estado raro) */
+    candado.encender(false);
+    await candado.arrancar();
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

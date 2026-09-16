@@ -307,6 +307,14 @@ const Store = {
 if (typeof window !== 'undefined') window.Store = Store;
 
 /* ==========================================================================
+   El cliente de Supabase a mano (lo usa el candado, para el login).
+   Solo tiene sentido en modo nube.
+   ========================================================================== */
+function clienteNube() {
+  return StoreNube.conectar();
+}
+
+/* ==========================================================================
    AYUDANTES cortos que usan mucho las pantallas
    ========================================================================== */
 const $  = (sel) => document.querySelector(sel);

@@ -6,6 +6,7 @@
 
 async function arrancarTorneos() {
   try {
+    await arrancarCandado();
     const torneos = await Store.iniciar();
     pintarModoDatos();
     pintarTorneos(torneos);

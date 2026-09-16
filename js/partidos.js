@@ -9,6 +9,7 @@ let filtroPartidos = 'todos';
 
 async function arrancarPartidos() {
   try {
+    await arrancarCandado();     // ¿esta web pide contraseña para apuntar?
     const torneos = await Store.iniciar();
 
     const idInicial = elegirTorneoInicial(torneos);
@@ -275,3 +276,9 @@ function engancharPartidos() {
 }
 
 document.addEventListener('DOMContentLoaded', arrancarPartidos);
+
+/* Al entrar o salir del candado, la lista se repinta: los botones de cada
+   partido cambian entre "Apuntar" y "🔑 entrar" */
+document.addEventListener('candado-cambiado', () => {
+  if (torneoActual) pintarTodoPartidos();
+});

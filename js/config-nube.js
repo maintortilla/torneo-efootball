@@ -22,6 +22,21 @@ const NUBE_CONFIG = {
   url: 'https://raccyikqsekbrnkjfvur.supabase.co',
   anonKey: 'sb_publishable_uhPIwnHofJ9p3abBAnC88w_Sq85YIB2',
 
+  /* ---------------------------------------------------------------- CANDADO
+     Para APUNTAR resultados hay que entrar con la contraseña del grupo.
+     Sin entrar, la web se ve entera pero en modo mirar.
+
+     activo = false → la web funciona como siempre (cualquiera puede escribir).
+     Se pone en true cuando la cuenta del grupo YA existe en Supabase y las
+     políticas de la base de datos están puestas (si no, nadie podría escribir).
+
+     La contraseña NO se escribe aquí: la valida Supabase. Aquí solo va el
+     email de la cuenta compartida que se crea en Supabase → Authentication. */
+  candado: {
+    activo: false,
+    email: 'amigos@torneo-efootball.app'
+  },
+
   // Nombre de las tablas (por si algún día hubiera que cambiarlas)
   tablas: {
     torneos: 'torneos',

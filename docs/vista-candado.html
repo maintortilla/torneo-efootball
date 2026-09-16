@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vista: la web con el candado puesto (modo mirar)</title>
+  <style>
+    body { margin:0; background:#070B12; }
+    iframe { width:1560px; height:900px; border:0; display:block; }
+  </style>
+</head>
+<body>
+<!-- Para ver cómo queda la web SIN entrar: carga la página de partidos y
+     enciende el candado. Solo para capturas y para enseñarlo. -->
+<iframe id="marco" src="../partidos.html"></iframe>
+<script>
+const marco = document.getElementById('marco');
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+marco.onload = async () => {
+  marco.onload = null;                 // solo la primera carga
+  const w = marco.contentWindow;
+  for (let i = 0; i < 120 && !w.__listo; i++) await esperar(150);
+  w.Candado.encender(true);
+  await w.Candado.arrancar();
+  await esperar(700);
+  document.title = 'vista-lista';
+};
+</script>
+</body>
+</html>

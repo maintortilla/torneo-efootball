@@ -470,6 +470,50 @@ body {
 }
 .pastilla.nube { color: var(--neon); background: var(--neon-suave); border: 1px solid var(--neon); }
 .pastilla.local { color: var(--aviso); background: rgba(255,176,32,.12); border: 1px solid rgba(255,176,32,.45); }
+.pastilla.mirando {
+  color: var(--lila); background: rgba(var(--lila-rgb), .12);
+  border: 1px solid rgba(var(--lila-rgb), .45); margin-left: 8px;
+}
+
+/* ==========================================================================
+   CANDADO — quién puede apuntar resultados
+   --------------------------------------------------------------------------
+   Con el candado puesto y sin entrar, la web se ve entera pero los botones
+   que escriben NO salen (modo mirar). Cualquier elemento que escriba lleva
+   la clase "solo-edicion".
+   ========================================================================== */
+html[data-candado="fuera"] .solo-edicion { display: none !important; }
+
+/* Botón de la barra de arriba */
+.btn-sesion {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
+  font-family: var(--fuente); font-weight: 700; font-size: 14.5px;
+  padding: 9px 15px; border-radius: 11px; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.btn-sesion:hover { border-color: var(--neon); color: var(--neon); }
+.btn-sesion.dentro {
+  color: var(--jugado); border-color: rgba(var(--jugado-rgb), .55);
+  background: rgba(var(--jugado-rgb), .10);
+}
+.btn-sesion.dentro:hover { color: var(--peligro); border-color: var(--peligro); }
+
+/* En modo mirar, el botón llama la atención (es la acción principal) */
+html[data-candado="fuera"] .btn-sesion {
+  color: var(--neon); border-color: var(--neon);
+  box-shadow: 0 0 14px rgba(var(--acento-rgb), .18);
+}
+
+/* El botón de una fila en modo mirar: candado en vez de "Apuntar" */
+.btn-mini-ir.btn-candado {
+  color: var(--lila); border-color: rgba(var(--lila-rgb), .5); padding: 6px 10px;
+}
+.btn-mini-ir.btn-candado:hover { border-color: var(--lila); background: rgba(var(--lila-rgb), .10); }
+
+/* La ventanita de entrar */
+.modal-candado { max-width: 470px; }
+.modal-candado .candado-error { color: var(--peligro); min-height: 19px; font-weight: 600; }
 
 /* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */
 .rejilla-torneos {
@@ -734,7 +778,7 @@ body {
 .fila-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
 /* Campos de formulario (selects e inputs con el tema oscuro) */
-select, input[type="number"], input[type="text"] {
+select, input[type="number"], input[type="text"], input[type="password"] {
   width: 100%; max-width: 100%; padding: 11px 12px; border-radius: 11px;
   background: var(--panel); color: var(--texto);
   border: 1px solid var(--linea); font-family: var(--fuente); font-size: 16.5px;

@@ -15,6 +15,7 @@ const COLORES = ['#00E676','#4DA3FF','#FFD54F','#FF4D5E','#B388FF','#FFA24D','#9
 async function arrancarAjustes() {
   pintarSelectorTema();      // el aspecto se puede cambiar aunque falle la conexión
   try {
+    await arrancarCandado(); // sin entrar, los ajustes se ven pero no se tocan
     torneos = await Store.iniciar();
     pintarModoDatos();
 
@@ -135,7 +136,7 @@ function pintarJugadoresEdit() {
        <input type="text" class="j-nombre" value="${j.nombre}" maxlength="20" title="Nombre">
        <input type="color" class="j-color" value="${j.color || '#00E676'}" title="Color">`;
 
-    const quitar = el('button', 'btn-mini-ir', 'Quitar');
+    const quitar = el('button', 'btn-mini-ir solo-edicion', 'Quitar');
     quitar.title = conPartidos ? 'Tiene partidos jugados: no se puede quitar' : 'Quitar del torneo';
     quitar.disabled = conPartidos;
     quitar.style.opacity = conPartidos ? .4 : 1;
@@ -177,7 +178,7 @@ function pintarJugadoresBorrador() {
        <input type="text" class="j-nombre" value="${j.nombre}" maxlength="20" placeholder="Nombre del jugador ${i + 1}">
        <input type="color" class="j-color" value="${j.color}">`;
 
-    const quitar = el('button', 'btn-mini-ir', 'Quitar');
+    const quitar = el('button', 'btn-mini-ir solo-edicion', 'Quitar');
     quitar.style.color = 'var(--peligro)';
     quitar.style.borderColor = 'var(--peligro)';
     quitar.onclick = () => {
@@ -207,7 +208,7 @@ function pintarDesempates() {
        <span class="nombre">${NOMBRES_DESEMPATE[criterio] || criterio}</span>`;
 
     const flechas = el('div', 'flechas');
-    const subir = el('button', null, '↑');
+    const subir = el('button', 'solo-edicion', '↑');
     subir.title = 'Subir (más importante)';
     subir.disabled = i === 0;
     subir.style.opacity = i === 0 ? .3 : 1;
@@ -215,7 +216,7 @@ function pintarDesempates() {
       [desempates[i - 1], desempates[i]] = [desempates[i], desempates[i - 1]];
       pintarDesempates();
     };
-    const bajar = el('button', null, '↓');
+    const bajar = el('button', 'solo-edicion', '↓');
     bajar.title = 'Bajar (menos importante)';
     bajar.disabled = i === desempates.length - 1;
     bajar.style.opacity = i === desempates.length - 1 ? .3 : 1;
