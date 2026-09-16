@@ -188,6 +188,18 @@ function pintarCaraACara() {
 
   const etiqueta = $('#etiqueta-cara');
   const jugadores = torneoActual.jugadores || [];
+  const controles = $('#cara-controles');
+
+  /* Torneo recién creado (sin ningún partido jugado): no hay nada que comparar,
+     así que no se ponen dos jugadores "puestos" de mentira. */
+  if (!(torneoActual.partidos || []).some(p => p.jugado)) {
+    if (controles) controles.hidden = true;
+    etiqueta.textContent = 'todavía nada';
+    caja.innerHTML = '';
+    caja.appendChild(el('div', 'vacio', 'Aparecerá en cuanto juguéis algún partido.'));
+    return;
+  }
+  if (controles) controles.hidden = false;
 
   // Los desplegables se rellenan solo la primera vez (o si cambia el torneo)
   if (selA.options.length !== jugadores.length) {
@@ -283,6 +295,14 @@ function pintarEliminatorias() {
     }
 
     generadas.forEach(p => caja.appendChild(filaDePartido(p)));
+    return;
+  }
+
+  /* Torneo recién creado (sin ningún partido jugado): no se inventan cruces.
+     Solo se enseña lo que ya está jugado de verdad. */
+  if (!torneoActual.partidos.some(p => p.jugado)) {
+    etiqueta.textContent = 'todavía nada';
+    caja.appendChild(el('div', 'vacio', 'Aparecerán en cuanto juguéis algún partido.'));
     return;
   }
 

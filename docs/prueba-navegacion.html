@@ -176,6 +176,31 @@ marcoEl.onload = async function ejecutarPrueba() {
        /diferentes/i.test(d.getElementById('lista-cara').textContent),
        d.getElementById('lista-cara').textContent.trim().slice(0, 40));
 
+    // 11. Un torneo recién creado (sin nada jugado) no debe inventarse nada
+    const CLAVE2 = 'torneos-efootball-v1';
+    const guardados2 = JSON.parse(localStorage.getItem(CLAVE2) || '[]');
+    const vacio = JSON.parse(JSON.stringify(guardados2[0]));
+    vacio.id = 't-prueba-sin-partidos';
+    vacio.nombre = 'Torneo recién creado';
+    vacio.partidos = [];
+    guardados2.push(vacio);
+    localStorage.setItem(CLAVE2, JSON.stringify(guardados2));
+
+    await navegar(marco, '../clasificacion.html?torneo=' + vacio.id);
+    d = marco.contentDocument;
+    const cajaElim = d.getElementById('lista-eliminatorias');
+    ok('un torneo sin partidos jugados no inventa cruces de eliminatorias',
+       cajaElim.querySelectorAll('.partido-fila').length === 0 &&
+       /en cuanto juguéis/i.test(cajaElim.textContent),
+       cajaElim.textContent.trim().slice(0, 60));
+    ok('y el cara a cara tampoco sale "puesto" de mentira',
+       d.getElementById('cara-controles').hidden === true &&
+       /en cuanto juguéis/i.test(d.getElementById('lista-cara').textContent),
+       d.getElementById('lista-cara').textContent.trim().slice(0, 60));
+    ok('pero la tabla sí enseña a los jugadores que hay creados',
+       d.getElementById('tabla-clasificacion').textContent.includes(vacio.jugadores[0].nombre),
+       vacio.jugadores.length + ' jugadores en la tabla');
+
     // 10. Ninguna pantalla debe haber dado error de JavaScript
     ok('ninguna pantalla ha dado error de JavaScript',
        erroresJS.length === 0, erroresJS.slice(0, 3).join(' | ') || 'sin errores');
