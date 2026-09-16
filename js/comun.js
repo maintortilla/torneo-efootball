@@ -1,4 +1,24 @@
 /* ==========================================================================
+   DETECTOR DE ERRORES DE JAVASCRIPT
+   --------------------------------------------------------------------------
+   Todo error suelto se guarda en window.__erroresJS. Sirve para dos cosas:
+     · verlos desde la consola del navegador cuando algo va raro
+     · que la prueba de arranque (docs/prueba-arranque.html) los cace sola
+
+   Nace de un fallo real: al renombrar una función (engancharRefrescar →
+   engancharActualizar) se quedó una llamada con el nombre viejo y la página
+   avisaba "no se pudo conectar con la nube" en vez de decir lo que pasaba.
+   ========================================================================== */
+window.__erroresJS = window.__erroresJS || [];
+window.addEventListener('error', (e) => {
+  window.__erroresJS.push(String((e && e.message) || (e && e.error) || 'error'));
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const motivo = e && e.reason ? (e.reason.message || e.reason) : 'promesa rechazada';
+  window.__erroresJS.push('promesa: ' + String(motivo));
+});
+
+/* ==========================================================================
    COMÚN — piezas que comparten la clasificación y la página de partidos
    --------------------------------------------------------------------------
    Aquí viven: los avisos flotantes (toast), la ventanita de apuntar resultado

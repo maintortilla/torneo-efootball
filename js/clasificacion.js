@@ -234,12 +234,7 @@ function pintarUltimos() {
 /* ------------------------------------------------------------- eventos */
 function engancharIndex() {
   engancharModal();
-  engancharRefrescar(() => {
-    torneoActual = Store.torneo(torneoActual.id);
-    configurarComun(torneoActual, () => pintarTodo());
-    pintarNombreTorneo(torneoActual);
-    pintarTodo();
-  });
+  // (El botón de actualizar lo engancha arrancarClasificacion con engancharActualizar)
 }
 
 document.addEventListener('DOMContentLoaded', arrancarClasificacion);

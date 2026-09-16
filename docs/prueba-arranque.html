@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: las páginas arrancan sin errores</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  h1 { font-size:20px; color:#00E676; }
+  iframe { border:1px solid #223; background:#0A1017; width:1400px; height:420px; }
+  pre { background:#0E1621; padding:16px; border-radius:10px; font-size:13px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Prueba de arranque: ninguna página debe dar error al cargar</h1>
+<p>Carga las cuatro páginas de la web y comprueba que terminan de arrancar y que no sale
+   ningún aviso rojo de error. Esto caza fallos del tipo «
+   <em>engancharRefrescar is not defined</em>» (una función renombrada y una llamada vieja
+   que se queda suelta).</p>
+<iframe id="marco"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+const PAGINAS = [
+  { url: '../index.html',        nombre: 'Mis torneos' },
+  { url: '../clasificacion.html', nombre: 'Clasificación' },
+  { url: '../partidos.html',      nombre: 'Partidos' },
+  { url: '../ajustes.html',       nombre: 'Ajustes' }
+];
+
+function esperarListo(marco, intentos = 250) {
+  return new Promise((resolver) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(true); }
+      else if (++n > intentos) { clearInterval(tic); resolver(false); }
+    }, 100);
+  });
+}
+
+const marco = document.getElementById('marco');
+
+(async () => {
+  for (const p of PAGINAS) {
+    // Cada página se carga desde cero en el iframe
+    const carga = new Promise(r => { marco.onload = () => r(); marco.src = p.url; });
+    await carga;
+    const listo = await esperarListo(marco);
+    await esperar(400);
+
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    ok(`«${p.nombre}» termina de arrancar`, listo === true, listo ? 'window.__listo' : 'se quedó a medias');
+
+    // ¿Ha salido el aviso rojo de error?
+    const aviso = d.getElementById('toast');
+    const texto = aviso ? aviso.textContent.trim() : '';
+    const esError = /no se pudo|error|not defined|no está definid/i.test(texto);
+    ok(`«${p.nombre}» arranca sin errores`, !esError, texto || 'sin avisos');
+
+    // Y la página tiene contenido de verdad (no una pantalla vacía)
+    const cuerpo = d.querySelector('.contenido, .layout, main');
+    ok(`«${p.nombre}» pinta su contenido`, Boolean(cuerpo),
+       cuerpo ? 'ok' : 'no se encontró el contenido');
+
+    // Ningún error suelto de JavaScript (el cazador de "X is not defined")
+    const errores = (w.__erroresJS || []).filter(e => !/favicon/i.test(e));
+    ok(`«${p.nombre}» no lanza errores de JavaScript`, errores.length === 0,
+       errores.length ? errores.join(' · ') : 'ninguno');
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' +
+    (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = 'prueba-lista';
+})();
+</script>
+</body>
+</html>
