@@ -341,10 +341,12 @@ function pintarUltimos() {
 
   const jugados = torneoActual.partidos.filter(p => p.jugado).slice(-5).reverse();
 
-  if (!jugados.length) {
-    caja.appendChild(el('div', 'vacio', 'Todavía no hay resultados apuntados.'));
-    return;
-  }
+  /* El panel entero se esconde hasta que haya algo que enseñar: así, en un
+     torneo recién creado, no aparece un hueco con "todavía no hay resultados".
+     En cuanto se juega el primer partido, sale solo. */
+  const panel = $('#panel-ultimos');
+  if (panel) panel.hidden = !jugados.length;
+  if (!jugados.length) return;
 
   jugados.forEach(p => caja.appendChild(filaDePartido(p)));
 }

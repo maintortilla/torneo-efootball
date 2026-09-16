@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: los paneles aparecen al jugarse el primer partido</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  iframe { width:1px; height:1px; border:0; position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<h1>Prueba: los paneles aparecen al jugarse el primer partido</h1>
+<p>Un torneo recién creado no debe inventarse nada (eliminatorias y cara a cara dan un aviso).
+   Y en cuanto se juega el PRIMER partido, los últimos resultados deben aparecer.</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const CLAVE = 'torneos-efootball-v1';
+
+function esperarListo(marco, intentos = 100) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      const w = marco.contentWindow;
+      if (w && w.__listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(250); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+
+  try {
+    // --- Se prepara un torneo con su calendario, SIN ningún partido jugado ---
+    await esperarListo(marco);
+    const w = marco.contentWindow;
+
+    const base = JSON.parse(localStorage.getItem(CLAVE))[0];
+    const t = JSON.parse(JSON.stringify(base));
+    t.id = 't-prueba-primer-partido';
+    t.nombre = 'Torneo para el primer partido';
+    t.jugadores = t.jugadores.slice(0, 4);              // 4 jugadores, rápido
+    t.config = Object.assign({}, t.config, { vueltas: 1 });
+    t.partidos = w.generarCalendario(t.jugadores, t.config)
+      .map(p => Object.assign({}, p, { jugado: false, golesLocal: 0, golesVisitante: 0 }));
+
+    const todos = JSON.parse(localStorage.getItem(CLAVE));
+    todos.push(t);
+    localStorage.setItem(CLAVE, JSON.stringify(todos));
+
+    // --- 1. Recién creado: mensajes, nada inventado ---
+    await navegar(marco, '../clasificacion.html?torneo=' + t.id);
+    let d = marco.contentDocument;
+    ok('sin jugar nada, las eliminatorias avisan en vez de inventar cruces',
+       /en cuanto juguéis/i.test(d.getElementById('lista-eliminatorias').textContent),
+       d.getElementById('lista-eliminatorias').textContent.trim().slice(0, 50));
+    ok('sin jugar nada, el cara a cara tampoco se pone solo',
+       d.getElementById('cara-controles').hidden === true,
+       'desplegables ocultos');
+    ok('sin jugar nada, el panel de Últimos resultados está oculto',
+       d.getElementById('panel-ultimos').hidden === true,
+       'panel oculto (aparecerá al jugarse el primer partido)');
+    ok('pero la tabla ya enseña a los jugadores creados',
+       d.getElementById('tabla-clasificacion').textContent.includes(t.jugadores[0].nombre),
+       t.jugadores.length + ' jugadores');
+
+    // --- 2. Se juega el PRIMER partido (lo que hace la web al guardar) ---
+    const primero = t.partidos[0];
+    const guardado = JSON.parse(localStorage.getItem(CLAVE));
+    const mio = guardado.find(x => x.id === t.id);
+    const p0 = mio.partidos.find(p => p.id === primero.id);
+    p0.golesLocal = 3;
+    p0.golesVisitante = 1;
+    p0.jugado = true;
+    localStorage.setItem(CLAVE, JSON.stringify(guardado));
+
+    await navegar(marco, '../clasificacion.html?torneo=' + t.id);
+    d = marco.contentDocument;
+
+    const ultimos = d.getElementById('lista-ultimos');
+    const nombreDe = id => (t.jugadores.find(j => j.id === id) || {}).nombre || '???';
+    ok('al jugar el primer partido, el panel de Últimos resultados YA aparece',
+       d.getElementById('panel-ultimos').hidden === false,
+       'panel visible');
+    ok('y dentro sale el resultado con su marcador',
+       /3\s*-\s*1/.test(ultimos.textContent.replace(/\s+/g, ' ')),
+       ultimos.textContent.replace(/\s+/g, ' ').trim().slice(0, 70));
+    ok('y sale con los dos jugadores que lo jugaron',
+       ultimos.textContent.includes(nombreDe(primero.localId)) &&
+       ultimos.textContent.includes(nombreDe(primero.visitanteId)),
+       nombreDe(primero.localId) + ' y ' + nombreDe(primero.visitanteId));
+    ok('la tabla ya reparte puntos',
+       /3/.test(d.getElementById('tabla-clasificacion').textContent.replace(/\s+/g, ' ')),
+       'puntos repartidos');
+    ok('las eliminatorias ya enseñan cruces (aviso de que quedan partidos)',
+       /quedan/i.test(d.getElementById('lista-eliminatorias').textContent),
+       d.getElementById('lista-eliminatorias').textContent.replace(/\s+/g, ' ').trim().slice(0, 60));
+    ok('y el cara a cara ya enseña sus desplegables',
+       d.getElementById('cara-controles').hidden === false,
+       'desplegables visibles');
+    ok('el cara a cara ya compara a los dos que jugaron',
+       /victoria|empate/i.test(d.getElementById('lista-cara').textContent),
+       d.getElementById('lista-cara').textContent.replace(/\s+/g, ' ').trim().slice(0, 60));
+
+    // --- limpieza ---
+    const finales = JSON.parse(localStorage.getItem(CLAVE)).filter(x => x.id !== t.id);
+    localStorage.setItem(CLAVE, JSON.stringify(finales));
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>
