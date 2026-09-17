@@ -6,7 +6,9 @@
    · "champions" → rojo y dorado, noche de gran final
    · "azul"      → azul eléctrico, aire de app deportiva moderna
    · "atardecer" → naranja y ámbar, luz cálida de última hora
-   · "claro"     → fondo blanco, el único de día
+   · "synthwave" → magenta y cian de neón sobre una rejilla retro
+   · "aurora"    → luces del norte y paneles de cristal
+   · "esports"   → lima ácido sobre carbón, esquinas rectas
 
    Se guarda en el navegador (cada uno puede tener la suya) y se cambia desde
    Ajustes → Aspecto de la web.
@@ -22,11 +24,9 @@ const TEMAS = {
   champions: { nombre: 'Champions',   emoji: '🏆', descripcion: 'Rojo y dorado, como una noche de gran final' },
   azul:      { nombre: 'Azul eléctrico', emoji: '🧊', descripcion: 'Cian sobre azul profundo, aire de app deportiva' },
   atardecer: { nombre: 'Atardecer',   emoji: '🌅', descripcion: 'Naranja y ámbar, luz cálida de última hora' },
-  claro:     { nombre: 'Claro',       emoji: '☀️', descripcion: 'Fondo blanco y verde esmeralda, para verlo de día' },
   synthwave: { nombre: 'Synthwave',   emoji: '🌆', descripcion: 'Magenta y cian de neón sobre una rejilla retro de los 80' },
   aurora:    { nombre: 'Aurora',      emoji: '💠', descripcion: 'Luces del norte y paneles de cristal esmerilado' },
-  esports:   { nombre: 'Esports',     emoji: '⚡', descripcion: 'Lima ácido sobre carbón, esquinas rectas y aire de torneo' },
-  editorial: { nombre: 'Editorial',   emoji: '📰', descripcion: 'Papel crema y tipografía de periódico deportivo' }
+  esports:   { nombre: 'Esports',     emoji: '⚡', descripcion: 'Lima ácido sobre carbón, esquinas rectas y aire de torneo' }
 };
 
 const CLAVE_TEMA = 'tema-web';

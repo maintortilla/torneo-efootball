@@ -5,7 +5,7 @@
    de marcador.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&family=Orbitron:wght@500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@400;500;600&family=Playfair+Display:wght@700;800;900&family=Lora:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&family=Orbitron:wght@500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap');
 
 :root {
   /* Colores del tema (cambiando estos valores cambia toda la web).
@@ -265,56 +265,6 @@
 }
 
 /* ==========================================================================
-   TEMA "CLARO" — fondo blanco, el único de día
-   --------------------------------------------------------------------------
-   Todo lo que en los demás es brillo, aquí es sombra suave: las tarjetas se
-   despegan con una sombra fina en vez de con un halo de color.
-   ========================================================================== */
-[data-tema="claro"] {
-  --bg:        #F4F6FA;
-  --panel:     #FFFFFF;
-  --panel-2:   #EDF0F6;
-  --linea:     #D3D9E3;
-  --neon:      #047857;   /* verde esmeralda (oscurecido para que se lea sobre blanco) */
-  --neon-suave:#D7F5E6;
-  --azul:      #2563EB;
-  --texto:     #111827;
-  --texto-2:   #3F4653;
-  --muted:     #5B6472;
-  --aviso:     #B45309;
-  --peligro:   #DC2626;
-
-  --acento-rgb:   4, 120, 87;
-  --acento-hover: #065F46;
-  --acento-texto: #047857;
-  --exito:        #047857;
-
-  --pendiente:     #B45309;   --pendiente-rgb: 180, 83, 9;
-  --jugado:        #047857;   --jugado-rgb:    4, 120, 87;
-  --en-curso:      #2563EB;   --en-curso-rgb:  37, 99, 235;
-  --lila:          #7C3AED;   --lila-rgb:      124, 58, 237;
-  --gris-rgb:      107, 114, 128;
-  --peligro-rgb:   220, 38, 38;
-  --aviso-rgb:     180, 83, 9;
-
-  --oro:    #D97706;
-  --plata:  #94A3B8;
-  --bronce: #B45309;
-
-  --brillo-fondo:   #E3F2EC;
-  --brillo-fondo-2: #E8EDFB;
-  --topbar-fondo:   rgba(255, 255, 255, .92);
-  --jornada-bg:     rgba(237, 240, 246, .8);
-  --velo:           rgba(15, 23, 42, .42);
-  --sobre-acento:   #FFFFFF;
-  --sombra-modal:   0 20px 50px rgba(15, 23, 42, .18);
-  --sombra-rueda:   inset 0 0 26px rgba(15, 23, 42, .07), 0 8px 22px rgba(15, 23, 42, .10);
-
-  /* De día no hay neón: el acento se apoya con un borde y una sombra fina */
-  --sombra-neon: 0 0 0 1px rgba(var(--acento-rgb), .25), 0 6px 16px rgba(var(--acento-rgb), .16);
-}
-
-/* ==========================================================================
    TEMA "SYNTHWAVE" — magenta y cian de neón sobre una rejilla retro
    --------------------------------------------------------------------------
    Aire de los 80: fondo violeta casi negro, magenta eléctrico como acento,
@@ -476,62 +426,6 @@
 }
 
 /* ==========================================================================
-   TEMA "EDITORIAL" — papel crema y tipografía de periódico
-   --------------------------------------------------------------------------
-   El único tema de papel: fondo crema, tinta oscura, rojo de cabecera y
-   serifas (Playfair para los títulos, Lora para el texto). Reglas finas en
-   vez de brillos de neón.
-   ========================================================================== */
-[data-tema="editorial"] {
-  --bg:        #F5F0E5;
-  --panel:     #FFFCF5;
-  --panel-2:   #F1EADC;
-  --linea:     #D9CFB9;
-  --neon:      #A61C1C;   /* rojo de cabecera */
-  --neon-suave:#F6E1DC;
-  --azul:      #1F4E79;
-  --texto:     #1A1613;
-  --texto-2:   #3E362E;
-  --muted:     #5A5148;
-  --aviso:     #96610A;
-  --peligro:   #B91C1C;
-
-  --acento-rgb:   166, 28, 28;
-  --acento-hover: #8A1616;
-  --acento-texto: #A61C1C;
-  --exito:        #166534;
-
-  --pendiente:     #96610A;   --pendiente-rgb: 150, 97, 10;
-  --jugado:        #166534;   --jugado-rgb:    22, 101, 52;
-  --en-curso:      #1F4E79;   --en-curso-rgb:  31, 78, 121;
-  --lila:          #5B21B6;   --lila-rgb:      91, 33, 182;
-  --gris-rgb:      107, 97, 86;
-  --peligro-rgb:   185, 28, 28;
-  --aviso-rgb:     150, 97, 10;
-
-  --oro:    #B45309;
-  --plata:  #8A8175;
-  --bronce: #9A5A24;
-
-  --brillo-fondo:   #FFFDF7;
-  --brillo-fondo-2: #F0E7D5;
-  --topbar-fondo:   rgba(250, 246, 237, .94);
-  --jornada-bg:     rgba(241, 234, 220, .7);
-  --velo:           rgba(40, 32, 22, .45);
-  --sobre-acento:   #FFFCF5;
-  --sombra-modal:   0 22px 55px rgba(60, 45, 25, .22);
-  --sombra-rueda:   inset 0 0 26px rgba(60,45,25,.07), 0 8px 22px rgba(60,45,25,.12);
-
-  /* En papel no hay neón: el acento se apoya con un borde fino y una sombra */
-  --sombra-neon: 0 0 0 1px rgba(var(--acento-rgb), .22), 0 4px 14px rgba(120, 90, 50, .16);
-
-  --radio: 3px;
-
-  --fuente:         'Lora', Georgia, 'Times New Roman', serif;
-  --fuente-numeros: 'Playfair Display', Georgia, serif;
-}
-
-/* ==========================================================================
    DETALLES PROPIOS DE CADA TEMA NUEVO
    --------------------------------------------------------------------------
    Un toque que los distingue más allá del color: el título con degradado y
@@ -583,32 +477,6 @@
 }
 [data-tema="atardecer"] .panel-titulo.verde b { color: var(--texto-2); }
 [data-tema="atardecer"] .tarjeta-torneo { border-top: 2px solid rgba(251, 140, 60, .5); }
-
-/* --- Claro: elevación con sombra suave en vez de brillos --- */
-[data-tema="claro"] .marca h1 span,
-[data-tema="claro"] .panel-cabecera h2 em,
-[data-tema="claro"] .panel-titulo.verde {
-  background: linear-gradient(92deg, #047857 0%, #065F46 55%, #064E3B 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-}
-[data-tema="claro"] .panel-titulo.verde b { color: var(--texto-2); }
-[data-tema="claro"] .topbar {
-  border-bottom: 1px solid var(--linea);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
-}
-[data-tema="claro"] .tarjeta-torneo,
-[data-tema="claro"] .partido-fila,
-[data-tema="claro"] .jornada,
-[data-tema="claro"] .cara-fila,
-[data-tema="claro"] .cara-resumen,
-[data-tema="claro"] .caja-codigo,
-[data-tema="claro"] .desempate-linea,
-[data-tema="claro"] .jugador-linea {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .05);
-}
-[data-tema="claro"] .tabla td.pos .medalla { filter: drop-shadow(0 1px 2px rgba(15, 23, 42, .22)); }
-[data-tema="claro"] .tabla tbody tr:hover { background: rgba(var(--acento-rgb), .06); }
 
 /* ==========================================================================
    TEMA "SYNTHWAVE" — rejilla retro en el fondo y títulos de neón
@@ -732,53 +600,6 @@
 }
 [data-tema="esports"] .tarjeta-torneo { border-top: 3px solid var(--neon); }
 [data-tema="esports"] .badge-jornada { border-radius: 0; letter-spacing: .14em; }
-
-/* ==========================================================================
-   TEMA "EDITORIAL" — papel, serifas y reglas finas
-   ========================================================================== */
-[data-tema="editorial"] body {
-  background:
-    radial-gradient(1200px 520px at 50% -10%, #FFFDF7 0%, transparent 62%),
-    var(--bg);
-  font-size: 17.5px;   /* las serifas finas se leen mejor un pelín más grandes */
-}
-[data-tema="editorial"] .marca h1 { font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0; }
-[data-tema="editorial"] .marca h1 span,
-[data-tema="editorial"] .panel-cabecera h2 em,
-[data-tema="editorial"] .panel-titulo.verde {
-  background: linear-gradient(92deg, #C42B2B 0%, #A61C1C 55%, #7A1010 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-}
-[data-tema="editorial"] .panel-titulo.verde b { color: var(--texto-2); }
-/* Cabecera de periódico: doble filete grueso bajo la barra superior */
-[data-tema="editorial"] .topbar {
-  border-bottom: 4px double rgba(26, 22, 19, .5);
-  box-shadow: 0 1px 3px rgba(60, 45, 25, .08);
-}
-/* Los títulos de panel, con filete doble (aire de sección de periódico) */
-[data-tema="editorial"] .panel-titulo {
-  border-bottom: 4px double rgba(26, 22, 19, .34);
-  letter-spacing: .04em;
-}
-[data-tema="editorial"] .panel-titulo::before { border-radius: 0; width: 4px; box-shadow: none; }
-[data-tema="editorial"] .panel { border-top: 1px solid rgba(26, 22, 19, .28); }
-[data-tema="editorial"] .tabla th { letter-spacing: .1em; border-bottom: 2px solid rgba(26, 22, 19, .3); }
-[data-tema="editorial"] .tabla td.pts { font-weight: 900; }
-/* En papel, lo deshabilitado se lee mejor que en los temas oscuros */
-[data-tema="editorial"] .nav-item.proximo { opacity: .8; }
-[data-tema="editorial"] .nav-item { opacity: .88; }
-[data-tema="editorial"] .tarjeta-torneo,
-[data-tema="editorial"] .partido-fila,
-[data-tema="editorial"] .jornada,
-[data-tema="editorial"] .cara-fila,
-[data-tema="editorial"] .cara-resumen,
-[data-tema="editorial"] .caja-codigo,
-[data-tema="editorial"] .sidebar-pie {
-  box-shadow: 0 1px 2px rgba(60, 45, 25, .07), 0 6px 18px rgba(60, 45, 25, .05);
-}
-[data-tema="editorial"] .tarjeta-torneo { border-top: 2px solid rgba(166, 28, 28, .55); }
-[data-tema="editorial"] .tabla tbody tr:hover { background: rgba(var(--acento-rgb), .05); }
 
 * { box-sizing: border-box; }
 html, body { overflow-x: hidden; }
@@ -1420,11 +1241,9 @@ html[data-candado="fuera"] .btn-sesion {
 .tema-bola.champions { background: linear-gradient(135deg, #F7DA8A, #B98A1F); }
 .tema-bola.azul      { background: linear-gradient(135deg, #67E8F9, #0369A1); }
 .tema-bola.atardecer { background: linear-gradient(135deg, #FDBA74, #C2410C); }
-.tema-bola.claro     { background: linear-gradient(135deg, #FFFFFF, #A8B3C4); }
 .tema-bola.synthwave { background: linear-gradient(135deg, #FF3CAC, #22D3EE); }
 .tema-bola.aurora    { background: linear-gradient(135deg, #7DF9E4, #A78BFA, #F472B6); }
 .tema-bola.esports   { background: linear-gradient(135deg, #E9FF8A, #C6FF00 55%, #5E7A00); }
-.tema-bola.editorial { background: linear-gradient(135deg, #FFFCF5 0 38%, #A61C1C 38% 100%); }
 .tema-opcion .tema-info { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
 .tema-opcion .tema-desc { font-size: 13px; font-weight: 500; color: var(--texto-2); }
 .tema-opcion .tema-check { color: var(--neon); font-weight: 800; opacity: 0; }
