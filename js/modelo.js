@@ -355,6 +355,17 @@ function todosLosDuelos(torneo) {
   return duelos.sort((x, y) => y.total - x.total || x.a.nombre.localeCompare(y.a.nombre));
 }
 
+/* Cuántos partidos de liguilla TOCAN según los jugadores y las vueltas.
+   Cada pareja se enfrenta una vez por vuelta: cruces x vueltas.
+   (Sirve para saber cuánto queda de verdad aunque el calendario no esté generado:
+   si el torneo se monta a mano con la ruleta, los partidos que existen son menos
+   que los que tocan, y el resumen no debe decir "liguilla terminada" antes de tiempo.) */
+function partidosQueTocan(jugadores, config) {
+  const n = (jugadores || []).length;
+  const vueltas = Math.max(1, Math.min(4, Number(config && config.vueltas) || 1));
+  return (n * (n - 1) / 2) * vueltas;
+}
+
 /* -------------------------------------------------------------------------
    CLASIFICACIÓN: se calcula solo con los partidos ya jugados.
    Los puntos salen de la configuración del torneo (3/1/0 por defecto).

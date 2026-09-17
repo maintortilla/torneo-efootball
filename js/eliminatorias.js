@@ -72,6 +72,13 @@ function pintarResumenFases() {
 
   const liga = partidosDeFase('liga');
   const jugadosLiga = liga.filter(p => p.jugado).length;
+
+  /* Los partidos que TOCAN según las vueltas (no solo los montados): así el
+     resumen no dice "liguilla terminada" si aún falta la mitad por montar. */
+  const tocanLiga = partidosQueTocan(torneoActual.jugadores, torneoActual.config);
+  const totalLiga = Math.max(liga.length, tocanLiga);
+  const porMontar = Math.max(0, totalLiga - liga.length);
+
   const finales = torneoActual.partidos.filter(p => ORDEN_FASES.includes(p.fase));
   const jugadosFinales = finales.filter(p => p.jugado).length;
   const clasificados = torneoActual.config.clasificados;
@@ -79,7 +86,7 @@ function pintarResumenFases() {
   const estado = estadoDeFases(torneoActual);
   const textos = {
     sin_calendario: 'Falta el calendario',
-    liga: liga.filter(p => !p.jugado).length + ' partidos de liguilla por jugar',
+    liga: Math.max(0, totalLiga - jugadosLiga) + ' partidos de liguilla por jugar',
     generar_semis: 'Liguilla terminada: ¡toca generar las eliminatorias!',
     semis: 'Semifinales en juego',
     generar_final: 'Semifinales hechas: toca generar la final',
@@ -88,7 +95,10 @@ function pintarResumenFases() {
   };
 
   [
-    { etiqueta: 'Liguilla', valor: jugadosLiga + '/' + liga.length, extra: 'partidos jugados', color: 1 },
+    { etiqueta: 'Liguilla', valor: jugadosLiga + '/' + totalLiga, color: 1,
+      extra: porMontar > 0
+        ? `${porMontar} por montar · ${torneoActual.config.vueltas} ${torneoActual.config.vueltas === 1 ? 'vuelta' : 'vueltas'}`
+        : 'partidos jugados' },
     { etiqueta: 'Eliminatorias', valor: jugadosFinales + '/' + finales.length, extra: finales.length ? 'partidos jugados' : 'aún sin generar', color: 2 },
     { etiqueta: 'Pasan al cuadro', valor: String(clasificados), extra: 'los mejores de la liguilla', color: 3 },
     { etiqueta: 'Estado', valor: '', extra: textos[estado.paso] || '—', textoLargo: true, color: 4 }
@@ -208,9 +218,20 @@ function pintarAccion() {
   caja.innerHTML = '';
 
   const estado = estadoDeFases(torneoActual);
-  const pendientesLiga = partidosDeFase('liga').filter(p => !p.jugado).length;
+  const liga = partidosDeFase('liga');
+  const jugadosLiga = liga.filter(p => p.jugado).length;
+
+  /* Los que faltan de verdad: los montados sin jugar MÁS los que aún no se han
+     montado (según las vueltas). Si no, aquí pondría "faltan 3" cuando en
+     realidad queda la mayor parte de la liguilla. */
+  const tocanLiga = partidosQueTocan(torneoActual.jugadores, torneoActual.config);
+  const totalLiga = Math.max(liga.length, tocanLiga);
+  const porMontar = Math.max(0, totalLiga - liga.length);
+  const faltanLiga = Math.max(0, totalLiga - jugadosLiga);
 
   const aviso = (texto, tipo) => caja.appendChild(el('div', tipo || 'nota', texto));
+  const textoFaltan = `<b>${faltanLiga}</b> ${faltanLiga === 1 ? 'partido' : 'partidos'}` +
+    (porMontar > 0 ? ` (${porMontar} aún por montar)` : '');
 
   if (estado.paso === 'sin_calendario') {
     aviso('Este torneo no tiene calendario. Genéralo desde <b>Ajustes</b> o monta los partidos con la ruleta.', 'aviso');
@@ -218,13 +239,21 @@ function pintarAccion() {
   }
 
   if (estado.paso === 'liga') {
-    aviso(`<span>📅</span><span>${pendientesLiga === 1 ? 'Falta' : 'Faltan'} <b>${pendientesLiga}</b> ${pendientesLiga === 1 ? 'partido' : 'partidos'} para acabar la liguilla. Cuando estén todos apuntados, aquí podrás generar las eliminatorias.</span>`, 'aviso');
+    aviso(`<span>📅</span><span>${faltanLiga === 1 ? 'Falta' : 'Faltan'} ${textoFaltan} para acabar la liguilla. Cuando estén todos apuntados, aquí podrás generar las eliminatorias.</span>`, 'aviso');
     caja.appendChild(botonIr('Ir a Partidos', 'partidos.html'));
     return;
   }
 
   if (estado.paso === 'generar_semis' || estado.paso === 'generar_final') {
     const esSemis = estado.paso === 'generar_semis';
+
+    /* Si aún quedan partidos por montar, se avisa: puede ser que ya hayan
+       acabado la liguilla de verdad, o que les falte la mitad. No se bloquea
+       nada (es su torneo), solo se les dice. */
+    if (esSemis && porMontar > 0) {
+      aviso(`<span>⚠️</span><span>Ojo: tenéis <b>${liga.length}</b> partidos montados de los <b>${totalLiga}</b> que tocan con ${torneoActual.config.vueltas} ${torneoActual.config.vueltas === 1 ? 'vuelta' : 'vueltas'}. Si ya habéis acabado la liguilla, adelante; si no, monta los que faltan con la ruleta 🎰.</span>`, 'aviso');
+    }
+
     aviso(esSemis
       ? `<span>🏟️</span><span>La liguilla ha terminado. Ya se pueden generar las <b>semifinales</b> con los ${torneoActual.config.clasificados} primeros.</span>`
       : '<span>🏟️</span><span>Las semifinales están resueltas. Ya se puede generar la <b>final</b> (y el 3º y 4º puesto si está activado).</span>', 'aviso');

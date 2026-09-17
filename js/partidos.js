@@ -54,7 +54,15 @@ function pintarTodoPartidos() {
 function pintarResumenPartidos() {
   const liga = torneoActual.partidos.filter(p => p.fase === 'liga');
   const jugados = liga.filter(p => p.jugado).length;
-  const pendientes = liga.length - jugados;
+
+  /* Los partidos que TOCAN según las vueltas. Si el torneo se monta a mano con la
+     ruleta hay menos montados que los que tocan, y sin esto parecería que la liga
+     está a punto de acabar cuando aún queda la mitad. */
+  const tocan = partidosQueTocan(torneoActual.jugadores, torneoActual.config);
+  const total = Math.max(liga.length, tocan);
+  const pendientes = Math.max(0, total - jugados);
+  const porMontar = Math.max(0, total - liga.length);
+
   const goles = torneoActual.partidos.filter(p => p.jugado)
     .reduce((s, p) => s + p.golesLocal + p.golesVisitante, 0);
   const media = jugados ? (goles / jugados).toFixed(1) : '0.0';
@@ -62,20 +70,22 @@ function pintarResumenPartidos() {
   const caja = $('#resumen-partidos');
   caja.innerHTML = '';
 
-  // Torneo recién creado: aún no hay ningún partido
+  // Torneo recién creado: aún no hay ningún partido montado
   if (!liga.length) {
+    const tocan = partidosQueTocan(torneoActual.jugadores, torneoActual.config);
     caja.appendChild(el('div', 'dato dato-col-4',
       `<span class="etiqueta">Sin partidos todavía</span>
        <small style="font-size:15px;color:var(--texto);white-space:normal">
          Este torneo se monta jornada a jornada: pulsa <b>🎰 Ruleta</b> para sortear
          el primer cruce, o <b>+ Añadir partido</b> para ponerlo a mano.
+         Tocan <b>${tocan}</b> partidos de liguilla.
        </small>`));
     return;
   }
 
   const estado = estadoDeFases(torneoActual);
   const textosEstado = {
-    liga: `${estado.pendientes} partidos para acabar la liguilla`,
+    liga: pendientes + ' partidos para acabar la liguilla' + (porMontar > 0 ? ` (${porMontar} por montar)` : ''),
     generar_semis: 'Liguilla terminada: toca generar semifinales',
     semis: 'Semifinales en juego',
     generar_final: 'Final lista para generar',
@@ -84,7 +94,11 @@ function pintarResumenPartidos() {
   };
 
   [
-    { etiqueta: 'Partidos jugados', valor: jugados + '/' + liga.length, extra: pendientes + ' pendientes', color: 1 },
+    { etiqueta: 'Partidos jugados', valor: jugados + '/' + total, color: 1,
+      extra: porMontar > 0 && porMontar === pendientes
+        ? `${pendientes} por montar y jugar`
+        : (porMontar > 0 ? `${pendientes} pendientes · ${porMontar} por montar`
+                         : pendientes + ' pendientes') },
     { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', color: 2 },
     { etiqueta: 'Estado', valor: '', extra: textosEstado[estado.paso] || '—', textoLargo: true, color: 4 }
   ].forEach(d => {

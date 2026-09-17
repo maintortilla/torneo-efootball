@@ -71,7 +71,17 @@ function pintarTodo() {
 /* ------------------------------------------------------------- resumen */
 function pintarResumen() {
   const jugados = torneoActual.partidos.filter(p => p.jugado);
-  const total = torneoActual.partidos.filter(p => p.fase === 'liga').length;
+  const liga = torneoActual.partidos.filter(p => p.fase === 'liga');
+  const ligaJugados = liga.filter(p => p.jugado).length;
+
+  /* Los partidos que TOCAN según las vueltas configuradas. Si el torneo se monta
+     a mano con la ruleta, hay menos montados que los que tocan: sin esto el
+     resumen diría "liguilla terminada" con la liga a medias. */
+  const tocan = partidosQueTocan(torneoActual.jugadores, torneoActual.config);
+  const total = Math.max(liga.length, tocan);
+  const porMontar = Math.max(0, total - liga.length);
+  const quedanLiga = Math.max(0, total - ligaJugados);
+
   const goles = jugados.reduce((s, p) => s + p.golesLocal + p.golesVisitante, 0);
   const media = jugados.length ? (goles / jugados.length).toFixed(1) : '0.0';
 
@@ -96,13 +106,25 @@ function pintarResumen() {
   const nJugadores = torneoActual.jugadores.length;
   $('#badge-jornada').textContent = nJugadores + (nJugadores === 1 ? ' jugador' : ' jugadores');
 
+  // Qué se cuenta debajo del número: primero lo que falta por montar, si falta algo
+  let extraJugados;
+  if (porMontar > 0 && porMontar === quedanLiga) {
+    extraJugados = `Quedan ${quedanLiga} por montar y jugar`;      // nada montado aún
+  } else if (porMontar > 0) {
+    extraJugados = `Quedan ${quedanLiga} · ${porMontar} por montar`;
+  } else if (quedanLiga > 0) {
+    extraJugados = jornadaActual
+      ? `Jornada ${jornadaActual} en juego · ${quedanLiga} pendientes`
+      : `Quedan ${quedanLiga} partidos`;
+  } else {
+    extraJugados = pendientes.length ? 'Quedan las eliminatorias' : 'Liguilla terminada';
+  }
+
   const caja = $('#resumen');
   caja.innerHTML = '';
   const datos = [
-    { etiqueta: 'Partidos jugados', valor: jugados.length + '/' + total, color: 1,   // verde: lo hecho
-      extra: jornadaActual
-        ? `Jornada ${jornadaActual} en juego · ${ligaPendiente.length} pendientes`
-        : (pendientes.length ? 'Quedan las eliminatorias' : 'Liguilla terminada') },
+    { etiqueta: 'Partidos jugados', valor: ligaJugados + '/' + total, color: 1,   // verde: lo hecho
+      extra: extraJugados },
     { etiqueta: 'Goles totales', valor: goles, extra: media + ' por partido', color: 2 },  // ámbar: los goles
     { etiqueta: 'Jugadores', valor: torneoActual.jugadores.length, extra: 'en el torneo', color: 3 },  // azul
     { etiqueta: 'Mayor goleada', valor: goleada ? goleada.dif + ' de dif.' : '—', extra: textoGoleada, color: 4 }  // lila

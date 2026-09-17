@@ -17,7 +17,7 @@ vm.runInThisContext(fuente + `
   jugadorYaJuegaEnJornada, siguienteJornada, jornadaSugerida, candidatosRuleta,
   elegirAlAzar, nuevoPartidoLiga, caraACara,
   partidosDeJugador, resultadoDePartido, estadisticasDeJugador, tablaEstadisticas,
-  puntosPorJornada, mayoresGoleadas, partidosMasLocos, todosLosDuelos,
+  puntosPorJornada, mayoresGoleadas, partidosMasLocos, todosLosDuelos, partidosQueTocan,
   nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo, asegurarCodigos,
   buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO };`);
 const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
@@ -29,7 +29,7 @@ const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
         asegurarCodigos, buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO,
         caraACara, partidosDeJugador, resultadoDePartido, estadisticasDeJugador,
         tablaEstadisticas, puntosPorJornada, mayoresGoleadas, partidosMasLocos,
-        todosLosDuelos } = globalThis.__api;
+        todosLosDuelos, partidosQueTocan } = globalThis.__api;
 
 const torneo = JSON.parse(JSON.stringify(TORNEO_PRUEBA));
 aplicarResultadosEjemplo(torneo);
@@ -406,6 +406,35 @@ comprobar('salen los duelos que se han jugado (X-Y, X-Z, Y-Z)', duelos.length ==
 comprobar('el duelo X-Y se ha jugado 2 veces y va 2-0 para X',
   duelos[0].total === 2 && duelos[0].ganaA === 2,
   duelos[0].a.nombre + ' ' + duelos[0].ganaA + '-' + duelos[0].ganaB + ' ' + duelos[0].b.nombre);
+
+console.log('\n=== PARTIDOS QUE TOCAN (según las vueltas) ===');
+
+const cfgV = v => Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { vueltas: v });
+const jugN = n => Array.from({ length: n }, (_, i) => ({ id: 'j' + i, nombre: 'J' + i }));
+
+comprobar('3 jugadores a 1 vuelta tocan 3 partidos', partidosQueTocan(jugN(3), cfgV(1)) === 3,
+  partidosQueTocan(jugN(3), cfgV(1)) + ' partidos');
+comprobar('3 jugadores a 2 vueltas tocan 6 partidos', partidosQueTocan(jugN(3), cfgV(2)) === 6,
+  partidosQueTocan(jugN(3), cfgV(2)) + ' partidos');
+comprobar('6 jugadores a 2 vueltas tocan 30 partidos', partidosQueTocan(jugN(6), cfgV(2)) === 30,
+  partidosQueTocan(jugN(6), cfgV(2)) + ' partidos');
+comprobar('6 jugadores a 4 vueltas tocan 60 partidos', partidosQueTocan(jugN(6), cfgV(4)) === 60,
+  partidosQueTocan(jugN(6), cfgV(4)) + ' partidos');
+comprobar('con 1 jugador no toca ningún partido', partidosQueTocan(jugN(1), cfgV(2)) === 0,
+  partidosQueTocan(jugN(1), cfgV(2)) + ' partidos');
+comprobar('sin jugadores tampoco', partidosQueTocan([], cfgV(2)) === 0,
+  partidosQueTocan([], cfgV(2)) + ' partidos');
+comprobar('si no hay vueltas configuradas, se cuenta 1 vuelta',
+  partidosQueTocan(jugN(4), {}) === 6, partidosQueTocan(jugN(4), {}) + ' partidos');
+
+// Lo importante: coincide con lo que genera el calendario de verdad
+comprobar('lo que dicen las vueltas coincide con el calendario que se genera',
+  generarCalendario(jugN(6), cfgV(2)).length === partidosQueTocan(jugN(6), cfgV(2)),
+  generarCalendario(jugN(6), cfgV(2)).length + ' generados = ' +
+  partidosQueTocan(jugN(6), cfgV(2)) + ' que tocan');
+comprobar('y también con 3 vueltas',
+  generarCalendario(jugN(5), cfgV(3)).length === partidosQueTocan(jugN(5), cfgV(3)),
+  generarCalendario(jugN(5), cfgV(3)).length + ' generados');
 
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);
