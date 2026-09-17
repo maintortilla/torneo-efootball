@@ -319,7 +319,7 @@ function pintarEliminatorias() {
 
   if (pendientes) {
     caja.appendChild(el('div', 'aviso',
-      `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> partidos de liguilla: esto es cómo quedarían los cruces <b>si acabara hoy</b>.</span>`));
+      `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> ${pendientes === 1 ? 'partido' : 'partidos'} de liguilla: esto es cómo quedarían los cruces <b>si acabara hoy</b>.</span>`));
   }
 
   cruces.forEach(c => {

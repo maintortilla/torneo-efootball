@@ -126,7 +126,7 @@ function pintarCuadro() {
 
     if (pendientes) {
       caja.appendChild(el('div', 'aviso',
-        `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> partidos de liguilla: estos son los cruces <b>si acabara hoy</b>.</span>`));
+        `<span>ℹ️</span><span>Quedan <b>${pendientes}</b> ${pendientes === 1 ? 'partido' : 'partidos'} de liguilla: estos son los cruces <b>si acabara hoy</b>.</span>`));
     }
 
     const col = el('div', 'ronda');
@@ -218,7 +218,7 @@ function pintarAccion() {
   }
 
   if (estado.paso === 'liga') {
-    aviso(`<span>📅</span><span>Faltan <b>${pendientesLiga}</b> partidos para acabar la liguilla. Cuando estén todos apuntados, aquí podrás generar las eliminatorias.</span>`, 'aviso');
+    aviso(`<span>📅</span><span>${pendientesLiga === 1 ? 'Falta' : 'Faltan'} <b>${pendientesLiga}</b> ${pendientesLiga === 1 ? 'partido' : 'partidos'} para acabar la liguilla. Cuando estén todos apuntados, aquí podrás generar las eliminatorias.</span>`, 'aviso');
     caja.appendChild(botonIr('Ir a Partidos', 'partidos.html'));
     return;
   }
