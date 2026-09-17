@@ -1208,6 +1208,77 @@ html[data-candado="fuera"] .btn-sesion {
 .ruleta-elegido.vacio { color: var(--muted); font-style: italic; }
 .ruleta-elegido .nombre.vacio { color: var(--muted); font-weight: 500; font-style: italic; }
 
+/* ---------- Estadísticas ---------- */
+.estad-linea {
+  display: grid; grid-template-columns: minmax(0, auto) 1fr auto;
+  align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: 10px; margin-bottom: 7px;
+  background: var(--panel-2); border: 1px solid var(--linea);
+}
+.estad-quien { font-weight: 700; color: var(--texto); white-space: nowrap; }
+.estad-texto { color: var(--texto-2); font-size: 14.5px; }
+.estad-valor {
+  font-family: var(--fuente-numeros); font-weight: 800; font-size: 16px;
+  color: var(--neon); white-space: nowrap;
+}
+.estad-extra { color: var(--texto-2); font-size: 13px; white-space: nowrap; }
+
+/* Fila de un partido dentro de las estadísticas (con su puesto) */
+.estad-partido {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 10px; margin-bottom: 6px;
+  background: var(--panel-2); border: 1px solid var(--linea);
+}
+.estad-puesto {
+  font-family: var(--fuente-numeros); font-weight: 800; font-size: 15px;
+  color: var(--muted); text-align: center;
+}
+.estad-partido .quien { font-size: 15px; }
+
+/* El historial de cada pareja */
+.duelo {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: 10px; margin-bottom: 7px;
+  background: var(--panel-2); border: 1px solid var(--linea);
+}
+.duelo-quien { font-weight: 700; color: var(--texto); white-space: nowrap; }
+.duelo-quien.der { text-align: right; }
+.duelo-datos {
+  font-family: var(--fuente-numeros); font-size: 16px; color: var(--texto-2);
+  white-space: nowrap;
+}
+.duelo-datos b { color: var(--neon); }
+.duelo-total { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+
+/* La gráfica de puntos (SVG) */
+.grafica-caja { width: 100%; overflow: hidden; }
+.grafica-svg { width: 100%; height: auto; display: block; }
+.grafica-rejilla { stroke: var(--linea); stroke-width: 1; }
+.grafica-eje {
+  fill: var(--texto-2); font-size: 11px; font-family: var(--fuente-numeros);
+  font-weight: 700;
+}
+.grafica-linea {
+  fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round;
+  opacity: .9;
+}
+.grafica-punto { stroke: var(--panel); stroke-width: 1.5; }
+.grafica-leyenda {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px;
+  padding-top: 11px; border-top: 1px solid var(--linea);
+}
+.grafica-clave {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--texto-2); white-space: nowrap;
+}
+.grafica-clave b { color: var(--texto); font-family: var(--fuente-numeros); }
+.grafica-color {
+  width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+
 /* ---------- Eliminatorias: el cuadro final ---------- */
 .cuadro {
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr);

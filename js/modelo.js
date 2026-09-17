@@ -199,6 +199,162 @@ function caraACara(torneo, idA, idB) {
   return res;
 }
 
+/* =========================================================================
+   ESTADÍSTICAS
+   Todo esto sale de los resultados que ya están apuntados: no hay que
+   apuntar nada nuevo. Se calcula al vuelo.
+   ========================================================================= */
+
+/* Los partidos ya jugados de un jugador, en orden (jornada; las eliminatorias al final) */
+function partidosDeJugador(torneo, jugadorId) {
+  return (torneo.partidos || [])
+    .filter(p => p.jugado && (p.localId === jugadorId || p.visitanteId === jugadorId))
+    .sort((a, b) => (a.jornada || 999) - (b.jornada || 999));
+}
+
+/* El resultado de un partido MIrado desde un jugador: sus goles y el signo (G/E/P) */
+function resultadoDePartido(p, jugadorId) {
+  const esLocal = p.localId === jugadorId;
+  const gf = Number(esLocal ? p.golesLocal : p.golesVisitante) || 0;
+  const gc = Number(esLocal ? p.golesVisitante : p.golesLocal) || 0;
+  return { gf, gc, signo: gf > gc ? 'G' : gf < gc ? 'P' : 'E' };
+}
+
+/* La ficha completa de un jugador: victorias, goles, rachas y su forma */
+function estadisticasDeJugador(torneo, jugadorId) {
+  const partidos = partidosDeJugador(torneo, jugadorId);
+  const cfg = torneo.config || {};
+
+  const e = {
+    id: jugadorId,
+    jugados: 0, ganados: 0, empatados: 0, perdidos: 0,
+    golesFavor: 0, golesContra: 0, puntos: 0,
+    racha: { tipo: null, n: 0 },   // lo último que hizo, repetido
+    mejorRacha: 0,                 // victorias seguidas (su mejor momento)
+    sinPerder: 0,                  // partidos seguidos sin perder (hasta hoy)
+    forma: []                      // los signos, del más viejo al más nuevo
+  };
+
+  partidos.forEach(p => {
+    const r = resultadoDePartido(p, jugadorId);
+    e.jugados++;
+    e.golesFavor += r.gf;
+    e.golesContra += r.gc;
+    if (r.signo === 'G') { e.ganados++; e.puntos += Number(cfg.puntosVictoria) || 0; }
+    else if (r.signo === 'E') { e.empatados++; e.puntos += Number(cfg.puntosEmpate) || 0; }
+    else { e.perdidos++; e.puntos += Number(cfg.puntosDerrota) || 0; }
+    e.forma.push(r.signo);
+  });
+
+  const forma = e.forma;
+
+  // Racha actual: lo que lleva repitiendo (3 victorias, 2 empates...)
+  if (forma.length) {
+    const ultimo = forma[forma.length - 1];
+    let n = 0;
+    for (let i = forma.length - 1; i >= 0 && forma[i] === ultimo; i--) n++;
+    e.racha = { tipo: ultimo, n };
+  }
+
+  // Su mejor racha: el máximo de victorias seguidas
+  let seguidas = 0;
+  forma.forEach(s => {
+    seguidas = (s === 'G') ? seguidas + 1 : 0;
+    if (seguidas > e.mejorRacha) e.mejorRacha = seguidas;
+  });
+
+  // Partidos seguidos sin perder (hasta el último jugado)
+  for (let i = forma.length - 1; i >= 0 && forma[i] !== 'P'; i--) e.sinPerder++;
+
+  return e;
+}
+
+/* Todos los jugadores con su ficha, ordenados por puntos y luego diferencia */
+function tablaEstadisticas(torneo) {
+  return (torneo.jugadores || [])
+    .map(j => {
+      const e = estadisticasDeJugador(torneo, j.id);
+      e.nombre = j.nombre;
+      e.emoji = j.emoji;
+      e.color = j.color;
+      e.diferencia = e.golesFavor - e.golesContra;
+      e.mediaFavor = e.jugados ? e.golesFavor / e.jugados : 0;
+      e.mediaContra = e.jugados ? e.golesContra / e.jugados : 0;
+      return e;
+    })
+    .sort((a, b) => b.puntos - a.puntos || b.diferencia - a.diferencia ||
+                    b.golesFavor - a.golesFavor || a.nombre.localeCompare(b.nombre));
+}
+
+/* Puntos acumulados jornada a jornada (para la gráfica de la temporada).
+   Devuelve { maxJornada, serie: { idJugador: [puntos tras la jornada 0, 1, 2...] } } */
+function puntosPorJornada(torneo) {
+  const liga = (torneo.partidos || []).filter(p => p.fase === 'liga' && p.jornada);
+  const maxJornada = liga.reduce((m, p) => Math.max(m, p.jornada), 0);
+  const cfg = torneo.config || {};
+
+  const serie = {};
+  (torneo.jugadores || []).forEach(j => { serie[j.id] = [0]; });
+
+  for (let j = 1; j <= maxJornada; j++) {
+    const deLaJornada = liga.filter(p => p.jornada === j && p.jugado);
+    (torneo.jugadores || []).forEach(jug => {
+      let suma = 0;
+      deLaJornada.forEach(p => {
+        if (p.localId !== jug.id && p.visitanteId !== jug.id) return;
+        const r = resultadoDePartido(p, jug.id);
+        suma += r.signo === 'G' ? (Number(cfg.puntosVictoria) || 0)
+              : r.signo === 'E' ? (Number(cfg.puntosEmpate) || 0)
+              : (Number(cfg.puntosDerrota) || 0);
+      });
+      serie[jug.id].push(serie[jug.id][j - 1] + suma);
+    });
+  }
+
+  return { maxJornada, serie };
+}
+
+/* Los partidos con la mayor diferencia de goles (las goleadas) */
+function mayoresGoleadas(torneo, cuantos) {
+  return (torneo.partidos || [])
+    .filter(p => p.jugado)
+    .map(p => ({ ...p, diferencia: Math.abs(p.golesLocal - p.golesVisitante),
+                 total: Number(p.golesLocal) + Number(p.golesVisitante) }))
+    .filter(p => p.diferencia > 0)
+    .sort((a, b) => b.diferencia - a.diferencia || b.total - a.total)
+    .slice(0, cuantos || 5);
+}
+
+/* Los partidos con más goles (los más locos) */
+function partidosMasLocos(torneo, cuantos) {
+  return (torneo.partidos || [])
+    .filter(p => p.jugado)
+    .map(p => ({ ...p, total: Number(p.golesLocal) + Number(p.golesVisitante) }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, cuantos || 5);
+}
+
+/* Todos los duelos entre cada pareja que se haya enfrentado (para el cara a cara general) */
+function todosLosDuelos(torneo) {
+  const jugadores = torneo.jugadores || [];
+  const duelos = [];
+
+  for (let i = 0; i < jugadores.length; i++) {
+    for (let j = i + 1; j < jugadores.length; j++) {
+      const r = caraACara(torneo, jugadores[i].id, jugadores[j].id);
+      if (!r.total) continue;
+      duelos.push({
+        a: jugadores[i], b: jugadores[j],
+        total: r.total, ganaA: r.ganaA, ganaB: r.ganaB, empates: r.empates,
+        golesA: r.golesA, golesB: r.golesB
+      });
+    }
+  }
+
+  // Los duelos más jugados primero; a igualdad, por nombre (así el orden no baila)
+  return duelos.sort((x, y) => y.total - x.total || x.a.nombre.localeCompare(y.a.nombre));
+}
+
 /* -------------------------------------------------------------------------
    CLASIFICACIÓN: se calcula solo con los partidos ya jugados.
    Los puntos salen de la configuración del torneo (3/1/0 por defecto).

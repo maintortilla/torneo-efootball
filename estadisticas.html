@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estadísticas · Torneo eFootball</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/tema.js"></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="marca">
+      <span class="balon">⚽</span>
+      <h1>Torneo <span>eFootball</span></h1>
+    </div>
+
+    <div class="topbar-centro">
+      <span class="nombre-torneo" id="nombre-torneo">—</span>
+      <span class="badge-jornada" id="badge-jornada">—</span>
+    </div>
+
+    <div class="topbar-derecha"></div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-cabecera">
+        <span class="sidebar-titulo">Menú</span>
+        <button class="btn-plegar" id="btn-plegar" title="Plegar el menú" aria-label="Plegar el menú">«</button>
+      </div>
+      <nav>
+        <a class="nav-item nav-clasificacion" data-pagina="clasificacion.html" href="clasificacion.html">🏆 <span class="texto">Clasificación</span></a>
+        <a class="nav-item nav-partidos" data-pagina="partidos.html" href="partidos.html">📅 <span class="texto">Partidos</span></a>
+        <a class="nav-item nav-eliminatorias" data-pagina="eliminatorias.html" href="eliminatorias.html">🏟️ <span class="texto">Eliminatorias</span></a>
+        <a class="nav-item nav-estadisticas activo" data-pagina="estadisticas.html" href="estadisticas.html">📊 <span class="texto">Estadísticas</span></a>
+        <a class="nav-item nav-ajustes" data-pagina="ajustes.html" href="ajustes.html">⚙️ <span class="texto">Ajustes</span></a>
+        <a class="nav-item nav-cambiar" href="index.html" title="Volver al menú principal (Mis torneos)">🏠 <span class="texto">Volver al menú</span></a>
+      </nav>
+      <div class="sidebar-pie">
+        <span class="nota" id="nota-guardado"></span>
+        <b>Todo sale de los resultados</b><br>Estas estadísticas se calculan solas con lo que vais apuntando. No hay que rellenar nada más.
+      </div>
+    </aside>
+
+    <main class="contenido">
+
+      <div class="resumen" id="resumen"></div>
+
+      <div class="rejilla-2">
+
+        <section class="panel" id="panel-tabla">
+          <p class="panel-titulo">Estadísticas por jugador <b id="etiqueta-tabla"></b></p>
+          <table class="tabla" id="tabla-estadisticas"></table>
+        </section>
+
+        <div class="columna">
+          <section class="panel" id="panel-grafica">
+            <p class="panel-titulo">Puntos jornada a jornada <b id="etiqueta-grafica"></b></p>
+            <div id="grafica"></div>
+          </section>
+
+          <section class="panel" id="panel-rachas">
+            <p class="panel-titulo">Rachas <b>el momento de cada uno</b></p>
+            <div id="rachas"></div>
+          </section>
+        </div>
+
+      </div>
+
+      <div class="rejilla-2">
+
+        <section class="panel" id="panel-goleadas">
+          <p class="panel-titulo">Mayores goleadas <b>las palizas</b></p>
+          <div id="goleadas"></div>
+        </section>
+
+        <section class="panel" id="panel-locos">
+          <p class="panel-titulo">Partidos más locos <b>los de más goles</b></p>
+          <div id="locos"></div>
+        </section>
+
+      </div>
+
+      <section class="panel" id="panel-duelos">
+        <p class="panel-titulo">Todos contra todos <b id="etiqueta-duelos"></b></p>
+        <div id="duelos"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/config-nube.js"></script>
+  <script src="js/modelo.js"></script>
+  <script src="js/datos-prueba.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/candado.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/estadisticas.js"></script>
+</body>
+</html>

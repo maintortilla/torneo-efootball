@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: la pantalla de estadísticas</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  .oculto { position:absolute; left:-9999px; width:1px; height:1px; border:0; }
+</style>
+</head>
+<body>
+<h1>Prueba: la pantalla de Estadísticas</h1>
+<p>Monta un torneo local con resultados conocidos y comprueba que cada apartado enseña
+   los números correctos: fichas, gráfica, rachas, goleadas, partidos locos y el cara a
+   cara de todos contra todos. Y que un torneo sin partidos no se inventa nada.</p>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const CLAVE = 'torneos-efootball-v1';
+
+/* Se crea un iframe, se espera a que la página termine de arrancar y se devuelve.
+   (Se crea uno nuevo cada vez: recargar el mismo iframe hace cascar el navegador) */
+function abrirPagina(torneoId) {
+  return new Promise((resolver, rechazar) => {
+    const marco = document.createElement('iframe');
+    marco.className = 'oculto';
+    let n = 0;
+    marco.onload = () => {
+      const tic = setInterval(async () => {
+        let listo = false;
+        try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); await esperar(400); resolver(marco); }
+        else if (++n > 150) { clearInterval(tic); rechazar(new Error('la pantalla no arrancó')); }
+      }, 100);
+    };
+    marco.src = '../estadisticas.html?torneo=' + torneoId + '&local=1';
+    document.body.appendChild(marco);
+  });
+}
+
+/* --- Los datos de la prueba: 4 jugadores y 6 partidos con resultados claros --- */
+const ID = 't-prueba-estad';
+const J = [
+  { id: 'est-a', nombre: 'Ana', emoji: '🟢', color: '#00E676' },
+  { id: 'est-b', nombre: 'Bruno', emoji: '🔵', color: '#4DA3FF' },
+  { id: 'est-c', nombre: 'Carla', emoji: '🟡', color: '#FFD54F' },
+  { id: 'est-d', nombre: 'Dani', emoji: '🔴', color: '#FF4D5E' }
+];
+const [A, B, C, D] = J.map(j => j.id);
+const P = (l, v, gl, gv, jor) => ({
+  id: 'ep' + jor + l + v, fase: 'liga', jornada: jor, localId: l, visitanteId: v,
+  golesLocal: gl, golesVisitante: gv, jugado: true, goles: [], stats: null, fecha: null
+});
+
+const torneo = {
+  id: ID, nombre: 'Prueba estadísticas', estado: 'en_curso',
+  config: { puntosVictoria: 3, puntosEmpate: 1, puntosDerrota: 0, vueltas: 1, clasificados: 4 },
+  jugadores: J,
+  partidos: [
+    P(A, B, 3, 0, 1),   // Ana golea a Bruno
+    P(C, D, 2, 2, 1),   // empate
+    P(A, C, 1, 1, 2),   // empate
+    P(B, D, 0, 5, 2),   // Dani golea a Bruno
+    P(A, D, 2, 1, 3),   // gana Ana
+    P(B, C, 1, 2, 3)    // gana Carla
+  ]
+};
+
+const vacio = JSON.parse(JSON.stringify(torneo));
+vacio.id = 't-prueba-estad-vacio';
+vacio.nombre = 'Prueba sin partidos';
+vacio.partidos = [];
+
+(async function ejecutar() {
+  try {
+    // Se guardan los dos torneos de prueba (y se quita cualquiera anterior)
+    const previos = JSON.parse(localStorage.getItem(CLAVE) || '[]').filter(
+      x => x.id !== ID && x.id !== vacio.id);
+    localStorage.setItem(CLAVE, JSON.stringify(previos.concat([torneo, vacio])));
+
+    /* ============ 1. El torneo CON partidos ============ */
+    const marco = await abrirPagina(ID);
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    ok('la pantalla carga y termina de arrancar', w.__listo === true, 'window.__listo');
+    ok('el menú marca Estadísticas como activa',
+       !!d.querySelector('.nav-item.nav-estadisticas.activo'), 'activa en el menú');
+
+    // Resumen
+    const resumen = d.getElementById('resumen').textContent.replace(/\s+/g, ' ');
+    ok('el resumen sale con los recuadros de ataque y defensa',
+       /Mejor ataque/.test(resumen) && /Mejor defensa/.test(resumen), resumen.slice(0, 70));
+
+    // Tabla por jugador
+    const filas = Array.from(d.querySelectorAll('#tabla-estadisticas tbody tr'));
+    ok('la tabla tiene una fila por jugador', filas.length === 4, filas.length + ' filas');
+
+    const datosDe = id => {
+      const j = J.find(x => x.id === id);
+      const tr = filas.find(f => f.textContent.includes(j.nombre));
+      const c = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
+      return { pj: +c[1], g: +c[2], e: +c[3], p: +c[4], gf: +c[5], gc: +c[6], pts: +c[8] };
+    };
+
+    const dA = datosDe(A);
+    ok('Ana lleva 3 partidos, 2 victorias y 1 empate',
+       dA.pj === 3 && dA.g === 2 && dA.e === 1, dA.pj + 'PJ ' + dA.g + 'G ' + dA.e + 'E');
+    ok('Ana lleva 6 goles a favor y 2 en contra', dA.gf === 6 && dA.gc === 2,
+       dA.gf + ':' + dA.gc);
+    ok('Ana suma 7 puntos (2 victorias y 1 empate)', dA.pts === 7, dA.pts + ' puntos');
+
+    const dB = datosDe(B);
+    ok('Bruno ha perdido sus 3 partidos y tiene 0 puntos',
+       dB.pj === 3 && dB.p === 3 && dB.pts === 0, dB.pj + 'PJ ' + dB.p + 'P ' + dB.pts + 'pts');
+
+    const dD = datosDe(D);
+    ok('Dani lleva 8 goles a favor (el mejor ataque)', dD.gf === 8, dD.gf + ' goles');
+
+    // La gráfica
+    ok('la gráfica se dibuja como SVG', !!d.querySelector('#grafica svg'), 'SVG presente');
+    ok('hay una línea por jugador', d.querySelectorAll('#grafica .grafica-linea').length === 4,
+       d.querySelectorAll('#grafica .grafica-linea').length + ' líneas');
+    ok('y un punto por jugador y jornada (4 x 4)', d.querySelectorAll('#grafica .grafica-punto').length === 16,
+       d.querySelectorAll('#grafica .grafica-punto').length + ' puntos');
+    const claves = Array.from(d.querySelectorAll('#grafica .grafica-clave')).map(c => c.textContent.trim());
+    ok('la leyenda enseña a los 4 con sus puntos finales',
+       claves.length === 4 && claves.some(c => /Ana/.test(c)),
+       claves.join(' · ').slice(0, 90));
+
+    // Rachas
+    const rachas = d.getElementById('rachas').textContent.replace(/\s+/g, ' ');
+    ok('dice quién va en racha', /racha/i.test(rachas), rachas.slice(0, 60));
+    ok('dice quién lleva más sin perder', /sin perder/i.test(rachas), 'presente');
+    ok('dice la mejor racha del torneo', /mejor racha/i.test(rachas), 'presente');
+
+    // Goleadas y locos
+    // El partido fue Bruno 0 - 5 Dani (Bruno era local), así que se enseña "0 - 5"
+    ok('la mayor goleada es el 0-5 de Bruno contra Dani',
+       /0\s*-\s*5/.test(d.getElementById('goleadas').textContent), 'goleada correcta');
+    ok('el partido más loco es también el de 5 goles',
+       /0\s*-\s*5/.test(d.getElementById('locos').textContent), 'correcto');
+
+    // Todos contra todos
+    ok('salen los 6 duelos posibles (4 jugadores)',
+       d.querySelectorAll('#duelos .duelo').length === 6,
+       d.querySelectorAll('#duelos .duelo').length + ' duelos');
+    ok('cada duelo dice cuántos partidos se han jugado',
+       /1 partido/.test(d.getElementById('duelos').textContent), 'cuenta los partidos');
+
+    // Sin errores de JavaScript
+    const js = (w.__erroresJS || []);
+    ok('la pantalla no ha dado ningún error de JavaScript', js.length === 0,
+       js.slice(0, 2).join(' | ') || 'sin errores');
+
+    marco.remove();
+
+    /* ============ 2. El torneo SIN partidos ============ */
+    const marco2 = await abrirPagina(vacio.id);
+    const d2 = marco2.contentDocument;
+
+    ok('sin partidos jugados, la gráfica avisa en vez de dibujarse',
+       !d2.querySelector('#grafica svg') &&
+       /jornadas jugadas/i.test(d2.getElementById('grafica').textContent),
+       d2.getElementById('grafica').textContent.trim().slice(0, 45));
+    ok('y los paneles de lo que ha pasado quedan ocultos',
+       d2.getElementById('panel-rachas').hidden === true &&
+       d2.getElementById('panel-goleadas').hidden === true &&
+       d2.getElementById('panel-duelos').hidden === true, 'paneles ocultos');
+    ok('pero la tabla sí enseña a los jugadores (con 0)',
+       d2.querySelectorAll('#tabla-estadisticas tbody tr').length === 4,
+       d2.querySelectorAll('#tabla-estadisticas tbody tr').length + ' filas');
+    marco2.remove();
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  // Limpieza: los torneos de prueba fuera
+  try {
+    const l = JSON.parse(localStorage.getItem(CLAVE) || '[]')
+      .filter(x => x.id !== ID && x.id !== vacio.id);
+    localStorage.setItem(CLAVE, JSON.stringify(l));
+  } catch (e) {}
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+})();
+</script>
+</body>
+</html>

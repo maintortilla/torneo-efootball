@@ -16,6 +16,8 @@ vm.runInThisContext(fuente + `
   estadoDeFases, crearTorneoNuevo, clavePareja, parejaYaExiste, partidosDeJornada,
   jugadorYaJuegaEnJornada, siguienteJornada, jornadaSugerida, candidatosRuleta,
   elegirAlAzar, nuevoPartidoLiga, caraACara,
+  partidosDeJugador, resultadoDePartido, estadisticasDeJugador, tablaEstadisticas,
+  puntosPorJornada, mayoresGoleadas, partidosMasLocos, todosLosDuelos,
   nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo, asegurarCodigos,
   buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO };`);
 const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
@@ -25,7 +27,9 @@ const { CONFIG_DEFECTO, TORNEO_PRUEBA, aplicarResultadosEjemplo,
         siguienteJornada, jornadaSugerida, candidatosRuleta, elegirAlAzar,
         nuevoPartidoLiga, nuevoCodigoTorneo, normalizarCodigo, codigoDeTorneo,
         asegurarCodigos, buscarTorneoPorCodigo, ALFABETO_CODIGO, LARGO_CODIGO,
-        caraACara } = globalThis.__api;
+        caraACara, partidosDeJugador, resultadoDePartido, estadisticasDeJugador,
+        tablaEstadisticas, puntosPorJornada, mayoresGoleadas, partidosMasLocos,
+        todosLosDuelos } = globalThis.__api;
 
 const torneo = JSON.parse(JSON.stringify(TORNEO_PRUEBA));
 aplicarResultadosEjemplo(torneo);
@@ -331,6 +335,77 @@ comprobar('con ida y vuelta suma los dos partidos',
 
 cara = caraACara({ partidos: [juego('a', 'b', 0, 0, false), juego('a', 'c', 5, 0)] }, 'a', 'b');
 comprobar('los partidos sin jugar y los de otros rivales no cuentan', cara.total === 0, 'total ' + cara.total);
+
+console.log('\n=== ESTADÍSTICAS ===');
+
+/* Un torneo de juguete: 3 jugadores y 4 partidos jugados, para comprobar a mano */
+const ch = (localId, visitanteId, gl, gv, jornada) => ({
+  id: 's' + Math.random().toString(36).slice(2, 7), fase: 'liga', jornada,
+  localId, visitanteId, golesLocal: gl, golesVisitante: gv, jugado: true, goles: [], stats: null
+});
+
+const jug3 = [{ id: 'x', nombre: 'X' }, { id: 'y', nombre: 'Y' }, { id: 'z', nombre: 'Z' }];
+const tEst = {
+  jugadores: jug3,
+  config: Object.assign(JSON.parse(JSON.stringify(CONFIG_DEFECTO)), { puntosVictoria: 3, puntosEmpate: 1, puntosDerrota: 0 }),
+  partidos: [
+    ch('x', 'y', 3, 1, 1),   // X gana
+    ch('x', 'z', 0, 2, 2),   // X pierde
+    ch('y', 'z', 2, 2, 3),   // empate
+    ch('x', 'y', 4, 0, 4)    // X gana
+  ]
+};
+
+const ex = estadisticasDeJugador(tEst, 'x');
+comprobar('X lleva 3 partidos jugados', ex.jugados === 3, ex.jugados + ' jugados');
+comprobar('X tiene 2 victorias y 1 derrota', ex.ganados === 2 && ex.perdidos === 1,
+  ex.ganados + 'G ' + ex.empatados + 'E ' + ex.perdidos + 'P');
+comprobar('X suma 6 puntos (2 victorias a 3)', ex.puntos === 6, ex.puntos + ' puntos');
+comprobar('X lleva 7 goles a favor y 3 en contra',
+  ex.golesFavor === 7 && ex.golesContra === 3, ex.golesFavor + ':' + ex.golesContra);
+comprobar('la forma de X va del más viejo al más nuevo', ex.forma.join('') === 'GPG',
+  ex.forma.join(' '));
+comprobar('la racha actual de X es 1 victoria', ex.racha.tipo === 'G' && ex.racha.n === 1,
+  ex.racha.n + ' ' + ex.racha.tipo);
+comprobar('la mejor racha de X es 1 victoria (no ganó dos seguidas)',
+  ex.mejorRacha === 1, ex.mejorRacha + ' seguidas');
+comprobar('X no está sin perder (perdió el penúltimo)', ex.sinPerder === 1, ex.sinPerder + ' sin perder');
+
+const ey = estadisticasDeJugador(tEst, 'y');
+comprobar('Y lleva 1 empate y 2 derrotas', ey.empatados === 1 && ey.perdidos === 2,
+  ey.ganados + 'G ' + ey.empatados + 'E ' + ey.perdidos + 'P');
+comprobar('Y suma 1 punto', ey.puntos === 1, ey.puntos + ' puntos');
+comprobar('la racha de Y es 1 derrota (empató en medio)', ey.racha.tipo === 'P' && ey.racha.n === 1,
+  ey.racha.n + ' ' + ey.racha.tipo);
+
+const ez = estadisticasDeJugador(tEst, 'z');
+comprobar('Z está sin perder (1 victoria y 1 empate)', ez.sinPerder === 2, ez.sinPerder + ' sin perder');
+
+const tablaEst = tablaEstadisticas(tEst);
+comprobar('la tabla ordena por puntos (X primero)',
+  tablaEst[0].id === 'x' && tablaEst[1].id === 'z' && tablaEst[2].id === 'y',
+  tablaEst.map(t => t.nombre + ':' + t.puntos).join(' · '));
+
+const pj = puntosPorJornada(tEst);
+comprobar('la gráfica tiene una jornada por partido jugado', pj.maxJornada === 4, pj.maxJornada + ' jornadas');
+comprobar('X va 0,3,3,3,6 jornada a jornada', pj.serie['x'].join(',') === '0,3,3,3,6',
+  pj.serie['x'].join(','));
+comprobar('Z va 0,0,3,4,4 jornada a jornada (gana y luego empata)',
+  pj.serie['z'].join(',') === '0,0,3,4,4', pj.serie['z'].join(','));
+
+const gol = mayoresGoleadas(tEst, 5);
+comprobar('la mayor goleada es el 4-0 (diferencia 4)', gol[0].golesLocal === 4 && gol[0].diferencia === 4,
+  gol[0].golesLocal + '-' + gol[0].golesVisitante);
+
+const locos = partidosMasLocos(tEst, 5);
+comprobar('el partido más loco es el de 4 goles en total', locos[0].total === 4, locos[0].total + ' goles');
+
+const duelos = todosLosDuelos(tEst);
+comprobar('salen los duelos que se han jugado (X-Y, X-Z, Y-Z)', duelos.length === 3,
+  duelos.length + ' duelos');
+comprobar('el duelo X-Y se ha jugado 2 veces y va 2-0 para X',
+  duelos[0].total === 2 && duelos[0].ganaA === 2,
+  duelos[0].a.nombre + ' ' + duelos[0].ganaA + '-' + duelos[0].ganaB + ' ' + duelos[0].b.nombre);
 
 console.log('\n' + (fallos === 0 ? '✅ TODO CORRECTO' : '❌ ' + fallos + ' comprobaciones fallidas'));
 process.exit(fallos === 0 ? 0 : 1);
