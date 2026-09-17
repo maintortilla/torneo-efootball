@@ -1331,6 +1331,21 @@ html[data-candado="fuera"] .btn-sesion {
   color: var(--neon); text-align: center;
 }
 
+/* ---------- Ayudas emergentes (dejar el ratón encima) ---------- */
+/* Las cabeceras que explican algo se notan: el ratón cambia y se iluminan */
+.tabla th[data-ayuda] { cursor: help; }
+.tabla th[data-ayuda]:hover { color: var(--neon); }
+.ayuda-flotante {
+  position: fixed; z-index: 300; max-width: 250px;
+  background: var(--panel-2); color: var(--texto);
+  border: 1px solid var(--neon); border-radius: 9px;
+  padding: 7px 11px; font-size: 13.5px; font-weight: 600; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55), var(--sombra-neon);
+  pointer-events: none; font-family: var(--fuente);
+  animation: aparece-ayuda .12s ease-out;
+}
+@keyframes aparece-ayuda { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; } }
+
 /* ---------- Refresco automático: el aviso de "auto" en la barra ---------- */
 .auto-refresco {
   display: inline-flex; align-items: center; gap: 6px;

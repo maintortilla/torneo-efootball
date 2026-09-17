@@ -129,16 +129,17 @@ function pintarClasificacion() {
   t.innerHTML = `
     <thead>
       <tr>
-        <th>#</th><th class="nombre">Jugador</th>
-        <th title="Partidos jugados">PJ</th>
-        <th title="Ganados">G</th>
-        <th title="Empatados">E</th>
-        <th title="Perdidos">P</th>
-        <th title="Goles a favor">GF</th>
-        <th title="Goles en contra">GC</th>
-        <th title="Diferencia de goles">DG</th>
-        <th title="Puntos">PTS</th>
-        <th title="Últimos resultados">Forma</th>
+        <th data-ayuda="Puesto en la tabla (1º es el primero)">#</th>
+        <th class="nombre">Jugador</th>
+        <th data-ayuda="Partidos jugados">PJ</th>
+        <th data-ayuda="Partidos ganados">G</th>
+        <th data-ayuda="Partidos empatados">E</th>
+        <th data-ayuda="Partidos perdidos">P</th>
+        <th data-ayuda="Goles a favor: los que ha metido">GF</th>
+        <th data-ayuda="Goles en contra: los que le han metido">GC</th>
+        <th data-ayuda="Diferencia de goles (a favor menos en contra)">DG</th>
+        <th data-ayuda="Puntos">PTS</th>
+        <th data-ayuda="Sus últimos resultados, el más reciente a la derecha">Forma</th>
       </tr>
     </thead>
     <tbody></tbody>`;

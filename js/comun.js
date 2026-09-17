@@ -340,6 +340,76 @@ function engancharMenuLateral() {
 
 document.addEventListener('DOMContentLoaded', engancharMenuLateral);
 
+/* ==========================================================================
+   AYUDAS EMERGENTES — dejar el ratón encima y que te digan qué es cada cosa
+   --------------------------------------------------------------------------
+   Cualquier elemento con data-ayuda="explicación" enseña un cartelito cuando
+   dejas el ratón encima medio segundo. Es solo para quien está mirando: no
+   cambia nada para los demás ni para lo que se guarda en la nube.
+   ========================================================================== */
+const AYUDA_RETARDO = 500;      // medio segundo, ni instantáneo ni eterno
+
+let temporizadorAyuda = null;
+let ayudaVisible = null;
+let ayudaPara = null;
+
+function ocultarAyuda() {
+  clearTimeout(temporizadorAyuda);
+  temporizadorAyuda = null;
+  ayudaPara = null;
+  if (ayudaVisible) { ayudaVisible.remove(); ayudaVisible = null; }
+}
+
+function mostrarAyuda(objetivo) {
+  ocultarAyuda();
+  const texto = objetivo.getAttribute('data-ayuda');
+  if (!texto) return;
+
+  const caja = el('div', 'ayuda-flotante', texto);
+  document.body.appendChild(caja);
+
+  // Se coloca encima del elemento; si no cabe, sale debajo
+  const c = objetivo.getBoundingClientRect();
+  const a = caja.getBoundingClientRect();
+  let arriba = c.top - a.height - 9;
+  if (arriba < 6) arriba = c.bottom + 9;
+  let izquierda = c.left + (c.width - a.width) / 2;
+  izquierda = Math.max(8, Math.min(izquierda, window.innerWidth - a.width - 8));
+
+  caja.style.top = Math.round(arriba) + 'px';
+  caja.style.left = Math.round(izquierda) + 'px';
+  ayudaVisible = caja;
+  ayudaPara = objetivo;
+}
+
+function engancharAyudas() {
+  document.addEventListener('mouseover', (e) => {
+    const objetivo = e.target.closest ? e.target.closest('[data-ayuda]') : null;
+    if (!objetivo || objetivo === ayudaPara) return;
+    clearTimeout(temporizadorAyuda);
+    temporizadorAyuda = setTimeout(() => mostrarAyuda(objetivo), AYUDA_RETARDO);
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const objetivo = e.target.closest ? e.target.closest('[data-ayuda]') : null;
+    if (objetivo) ocultarAyuda();
+  });
+
+  // Con el teclado también (por si alguien navega con Tab)
+  document.addEventListener('focusin', (e) => {
+    const objetivo = e.target.closest ? e.target.closest('[data-ayuda]') : null;
+    if (objetivo) mostrarAyuda(objetivo);
+  });
+  document.addEventListener('focusout', ocultarAyuda);
+
+  // Al mover la página o pulsar algo, el cartelito sobra
+  window.addEventListener('scroll', ocultarAyuda, true);
+  document.addEventListener('click', ocultarAyuda);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ocultarAyuda(); });
+}
+
+document.addEventListener('DOMContentLoaded', engancharAyudas);
+
 /* -------------------------------------------------- botón de actualizar */
 /* Vuelve a leer de la nube lo que hayan apuntado los demás. El botón se crea
    solo en la barra de arriba, así vale para todas las páginas sin tocar el

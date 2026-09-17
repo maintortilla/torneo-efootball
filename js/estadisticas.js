@@ -115,9 +115,16 @@ function pintarTablaEstadisticas() {
   const cabecera = el('thead', null,
     `<tr>
        <th class="nombre">Jugador</th>
-       <th>PJ</th><th>G</th><th>E</th><th>P</th>
-       <th>GF</th><th>GC</th><th>DG</th><th>PTS</th>
-       <th>Media a favor</th><th>Media en contra</th>
+       <th data-ayuda="Partidos jugados">PJ</th>
+       <th data-ayuda="Partidos ganados">G</th>
+       <th data-ayuda="Partidos empatados">E</th>
+       <th data-ayuda="Partidos perdidos">P</th>
+       <th data-ayuda="Goles a favor: los que ha metido">GF</th>
+       <th data-ayuda="Goles en contra: los que le han metido">GC</th>
+       <th data-ayuda="Diferencia de goles (a favor menos en contra)">DG</th>
+       <th data-ayuda="Puntos">PTS</th>
+       <th data-ayuda="Goles que mete por partido de media">Media a favor</th>
+       <th data-ayuda="Goles que le meten por partido de media">Media en contra</th>
      </tr>`);
   tabla.appendChild(cabecera);
 

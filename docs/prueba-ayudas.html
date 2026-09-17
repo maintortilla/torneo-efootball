@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: las ayudas al pasar el ratón</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  .oculto { position:absolute; left:-9999px; width:1px; height:1px; border:0; }
+</style>
+</head>
+<body>
+<h1>Prueba: dejar el ratón encima de las siglas de la tabla</h1>
+<p>Comprueba que al pasar el ratón por encima de PJ, G, GF... aparece un cartelito
+   explicándolo, pero solo después de medio segundo (no de golpe), que al quitar el
+   ratón desaparece, y que las columnas sin explicación no sacan nada.</p>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+/* Se crea un iframe nuevo (recargar el mismo hace cascar el navegador) */
+function abrirPagina(url) {
+  return new Promise((resolver, rechazar) => {
+    const marco = document.createElement('iframe');
+    marco.className = 'oculto';
+    let n = 0;
+    marco.onload = () => {
+      const tic = setInterval(async () => {
+        let listo = false;
+        try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); await esperar(400); resolver(marco); }
+        else if (++n > 150) { clearInterval(tic); rechazar(new Error('la pantalla no arrancó')); }
+      }, 100);
+    };
+    marco.src = url;
+    document.body.appendChild(marco);
+  });
+}
+
+/* Simula pasar el ratón por encima (o quitarlo) */
+function pasarRaton(elemento) {
+  elemento.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+}
+function quitarRaton(elemento) {
+  elemento.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+}
+const cartelito = d => d.querySelector('.ayuda-flotante');
+
+(async function ejecutar() {
+  try {
+    /* ============ 1. La tabla de clasificación ============ */
+    const marco = await abrirPagina('../clasificacion.html?local=1');
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    const cabeceras = Array.from(d.querySelectorAll('#tabla-clasificacion thead th'));
+    const conAyuda = cabeceras.filter(th => th.hasAttribute('data-ayuda'));
+    ok('las siglas de la tabla tienen su explicación puesta',
+       conAyuda.length === 10, conAyuda.length + ' de ' + cabeceras.length + ' columnas');
+
+    const thPJ = cabeceras.find(th => th.textContent.trim() === 'PJ');
+    ok('la columna PJ existe y trae su texto',
+       !!thPJ && thPJ.getAttribute('data-ayuda') === 'Partidos jugados',
+       thPJ ? thPJ.getAttribute('data-ayuda') : 'no está');
+
+    /* --- 2. Se mide de verdad cuánto tarda en salir --- */
+    const t0 = performance.now();
+    pasarRaton(thPJ);
+    let ms = null;
+    for (let i = 0; i < 80; i++) {
+      await esperar(25);
+      if (cartelito(d)) { ms = performance.now() - t0; break; }
+    }
+    ok('el cartelito tarda medio segundo, ni de golpe ni eterno',
+       ms !== null && ms >= 400 && ms <= 800, ms === null ? 'no salió' : Math.round(ms) + ' ms');
+    ok('y no sale de golpe (a los 250 ms todavía no estaba)',
+       ms !== null && ms > 300, ms === null ? '—' : 'salió a los ' + Math.round(ms) + ' ms');
+
+    /* --- 3. El texto es el correcto y no estorba --- */
+    const caja = cartelito(d);
+    ok('y explica lo que es PJ', caja && /Partidos jugados/i.test(caja.textContent),
+       caja ? caja.textContent.trim() : '—');
+    ok('el cartelito no estorba para hacer clic (no coge el ratón)',
+       caja && d.defaultView.getComputedStyle(caja).pointerEvents === 'none',
+       caja ? d.defaultView.getComputedStyle(caja).pointerEvents : '—');
+
+    /* --- 4. Al quitar el ratón desaparece --- */
+    quitarRaton(thPJ);
+    await esperar(120);
+    ok('al quitar el ratón el cartelito se va', !cartelito(d),
+       cartelito(d) ? 'se quedó' : 'se fue');
+
+    /* --- 5. Otra sigla, otro texto (GF) --- */
+    const thGF = cabeceras.find(th => th.textContent.trim() === 'GF');
+    pasarRaton(thGF);
+    await esperar(620);
+    const cajaGF = cartelito(d);
+    ok('al pasar por GF explica los goles a favor',
+       cajaGF && /goles a favor/i.test(cajaGF.textContent),
+       cajaGF ? cajaGF.textContent.trim() : '—');
+    quitarRaton(thGF);
+    await esperar(120);
+
+    /* --- 6. Una columna sin explicación no saca nada --- */
+    const thJugador = cabeceras.find(th => th.textContent.trim() === 'Jugador');
+    pasarRaton(thJugador);
+    await esperar(650);
+    ok('una columna sin explicación (Jugador) no saca cartelito', !cartelito(d),
+       cartelito(d) ? 'salió algo' : 'nada, correcto');
+    quitarRaton(thJugador);
+
+    /* --- 7. Ningún error de JavaScript --- */
+    const js = (w.__erroresJS || []);
+    ok('la clasificación no ha dado ningún error de JavaScript', js.length === 0,
+       js.slice(0, 2).join(' | ') || 'sin errores');
+
+    marco.remove();
+
+    /* ============ 8. La tabla de estadísticas también los tiene ============ */
+    const marco2 = await abrirPagina('../estadisticas.html?local=1');
+    const d2 = marco2.contentDocument;
+    const th2 = Array.from(d2.querySelectorAll('#tabla-estadisticas thead th'));
+    const conAyuda2 = th2.filter(th => th.hasAttribute('data-ayuda'));
+    ok('la tabla de estadísticas también explica sus siglas',
+       conAyuda2.length === 10, conAyuda2.length + ' columnas explicadas');
+
+    const thPJ2 = th2.find(th => th.textContent.trim() === 'PJ');
+    pasarRaton(thPJ2);
+    await esperar(650);
+    const caja2 = cartelito(d2);
+    ok('y allí también sale el cartelito de PJ',
+       caja2 && /Partidos jugados/i.test(caja2.textContent),
+       caja2 ? caja2.textContent.trim() : 'no salió');
+    marco2.remove();
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+})();
+</script>
+</body>
+</html>
