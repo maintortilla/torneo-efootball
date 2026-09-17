@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Vista previa de un tema</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; }
+  iframe { width: 1400px; border: 0; display: block; }
+</style>
+</head>
+<body>
+<!--
+  Página de apoyo para VER un tema sin tocar los ajustes.
+  Uso:  vista-tema.html?tema=synthwave&pagina=clasificacion.html&alto=1250
+  Pone el tema en el navegador y carga la página de verdad dentro.
+-->
+<script>
+  const p = new URLSearchParams(location.search);
+  const tema = p.get('tema') || 'verde';
+  const pagina = p.get('pagina') || 'clasificacion.html';
+
+  try { localStorage.setItem('tema-web', tema); } catch (e) {}
+
+  const marco = document.createElement('iframe');
+  marco.style.height = (p.get('alto') || 1250) + 'px';
+  marco.src = '../' + pagina + (pagina.includes('?') ? '&' : '?') + 'local=1';
+  document.body.appendChild(marco);
+</script>
+</body>
+</html>

@@ -1,8 +1,12 @@
 /* ==========================================================================
    TEMA VISUAL — la paleta de colores de la web
    --------------------------------------------------------------------------
-   · "verde"  → el tema de siempre (verde neón sobre azul noche)
-   · "morado" → la paleta de plataforma (violeta sobre gris oscuro)
+   · "verde"     → el tema de siempre (verde neón sobre azul noche)
+   · "morado"    → la paleta de plataforma (violeta sobre gris oscuro)
+   · "champions" → rojo y dorado, noche de gran final
+   · "azul"      → azul eléctrico, aire de app deportiva moderna
+   · "atardecer" → naranja y ámbar, luz cálida de última hora
+   · "claro"     → fondo blanco, el único de día
 
    Se guarda en el navegador (cada uno puede tener la suya) y se cambia desde
    Ajustes → Aspecto de la web.
@@ -13,8 +17,16 @@
    ========================================================================== */
 
 const TEMAS = {
-  verde:  { nombre: 'Verde neón', emoji: '🟢', descripcion: 'El de siempre: verde neón sobre azul noche' },
-  morado: { nombre: 'Morado',     emoji: '🟣', descripcion: 'Violeta sobre gris oscuro, estilo plataforma' }
+  verde:     { nombre: 'Verde neón',  emoji: '🟢', descripcion: 'El de siempre: verde neón sobre azul noche' },
+  morado:    { nombre: 'Morado',      emoji: '🟣', descripcion: 'Violeta sobre gris oscuro, estilo plataforma' },
+  champions: { nombre: 'Champions',   emoji: '🏆', descripcion: 'Rojo y dorado, como una noche de gran final' },
+  azul:      { nombre: 'Azul eléctrico', emoji: '🧊', descripcion: 'Cian sobre azul profundo, aire de app deportiva' },
+  atardecer: { nombre: 'Atardecer',   emoji: '🌅', descripcion: 'Naranja y ámbar, luz cálida de última hora' },
+  claro:     { nombre: 'Claro',       emoji: '☀️', descripcion: 'Fondo blanco y verde esmeralda, para verlo de día' },
+  synthwave: { nombre: 'Synthwave',   emoji: '🌆', descripcion: 'Magenta y cian de neón sobre una rejilla retro de los 80' },
+  aurora:    { nombre: 'Aurora',      emoji: '💠', descripcion: 'Luces del norte y paneles de cristal esmerilado' },
+  esports:   { nombre: 'Esports',     emoji: '⚡', descripcion: 'Lima ácido sobre carbón, esquinas rectas y aire de torneo' },
+  editorial: { nombre: 'Editorial',   emoji: '📰', descripcion: 'Papel crema y tipografía de periódico deportivo' }
 };
 
 const CLAVE_TEMA = 'tema-web';

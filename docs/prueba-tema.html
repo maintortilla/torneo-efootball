@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Prueba: las dos paletas de color</title>
+<title>Prueba: las paletas de color</title>
 <style>
   body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
   h1 { font-size:20px; color:#00E676; }
@@ -11,9 +11,10 @@
 </style>
 </head>
 <body>
-<h1>Prueba de temas: verde neón y morado 🎨</h1>
-<p>Cambia la paleta desde Ajustes y comprueba que se aplica a toda la web, que se recuerda
-   y que la paleta de siempre sigue intacta. Al terminar deja el tema como estaba.</p>
+<h1>Prueba de temas 🎨</h1>
+<p>Comprueba que cada paleta se aplica a toda la web, que se recuerda al cambiar de página,
+   que el texto se LEE bien en todas (contraste) y que las paletas de siempre siguen
+   intactas. Al terminar deja el tema como estaba.</p>
 <iframe id="marco" src="../ajustes.html"></iframe>
 <pre id="resultado">Ejecutando…</pre>
 
@@ -48,12 +49,61 @@ function navegar(marco, url) {
   });
 }
 
-/* Color de fondo real que se está viendo */
-function fondoDe(d) {
-  return d.defaultView.getComputedStyle(d.body).backgroundColor;
+/* ---------- utilidades de color (para medir el contraste de verdad) ---------- */
+function aRgb(css) {
+  css = String(css || '').trim();
+  if (css.startsWith('#')) {
+    const h = css.slice(1);
+    const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+  }
+  const m = css.match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+  return m ? [+m[1], +m[2], +m[3]] : null;
 }
+function luminancia(rgb) {
+  const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
+}
+/* Devuelve el contraste (1 = igual, 21 = blanco sobre negro) */
+function contraste(c1, c2) {
+  const a = luminancia(aRgb(c1)), b = luminancia(aRgb(c2));
+  const hi = Math.max(a, b), lo = Math.min(a, b);
+  return (hi + 0.05) / (lo + 0.05);
+}
+const dosDec = n => (Math.round(n * 100) / 100).toString();
+
+const COLORES_ESPERADOS = {
+  verde:     '#00e676',
+  morado:    '#7c3aed',
+  champions: '#e3b23c',
+  azul:      '#22d3ee',
+  atardecer: '#f97316',
+  claro:     '#047857',
+  synthwave: '#ff3cac',
+  aurora:    '#2dd4bf',
+  esports:   '#c6ff00',
+  editorial: '#a61c1c'
+};
+
+const NOMBRES_ESPERADOS = {
+  verde: 'Verde neón',
+  morado: 'Morado',
+  champions: 'Champions',
+  azul: 'Azul eléctrico',
+  atardecer: 'Atardecer',
+  claro: 'Claro',
+  synthwave: 'Synthwave',
+  aurora: 'Aurora',
+  esports: 'Esports',
+  editorial: 'Editorial'
+};
+
+function fondoDe(d) { return d.defaultView.getComputedStyle(d.body).backgroundColor; }
 function acentoDe(d) {
   return d.defaultView.getComputedStyle(d.documentElement).getPropertyValue('--neon').trim();
+}
+function varDe(d, nombre) {
+  return d.defaultView.getComputedStyle(d.documentElement).getPropertyValue(nombre).trim();
 }
 
 const marcoEl = document.getElementById('marco');
@@ -69,54 +119,105 @@ marcoEl.onload = async function ejecutarPrueba() {
 
     temaAntes = w.temaActual();
 
-    // 1. El selector está en Ajustes
+    // 1. El selector está en Ajustes, con todas las paletas
+    // (Las claves se leen de la clase de cada bolita: es lo que pinta el selector)
+    const claves = Array.from(d.querySelectorAll('#selector-tema .tema-bola'))
+      .map(s => s.className.replace('tema-bola', '').trim());
     const opciones = d.querySelectorAll('#selector-tema .tema-opcion');
-    ok('Ajustes tiene el selector de aspecto', opciones.length === 2, opciones.length + ' opciones');
-    ok('las dos paletas se llaman Verde neón y Morado',
-       d.getElementById('selector-tema').textContent.includes('Verde neón') &&
-       d.getElementById('selector-tema').textContent.includes('Morado'),
-       d.getElementById('selector-tema').textContent.replace(/\s+/g, ' ').trim().slice(0, 80));
+    const esperadas = Object.keys(NOMBRES_ESPERADOS);   // las paletas que DEBE haber
+    ok('el selector ofrece todas las paletas (' + esperadas.length + ')',
+       opciones.length === esperadas.length && claves.length === esperadas.length,
+       opciones.length + ' opciones');
+    ok('salen todos los nombres en el selector',
+       esperadas.every(k => claves.includes(k)) &&
+       claves.every(k => d.getElementById('selector-tema').textContent.includes(NOMBRES_ESPERADOS[k])),
+       claves.map(k => NOMBRES_ESPERADOS[k]).join(' · '));
+    ok('cada paleta tiene su color de acento declarado en la prueba',
+       esperadas.every(k => COLORES_ESPERADOS[k]), esperadas.join(', '));
 
-    // 2. Estado de partida: el tema que hubiera (por defecto, verde)
+    // 2. Estado de partida
     ok('el tema activo está marcado en el selector',
        !!d.querySelector('#selector-tema .tema-opcion.activo'),
        'tema actual: ' + temaAntes);
 
-    const acentoVerde = acentoDe(d);
+    const fondos = {};   // para comprobar luego que cada tema tiene su propio fondo
 
-    // 3. Cambiar a MORADO
-    const botonMorado = Array.from(opciones).find(b => /morado/i.test(b.textContent));
-    botonMorado.click();
-    await esperar(400);
+    // 3. Cada paleta: se aplica, se guarda y SE LEE BIEN
+    for (let i = 0; i < claves.length; i++) {
+      const clave = claves[i];
+      const boton = d.querySelectorAll('#selector-tema .tema-opcion')[i];
+      boton.click();
+      await esperar(320);
 
-    ok('al elegir Morado se aplica el tema en el <html>',
-       w.document.documentElement.getAttribute('data-tema') === 'morado',
-       'data-tema=' + w.document.documentElement.getAttribute('data-tema'));
+      // 3a. Se aplica al <html> (el verde es el de por defecto: sin atributo)
+      const attr = w.document.documentElement.getAttribute('data-tema');
+      const esperado = clave === 'verde' ? null : clave;
+      ok('[' + clave + '] se aplica el tema en la página', attr === esperado,
+         'data-tema=' + (attr === null ? '(por defecto)' : attr));
 
-    const acentoMorado = acentoDe(d);
-    ok('el acento pasa a violeta (#7C3AED)',
-       acentoMorado.toLowerCase() === '#7c3aed', acentoMorado);
+      // 3b. El acento es el de su paleta
+      ok('[' + clave + '] el acento es el suyo (' + COLORES_ESPERADOS[clave] + ')',
+         acentoDe(d).toLowerCase() === COLORES_ESPERADOS[clave], acentoDe(d));
 
-    const fondoMorado = fondoDe(d);
-    ok('el fondo pasa al gris oscuro de la paleta', !!fondoMorado, 'fondo: ' + fondoMorado);
+      // 3c. Se recuerda en el navegador
+      // (Con el tema por defecto ya puesto no se escribe nada: eso es correcto,
+      //  así que ahí se acepta que no haya nada guardado)
+      const guardado = w.localStorage.getItem('tema-web');
+      ok('[' + clave + '] el tema se recuerda en el navegador',
+         guardado === clave || (clave === 'verde' && guardado === null),
+         'tema-web=' + guardado);
 
-    ok('la opción Morado queda marcada como activa',
-       /morado/i.test(d.querySelector('#selector-tema .tema-opcion.activo').textContent));
+      // 3d. LO IMPORTANTE: el texto se lee bien (contraste real, como lo mide la norma)
+      const texto = varDe(d, '--texto'), fondo = varDe(d, '--bg'), panel = varDe(d, '--panel');
+      const texto2 = varDe(d, '--texto-2'), acento = varDe(d, '--neon'), sobreAcento = varDe(d, '--sobre-acento');
+      const cTexto = contraste(texto, fondo);
+      const cTextoPanel = contraste(texto, panel);
+      const cSecundario = contraste(texto2, panel);
+      const cBoton = contraste(sobreAcento, acento);
 
-    // 4. Se recuerda en el navegador y aguanta al cambiar de página
-    ok('el tema se guarda en el navegador',
-       w.localStorage.getItem('tema-web') === 'morado',
-       'tema-web=' + w.localStorage.getItem('tema-web'));
+      ok('[' + clave + '] el texto principal se lee sobre el fondo (' + dosDec(cTexto) + ':1)',
+         cTexto >= 4.5, texto + ' sobre ' + fondo);
+      ok('[' + clave + '] el texto principal se lee sobre las tarjetas (' + dosDec(cTextoPanel) + ':1)',
+         cTextoPanel >= 4.5, texto + ' sobre ' + panel);
+      ok('[' + clave + '] el texto secundario se lee (' + dosDec(cSecundario) + ':1)',
+         cSecundario >= 4.5, texto2 + ' sobre ' + panel);
+      ok('[' + clave + '] el texto de los botones se lee (' + dosDec(cBoton) + ':1)',
+         cBoton >= 4.5, sobreAcento + ' sobre ' + acento);
 
+      fondos[clave] = fondoDe(d);
+    }
+
+    // 3e. Cada tema tiene su propio fondo (ninguno se ha quedado sin cambiar)
+    const unicos = new Set(Object.values(fondos));
+    ok('cada paleta tiene su propio fondo', unicos.size === claves.length,
+       Object.entries(fondos).map(([k, v]) => k + '=' + v).join(' · '));
+
+    // 4. Al cambiar de página, el tema aguanta (se aplica antes de pintar)
+    //    (El bucle ha dejado puesto el último de la lista)
+    const ultima = claves[claves.length - 1];
     await navegar(marco, '../partidos.html');
     w = marco.contentWindow;
     d = marco.contentDocument;
     ok('al cambiar de página el tema sigue puesto (sin parpadeo)',
-       w.document.documentElement.getAttribute('data-tema') === 'morado' &&
-       acentoDe(d).toLowerCase() === '#7c3aed',
-       'acento en Partidos: ' + acentoDe(d));
+       w.document.documentElement.getAttribute('data-tema') === ultima &&
+       acentoDe(d).toLowerCase() === COLORES_ESPERADOS[ultima],
+       'tema ' + ultima + ' · acento en Partidos: ' + acentoDe(d));
 
-    // Los filtros usan los tonos apagados de esta paleta
+    // 5. Los DOS temas de siempre siguen igual que antes
+    await navegar(marco, '../ajustes.html');
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+
+    const botones = () => Array.from(d.querySelectorAll('#selector-tema .tema-opcion'));
+    const porClave = clave => botones()[claves.indexOf(clave)];
+
+    porClave('morado').click();
+    await esperar(320);
+    ok('el Morado sigue con su violeta (#7C3AED)',
+       acentoDe(d).toLowerCase() === '#7c3aed' && !!fondoDe(d), acentoDe(d));
+
+    await navegar(marco, '../partidos.html');
+    d = marco.contentDocument;
     const colorFiltro = f => d.defaultView.getComputedStyle(d.querySelector('.tab[data-filtro="' + f + '"]')).color;
     ok('en la paleta morada los filtros van con tonos más apagados',
        colorFiltro('pendientes') === 'rgb(217, 119, 6)' &&
@@ -124,14 +225,12 @@ marcoEl.onload = async function ejecutarPrueba() {
        colorFiltro('proximos') === 'rgb(96, 165, 250)',
        'pendientes ' + colorFiltro('pendientes') + ' · jugados ' + colorFiltro('jugados') + ' · curso ' + colorFiltro('proximos'));
 
-    // 5. Las insignias del podio salen en la clasificación
     await navegar(marco, '../clasificacion.html');
     d = marco.contentDocument;
     const medallas = d.querySelectorAll('#tabla-clasificacion .pos .medalla');
     ok('la clasificación enseña las insignias 🥇🥈🥉', medallas.length === 3,
        Array.from(medallas).map(m => m.textContent).join(' ') || 'ninguna');
 
-    // El podio con sus metales y los clasificados en esmeralda apagado
     const colorTexto = nodo => d.defaultView.getComputedStyle(nodo).color;
     const colorPos = i => colorTexto(d.querySelectorAll('#tabla-clasificacion tbody tr')[i].querySelector('td.pos'));
     ok('el podio usa los metales sobrios de esta paleta',
@@ -144,21 +243,19 @@ marcoEl.onload = async function ejecutarPrueba() {
        recuadrosClas[0] === 'rgb(5, 150, 105)',
        recuadrosClas.join('  '));
 
-    // 6. Volver al tema de siempre: la paleta verde sigue intacta
+    // 6. Volver al tema de siempre
     await navegar(marco, '../ajustes.html');
     w = marco.contentWindow;
     d = marco.contentDocument;
-    const botonVerde = Array.from(d.querySelectorAll('#selector-tema .tema-opcion'))
-      .find(b => /verde/i.test(b.textContent));
-    botonVerde.click();
-    await esperar(400);
+    porClave('verde').click();
+    await esperar(320);
 
     ok('se puede volver al tema verde neón',
        !w.document.documentElement.hasAttribute('data-tema'), 'sin data-tema (tema por defecto)');
     ok('la paleta verde sigue siendo la de siempre (#00E676)',
        acentoDe(d).toLowerCase() === '#00e676', acentoDe(d));
     ok('el fondo vuelve al azul noche',
-       fondoDe(d) !== fondoMorado, 'fondo: ' + fondoDe(d));
+       fondoDe(d) === fondos['verde'], 'fondo: ' + fondoDe(d));
 
   } catch (e) {
     salida.push('[EXCEPCIÓN] ' + e.message);
