@@ -21,7 +21,7 @@ const CARPETA = path.join(__dirname, '..', 'js');
 /* Choques que SÍ son aceptables, con el motivo. Si sale uno nuevo, hay que
    renombrarlo o añadirlo aquí a conciencia. */
 const PERMITIDOS = {
-  'torneoActual': 'cada pantalla declara la suya y solo se carga un fichero de pantalla a la vez (clasificacion.js, partidos.js, ajustes.js)'
+  'torneoActual': 'cada pantalla declara la suya y solo se carga un fichero de pantalla a la vez (clasificacion.js, partidos.js, eliminatorias.js, ajustes.js)'
 };
 // Estos nombres se declaran en varios ficheros de pantalla y es así por diseño
 const NOMBRES_DE_PANTALLA = ['torneoActual'];

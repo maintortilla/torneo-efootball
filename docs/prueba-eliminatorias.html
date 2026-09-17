@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: el cuadro de eliminatorias</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  iframe { width:1px; height:1px; border:0; position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<h1>Prueba: eliminatorias de principio a fin</h1>
+<p>Monta un torneo de 4 jugadores, juega la liguilla, genera las semifinales,
+   apunta los resultados, genera la final y comprueba que sale el campeón.
+   Todo en local: no toca la nube.</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const CLAVE = 'torneos-efootball-v1';
+
+function esperarListo(marco, intentos = 200) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(300); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+  const errores = [];
+  let ID = null;
+
+  try {
+    await esperarListo(marco);
+    let w = marco.contentWindow;
+
+    /* --- 1. Se monta un torneo local de 4 jugadores con la liguilla jugada --- */
+    const base = JSON.parse(localStorage.getItem(CLAVE))[0];
+    const t = JSON.parse(JSON.stringify(base));
+    ID = 't-prueba-elim';
+    t.id = ID;
+    t.nombre = 'Prueba eliminatorias';
+    t.jugadores = t.jugadores.slice(0, 4);
+    t.config = Object.assign({}, t.config, { vueltas: 1, clasificados: 4, partidoTercerPuesto: false });
+    t.partidos = w.generarCalendario(t.jugadores, t.config);
+
+    // Se apuntan todos los partidos de liguilla con resultados distintos
+    t.partidos.forEach((p, i) => {
+      p.jugado = true;
+      p.golesLocal = 2 + (i % 3);
+      p.golesVisitante = i % 2;
+    });
+
+    const todos = JSON.parse(localStorage.getItem(CLAVE));
+    const sinViejo = todos.filter(x => x.id !== ID);
+    sinViejo.push(t);
+    localStorage.setItem(CLAVE, JSON.stringify(sinViejo));
+
+    /* --- 2. La página carga y avisa de que toca generar las semifinales --- */
+    await navegar(marco, '../eliminatorias.html?torneo=' + ID);
+    w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    ok('la página de eliminatorias carga y termina de arrancar', w.__listo === true, 'window.__listo');
+    ok('enseña el menú con Eliminatorias marcada como activa',
+       !!d.querySelector('.nav-item.nav-eliminatorias.activo'), 'activa en el menú');
+
+    const accion = d.getElementById('accion');
+    ok('dice que la liguilla ha terminado y toca generar',
+       /liguilla ha terminado/i.test(accion.textContent),
+       accion.textContent.replace(/\s+/g, ' ').trim().slice(0, 70));
+
+    const botonSemis = Array.from(accion.querySelectorAll('button'))
+      .find(b => /semifinales/i.test(b.textContent));
+    ok('ofrece el botón de generar las semifinales', !!botonSemis,
+       botonSemis ? botonSemis.textContent.trim() : 'no está');
+
+    ok('antes de generar, el cuadro enseña los cruces que tocarían',
+       d.querySelectorAll('#cuadro .llave').length === 2,
+       d.querySelectorAll('#cuadro .llave').length + ' llaves');
+
+    /* --- 3. Se generan las semifinales pulsando el botón --- */
+    botonSemis.click();
+    await esperar(900);
+    const semis = w.Store.torneo(ID).partidos.filter(p => p.fase === 'semifinal');
+    ok('al pulsar el botón se crean 2 semifinales', semis.length === 2, semis.length + ' semifinales');
+    ok('y el cuadro ya las enseña en su ronda',
+       /semifinales/i.test(d.getElementById('cuadro').textContent),
+       'ronda de semifinales dibujada');
+
+    /* --- 4. Se apuntan las semifinales --- */
+    let guardado = JSON.parse(localStorage.getItem(CLAVE)).find(x => x.id === ID);
+    guardado.partidos.filter(p => p.fase === 'semifinal').forEach((p, i) => {
+      p.jugado = true;
+      p.golesLocal = 3; p.golesVisitante = 1;
+    });
+    localStorage.setItem(CLAVE, JSON.stringify(JSON.parse(localStorage.getItem(CLAVE))
+      .map(x => x.id === ID ? guardado : x)));
+
+    await navegar(marco, '../eliminatorias.html?torneo=' + ID);
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+    ok('con las semifinales jugadas, toca generar la final',
+       /generar la final/i.test(d.getElementById('accion').textContent),
+       d.getElementById('accion').textContent.replace(/\s+/g, ' ').trim().slice(0, 60));
+
+    /* --- 5. Se genera la final --- */
+    const botonFinal = Array.from(d.getElementById('accion').querySelectorAll('button'))
+      .find(b => /final/i.test(b.textContent));
+    ok('ofrece el botón de generar la final', !!botonFinal,
+       botonFinal ? botonFinal.textContent.trim() : 'no está');
+    botonFinal.click();
+    await esperar(900);
+
+    const final = w.Store.torneo(ID).partidos.filter(p => p.fase === 'final');
+    ok('se crea la final', final.length === 1, final.length + ' final');
+    ok('la final la juegan los dos que ganaron las semifinales',
+       semis.every(s => final[0].localId === s.localId || final[0].visitanteId === s.localId ||
+                        final[0].localId === s.visitanteId || final[0].visitanteId === s.visitanteId),
+       'cruces coherentes');
+
+    /* --- 6. Se juega la final y sale el campeón --- */
+    const ganadorFinal = final[0].localId;
+    guardado = JSON.parse(localStorage.getItem(CLAVE)).find(x => x.id === ID);
+    const f = guardado.partidos.find(p => p.fase === 'final');
+    f.jugado = true; f.golesLocal = 4; f.golesVisitante = 0;
+    localStorage.setItem(CLAVE, JSON.stringify(JSON.parse(localStorage.getItem(CLAVE))
+      .map(x => x.id === ID ? guardado : x)));
+
+    await navegar(marco, '../eliminatorias.html?torneo=' + ID);
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+
+    const campeon = d.querySelector('#cuadro .campeon');
+    ok('al terminar la final aparece el campeón en grande', !!campeon,
+       campeon ? campeon.textContent.replace(/\s+/g, ' ').trim() : 'no aparece');
+    ok('y el campeón es quien ganó la final',
+       campeon && campeon.textContent.includes(
+         w.Store.torneo(ID).jugadores.find(j => j.id === ganadorFinal).nombre),
+       'campeón correcto');
+    ok('y avisa de que el torneo ha terminado',
+       /torneo terminado/i.test(d.getElementById('accion').textContent),
+       d.getElementById('accion').textContent.replace(/\s+/g, ' ').trim().slice(0, 50));
+
+    /* --- 7. Nada de errores de JavaScript --- */
+    const js = (w.__erroresJS || []);
+    ok('la pantalla no ha dado ningún error de JavaScript', js.length === 0,
+       js.slice(0, 2).join(' | ') || 'sin errores');
+
+    /* --- limpieza --- */
+    localStorage.setItem(CLAVE, JSON.stringify(
+      JSON.parse(localStorage.getItem(CLAVE)).filter(x => x.id !== ID)));
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+    try {
+      const l = JSON.parse(localStorage.getItem(CLAVE) || '[]');
+      localStorage.setItem(CLAVE, JSON.stringify(l.filter(x => x.id !== ID)));
+    } catch (x) {}
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

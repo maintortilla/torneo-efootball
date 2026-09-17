@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clasificación · Torneo eFootball</title>
+  <title>Eliminatorias · Torneo eFootball</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
   <script src="js/tema.js"></script>
@@ -32,16 +32,16 @@
         <button class="btn-plegar" id="btn-plegar" title="Plegar el menú" aria-label="Plegar el menú">«</button>
       </div>
       <nav>
-        <a class="nav-item nav-clasificacion activo" data-pagina="clasificacion.html" href="clasificacion.html">🏆 <span class="texto">Clasificación</span></a>
+        <a class="nav-item nav-clasificacion" data-pagina="clasificacion.html" href="clasificacion.html">🏆 <span class="texto">Clasificación</span></a>
         <a class="nav-item nav-partidos" data-pagina="partidos.html" href="partidos.html">📅 <span class="texto">Partidos</span></a>
-        <a class="nav-item nav-eliminatorias" data-pagina="eliminatorias.html" href="eliminatorias.html">🏟️ <span class="texto">Eliminatorias</span></a>
+        <a class="nav-item nav-eliminatorias activo" data-pagina="eliminatorias.html" href="eliminatorias.html">🏟️ <span class="texto">Eliminatorias</span></a>
         <span class="nav-item nav-estadisticas proximo" title="Próximamente">📊 <span class="texto">Estadísticas · pronto</span></span>
         <a class="nav-item nav-ajustes" data-pagina="ajustes.html" href="ajustes.html">⚙️ <span class="texto">Ajustes</span></a>
         <a class="nav-item nav-cambiar" href="index.html" title="Volver al menú principal (Mis torneos)">🏠 <span class="texto">Volver al menú</span></a>
       </nav>
       <div class="sidebar-pie">
         <span class="nota" id="nota-guardado"></span>
-        <b>Apuntar resultados</b><br>En la página <b>Partidos</b>: pulsa <b>Apuntar</b> en cualquier partido y sale la ventanita con los dos marcadores.
+        <b>El cuadro final</b><br>Cuando acabe la liguilla, aquí se generan las <b>semifinales</b> y la <b>final</b>. Los cruces se apuntan en <b>Partidos</b>.
       </div>
     </aside>
 
@@ -49,36 +49,16 @@
 
       <div class="resumen" id="resumen"></div>
 
-      <div class="rejilla-2">
+      <section class="panel" id="panel-cuadro">
+        <p class="panel-titulo">Cuadro final <b id="etiqueta-cuadro">—</b></p>
+        <div id="cuadro"></div>
+      </section>
 
-        <section class="panel" id="clasificacion">
-          <p class="panel-titulo">Clasificación <b id="aviso-clasificados"></b></p>
-          <table class="tabla" id="tabla-clasificacion"></table>
-        </section>
+      <section class="panel" id="panel-accion">
+        <p class="panel-titulo">Qué toca ahora</p>
+        <div id="accion"></div>
+      </section>
 
-        <div class="columna">
-          <section class="panel">
-            <p class="panel-titulo">Eliminatorias <b id="etiqueta-eliminatorias">si acabara hoy</b></p>
-            <div id="lista-eliminatorias"></div>
-          </section>
-
-          <section class="panel">
-            <p class="panel-titulo">Cara a cara <b id="etiqueta-cara">elige dos jugadores</b></p>
-            <div class="cara-controles" id="cara-controles">
-              <select id="cara-a" aria-label="Primer jugador"></select>
-              <span class="cara-vs">vs</span>
-              <select id="cara-b" aria-label="Segundo jugador"></select>
-            </div>
-            <div id="lista-cara"></div>
-          </section>
-
-          <section class="panel" id="panel-ultimos" hidden>
-            <p class="panel-titulo">Últimos resultados <b>se pueden corregir</b></p>
-            <div id="lista-ultimos"></div>
-          </section>
-        </div>
-
-      </div>
     </main>
   </div>
 
@@ -132,6 +112,6 @@
   <script src="js/store.js"></script>
   <script src="js/candado.js"></script>
   <script src="js/comun.js"></script>
-  <script src="js/clasificacion.js"></script>
+  <script src="js/eliminatorias.js"></script>
 </body>
 </html>
