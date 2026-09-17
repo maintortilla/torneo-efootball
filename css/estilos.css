@@ -1387,6 +1387,20 @@ html[data-candado="fuera"] .btn-sesion {
 .ruleta-elegido.vacio { color: var(--muted); font-style: italic; }
 .ruleta-elegido .nombre.vacio { color: var(--muted); font-weight: 500; font-style: italic; }
 
+/* ---------- Refresco automático: el aviso de "auto" en la barra ---------- */
+.auto-refresco {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--jugado); white-space: nowrap; opacity: .85;
+}
+.auto-refresco::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--jugado); box-shadow: 0 0 8px var(--jugado);
+  animation: latido-auto 2.4s ease-in-out infinite;
+}
+@keyframes latido-auto { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .auto-refresco::before { animation: none; } }
+
 /* ---------- Aspecto: selector de temas (Ajustes) ---------- */
 .temas-rejilla { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
 .tema-opcion {

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba (nube): el refresco automático trae lo que apuntan los demás</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  iframe { width:1px; height:1px; border:0; position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<h1>Prueba contra la NUBE: el refresco automático</h1>
+<p>Usa un torneo de PRUEBA que se borra al terminar. Simula que otro amigo apunta un
+   resultado (escribiendo en la nube de verdad) y comprueba que la página lo coge sola,
+   y que NO lo coge si tienes la ventanita de apuntar abierta.</p>
+<iframe id="marco" src="../index.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script src="../js/config-nube.js"></script>
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+const p = new URLSearchParams(location.search);
+const TORNEO = p.get('torneo');
+const PARTIDO = p.get('partido');
+
+function esperarListo(marco, intentos = 200) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(400); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+/* Escribe en la nube como si fuera otro amigo apuntando el resultado */
+async function apuntarEnLaNube(gl, gv) {
+  const r = await fetch(NUBE_CONFIG.url + '/rest/v1/' + NUBE_CONFIG.tablas.partidos + '?id=eq.' + PARTIDO, {
+    method: 'PATCH',
+    headers: {
+      'apikey': NUBE_CONFIG.anonKey,
+      'Authorization': 'Bearer ' + NUBE_CONFIG.anonKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ goles_local: gl, goles_visitante: gv, jugado: true })
+  });
+  return r.ok;
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+
+  try {
+    ok('se ha recibido el torneo de prueba', !!TORNEO && !!PARTIDO, TORNEO + ' / ' + PARTIDO);
+
+    await navegar(marco, '../clasificacion.html?torneo=' + TORNEO + '&nube=1');
+    let w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    // 1. En modo nube SÍ aparece el aviso de que se actualiza solo
+    const marca = d.getElementById('marca-auto');
+    ok('en la nube aparece el aviso de "auto" en la barra', !!marca,
+       marca ? marca.textContent.trim() : 'no está');
+    ok('y el botón de actualizar a mano sigue ahí', !!d.getElementById('btn-actualizar'),
+       'botón presente');
+    ok('la página está en modo NUBE (no local)', w.Store.modo() === 'nube', w.Store.modo());
+
+    // 2. Al principio el partido no está jugado y no hay últimos resultados
+    ok('el partido empieza sin jugar',
+       !/5\s*-\s*3/.test(d.body.textContent), 'sin resultado todavía');
+    ok('sin resultados, el panel de Últimos resultados está oculto',
+       d.getElementById('panel-ultimos').hidden === true, 'panel oculto');
+
+    // 3. Otro amigo apunta 5-3 en la nube
+    const escrito = await apuntarEnLaNube(5, 3);
+    ok('otro amigo apunta el 5-3 en la nube (de verdad)', escrito, 'PATCH hecho');
+
+    // 4. Un ciclo de refresco automático lo trae
+    const cambio = await w.refrescoAutomaticoAhora();
+    ok('el refresco automático detecta el cambio', cambio === true, 'resultado: ' + cambio);
+    await esperar(300);
+    const texto = d.body.textContent.replace(/\s+/g, ' ');
+    ok('y la página ya enseña el 5-3 SIN tocar nada', /5\s*-\s*3/.test(texto),
+       (texto.match(/.{0,28}5\s*-\s*3.{0,20}/) || ['no aparece'])[0].trim());
+    ok('el panel de Últimos resultados se ha despertado solo',
+       d.getElementById('panel-ultimos').hidden === false, 'panel visible');
+
+    // 5. Si no hay nada nuevo, no se repinta (no gasta de balde)
+    const sinCambio = await w.refrescoAutomaticoAhora();
+    ok('si no hay nada nuevo, el refresco no hace nada', sinCambio === false,
+       'resultado: ' + sinCambio);
+
+    // 6. Con la ventanita de apuntar ABIERTA, no se refresca (no te pisa el resultado)
+    d.getElementById('modal-fondo').hidden = false;
+    const otroEscrito = await apuntarEnLaNube(9, 1);
+    ok('otro amigo cambia el resultado a 9-1 mientras tienes la ventanita abierta',
+       otroEscrito, 'PATCH hecho');
+    const bloqueado = await w.refrescoAutomaticoAhora();
+    ok('con la ventanita abierta el refresco NO se hace', bloqueado === null,
+       'resultado: ' + bloqueado);
+    await esperar(300);
+    ok('y la pantalla sigue como estaba (no te ha pisado nada)',
+       !/9\s*-\s*1/.test(d.body.textContent.replace(/\s+/g, ' ')), 'no ha cambiado');
+
+    // 7. Al cerrar la ventanita, el siguiente refresco sí lo trae
+    d.getElementById('modal-fondo').hidden = true;
+    const cambio2 = await w.refrescoAutomaticoAhora();
+    ok('al cerrar la ventanita, el siguiente refresco sí lo trae', cambio2 === true,
+       'resultado: ' + cambio2);
+    await esperar(300);
+    ok('y ahora sí enseña el 9-1',
+       /9\s*-\s*1/.test(d.body.textContent.replace(/\s+/g, ' ')), 'actualizado');
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

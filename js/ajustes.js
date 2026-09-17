@@ -8,6 +8,12 @@ let torneos = [];
 let torneoActual = null;
 let desempates = [];              // criterios, en orden de prioridad
 let jugadoresBorrador = [];       // filas del formulario de "nuevo torneo"
+
+/* En Ajustes NO se refresca solo: aquí se está configurando el torneo y un
+   refresco a media faena repintaría el formulario y te borraría lo que llevas
+   escrito. El botón 🔄 Actualizar sigue estando para cuando quieras. */
+window.__sinAutoRefresco = true;
+
 const EMOJIS = ['🟢','🔵','🟡','🔴','🟣','🟠','⚫','⚪','🟤','🔷','🔶','🟩','🟥','🟦','⭐','🔥'];
 const COLORES = ['#00E676','#4DA3FF','#FFD54F','#FF4D5E','#B388FF','#FFA24D','#90A4AE','#E8F2FF','#A1887F','#42A5F5','#FF9800','#66BB6A','#EF5350','#29B6F6','#FFC107','#FF7043'];
 

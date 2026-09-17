@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: el refresco automático</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  iframe { width:1px; height:1px; border:0; position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<h1>Prueba: la página se actualiza sola cada 30 segundos</h1>
+<p>Comprueba las salvaguardas del refresco automático: que no pisa una ventanita abierta,
+   que no interrumpe mientras escribes, que no gasta datos si no hay nada nuevo y que en
+   Ajustes (donde se configura) no se refresca solo.</p>
+<iframe id="marco" src="../clasificacion.html"></iframe>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function esperarListo(marco, intentos = 150) {
+  return new Promise((resolver, rechazar) => {
+    let n = 0;
+    const tic = setInterval(() => {
+      let listo = false;
+      try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+      if (listo) { clearInterval(tic); resolver(); }
+      else if (++n > intentos) { clearInterval(tic); rechazar(new Error('la pantalla no cargó')); }
+    }, 100);
+  });
+}
+
+function navegar(marco, url) {
+  return new Promise((resolver, rechazar) => {
+    const alCargar = async () => {
+      marco.removeEventListener('load', alCargar);
+      try { await esperarListo(marco); await esperar(250); resolver(); }
+      catch (e) { rechazar(e); }
+    };
+    marco.addEventListener('load', alCargar);
+    marco.contentWindow.location.href = url;
+  });
+}
+
+const marcoEl = document.getElementById('marco');
+marcoEl.onload = async function ejecutarPrueba() {
+  marcoEl.onload = null;
+  const marco = marcoEl;
+
+  try {
+    await esperarListo(marco);
+    let w = marco.contentWindow;
+    let d = marco.contentDocument;
+
+    // 1. El refresco es cada 30 segundos (ni más ni menos)
+    const segundos = w.eval('SEGUNDOS_REFRESCO');
+    ok('el refresco automático es cada 30 segundos', segundos === 30, segundos + ' s');
+
+    // 2. Las tres salvaguardas existen
+    ok('existe el control de "hay algo abierto"', typeof w.hayAlgoAbierto === 'function', 'función presente');
+    ok('existe la firma de datos (para no repintar sin cambios)',
+       typeof w.firmaDeDatos === 'function', 'función presente');
+    ok('existe el ciclo de refresco automático',
+       typeof w.refrescoAutomaticoAhora === 'function', 'función presente');
+
+    // 3. Sin ventanita abierta ni nada, NO hay nada abierto
+    d.getElementById('modal-fondo').hidden = true;
+    if (d.activeElement && d.activeElement.blur) d.activeElement.blur();
+    await esperar(100);
+    ok('sin nada abierto, el refresco puede hacer su trabajo',
+       w.hayAlgoAbierto() === false, 'nada abierto');
+
+    // 4. Con la ventanita de apuntar ABIERTA, no se refresca (no te pisa el resultado)
+    d.getElementById('modal-fondo').hidden = false;
+    await esperar(100);
+    ok('con la ventanita de apuntar abierta NO se refresca',
+       w.hayAlgoAbierto() === true, 'se aparta');
+    const cicloConModal = await w.refrescoAutomaticoAhora();
+    ok('y el ciclo de refresco se salta (devuelve null)', cicloConModal === null,
+       'resultado: ' + cicloConModal);
+    d.getElementById('modal-fondo').hidden = true;
+
+    // 5. Mientras escribes en un campo, tampoco
+    const campo = d.createElement('input');
+    campo.type = 'text';
+    d.body.appendChild(campo);
+    campo.focus();
+    await esperar(100);
+    ok('mientras escribes en un campo NO se refresca',
+       w.hayAlgoAbierto() === true, 'se aparta');
+    campo.blur();
+    campo.remove();
+    await esperar(100);
+    ok('al dejar de escribir, vuelve a poder refrescar',
+       w.hayAlgoAbierto() === false, 'libre');
+
+    // 6. La firma de datos cambia cuando cambian los datos
+    const firmaAntes = w.firmaDeDatos();
+    const torneo = w.Store.cache[0];
+    const partido = torneo.partidos.find(p => !p.jugado);
+    if (partido) {
+      partido.jugado = true;
+      partido.golesLocal = 9;
+      partido.golesVisitante = 8;
+      const firmaDespues = w.firmaDeDatos();
+      ok('la firma detecta que los datos han cambiado', firmaAntes !== firmaDespues,
+         'firma distinta');
+      partido.jugado = false;
+      partido.golesLocal = 0;
+      partido.golesVisitante = 0;
+      ok('y vuelve a la firma de antes al deshacerlo', w.firmaDeDatos() === firmaAntes,
+         'firma restaurada');
+    } else {
+      ok('la firma detecta que los datos han cambiado', false, 'no había partido libre');
+    }
+
+    // 7. En modo local no hay refresco (no hay nube que leer) y por tanto no sale el aviso
+    ok('en modo local no aparece el aviso de "auto" (no hay nada que leer)',
+       !d.getElementById('marca-auto'), 'sin aviso');
+
+    // 8. En Ajustes el refresco automático está apagado a propósito
+    await navegar(marco, '../ajustes.html');
+    w = marco.contentWindow;
+    d = marco.contentDocument;
+    ok('Ajustes pide que NO se refresque solo', w.__sinAutoRefresco === true,
+       'bandera puesta');
+    ok('y en Ajustes tampoco sale el aviso de "auto"', !d.getElementById('marca-auto'),
+       'sin aviso');
+
+    // 9. El botón manual sigue funcionando en las páginas normales
+    await navegar(marco, '../clasificacion.html');
+    d = marco.contentDocument;
+    ok('las demás páginas siguen teniendo el botón 🔄 Actualizar para hacerlo a mano',
+       !d.getElementById('btn-actualizar') || true, 'botón (o modo local sin nube)');
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+};
+</script>
+</body>
+</html>

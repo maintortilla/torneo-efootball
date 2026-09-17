@@ -343,7 +343,55 @@ document.addEventListener('DOMContentLoaded', engancharMenuLateral);
 /* -------------------------------------------------- botón de actualizar */
 /* Vuelve a leer de la nube lo que hayan apuntado los demás. El botón se crea
    solo en la barra de arriba, así vale para todas las páginas sin tocar el
-   HTML de cada una. En modo local no hay nada que actualizar, así que no sale. */
+   HTML de cada una. En modo local no hay nada que actualizar, así que no sale.
+
+   Además, la página se actualiza SOLA cada 30 segundos (para no tener que estar
+   pulsando el botón). El refresco automático lleva tres salvaguardas:
+     · no hace nada si la pestaña está de fondo (no gasta datos de balde)
+     · no hace nada si hay una ventanita abierta (no te pisa el resultado que
+       estás apuntando)
+     · no hace nada mientras estás escribiendo en un campo
+   Las páginas que no lo quieren (Ajustes) lo apagan con `window.__sinAutoRefresco`. */
+
+const SEGUNDOS_REFRESCO = 30;
+
+let refrescarActual = null;      // la función de refresco de la página actual
+let refrescoOcupado = false;     // para no solapar dos refrescos
+let ultimoAvisoAuto = 0;         // para no repetir el aviso cada 30 s
+
+/* ¿Hay algo abierto que un refresco podría pisar? */
+function hayAlgoAbierto() {
+  if (document.hidden) return true;                                    // pestaña de fondo
+  if (document.querySelector('.modal-fondo:not([hidden])')) return true; // ventanita abierta
+  const f = document.activeElement;
+  if (f && /^(INPUT|SELECT|TEXTAREA)$/.test(f.tagName)) return true;    // escribiendo
+  return false;
+}
+
+/* Una firma de los datos: sirve para saber si el refresco ha cambiado algo */
+function firmaDeDatos() {
+  try { return JSON.stringify(Store.cache); } catch (e) { return ''; }
+}
+
+/* Un ciclo del refresco automático. Devuelve true si los datos cambiaron,
+   false si no había nada nuevo, y null si no se hizo (por las salvaguardas).
+   Se llama desde el temporizador y desde las pruebas. */
+async function refrescoAutomaticoAhora() {
+  if (!refrescarActual || refrescoOcupado || hayAlgoAbierto()) return null;
+  refrescoOcupado = true;
+  try {
+    const antes = firmaDeDatos();
+    await Store.recargar();
+    if (firmaDeDatos() === antes) return false;      // nada nuevo: ni se repinta
+    await refrescarActual();
+    return true;
+  } catch (e) {
+    return null;    // en silencio: el botón sigue ahí para hacerlo a mano
+  } finally {
+    refrescoOcupado = false;
+  }
+}
+
 function engancharActualizar(alActualizar) {
   const caja = document.querySelector('.topbar-derecha');
   if (!caja) return;
@@ -358,13 +406,19 @@ function engancharActualizar(alActualizar) {
     caja.appendChild(boton);
   }
 
+  /* La misma faena para el botón y para el refresco automático */
+  const refrescar = async () => {
+    await Store.recargar();
+    if (alActualizar) await alActualizar();
+  };
+  refrescarActual = refrescar;
+
   boton.onclick = async () => {
     if (boton.disabled) return;
     boton.disabled = true;
     boton.classList.add('girando');
     try {
-      await Store.recargar();
-      if (alActualizar) await alActualizar();
+      await refrescar();
       avisar('Datos puestos al día 🔄');
     } catch (e) {
       console.error(e);
@@ -374,6 +428,24 @@ function engancharActualizar(alActualizar) {
       boton.classList.remove('girando');
     }
   };
+
+  // --- refresco automático (Ajustes lo apaga: allí se está configurando) ---
+  if (window.__sinAutoRefresco) return;
+  if (document.getElementById('marca-auto')) return;   // ya estaba puesto
+
+  const marca = el('span', 'auto-refresco');
+  marca.id = 'marca-auto';
+  marca.innerHTML = '<span>auto</span>';
+  marca.title = 'Esta página se actualiza sola cada ' + SEGUNDOS_REFRESCO + ' segundos';
+  caja.insertBefore(marca, boton);
+
+  setInterval(async () => {
+    const cambio = await refrescoAutomaticoAhora();
+    if (cambio && Date.now() - ultimoAvisoAuto > 60000) {
+      ultimoAvisoAuto = Date.now();
+      avisar('Actualizado con lo que han apuntado los demás 🔄');
+    }
+  }, SEGUNDOS_REFRESCO * 1000);
 }
 
 /* ==========================================================================
