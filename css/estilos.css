@@ -1331,6 +1331,30 @@ html[data-candado="fuera"] .btn-sesion {
   color: var(--neon); text-align: center;
 }
 
+/* ---------- Buscador por jugador (Partidos) ---------- */
+.buscador-jugador {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 14px 0 4px; padding-top: 13px; border-top: 1px solid var(--linea);
+}
+.buscador-titulo {
+  font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--texto-2); white-space: nowrap;
+}
+.buscador-pastillas { display: flex; flex-wrap: wrap; gap: 7px; }
+.pastilla-jugador {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto-2);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-size: 14.5px; font-weight: 600;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.pastilla-jugador:hover { border-color: var(--neon); color: var(--texto); }
+.pastilla-jugador.activo {
+  border-color: var(--neon); color: var(--texto);
+  background: rgba(var(--acento-rgb), .14); box-shadow: var(--sombra-neon);
+}
+.pastilla-jugador .pj-emoji { font-size: 15px; line-height: 1; }
+
 /* ---------- Ayudas emergentes (dejar el ratón encima) ---------- */
 /* Las cabeceras que explican algo se notan: el ratón cambia y se iluminan */
 .tabla th[data-ayuda] { cursor: help; }

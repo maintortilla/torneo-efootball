@@ -6,6 +6,7 @@
 
 let torneoActual = null;
 let filtroPartidos = 'todos';
+let jugadorFiltro = null;      // jugador por el que se busca (null = todos)
 
 async function arrancarPartidos() {
   /* Si falla la conexión se dice; si falla el dibujado, se dice también.
@@ -47,6 +48,7 @@ async function arrancarPartidos() {
 function pintarTodoPartidos() {
   pintarResumenPartidos();
   pintarProgreso();
+  pintarBuscadorJugadores();
   pintarLista();
 }
 
@@ -117,6 +119,46 @@ function pintarProgreso() {
   $('#progreso').textContent = n + (n === 1 ? ' jugador' : ' jugadores');
 }
 
+/* --------------------------------------------- buscador por jugador */
+/* Pastillas con los nombres: un clic y se ven solo sus partidos.
+   Se combina con las pestañas de arriba (ej. "Pendientes" + "Leo"). */
+function pintarBuscadorJugadores() {
+  const caja = $('#buscador-jugador');
+  const pastillas = $('#pastillas-jugador');
+  if (!caja || !pastillas) return;
+
+  const jugadores = torneoActual.jugadores || [];
+  if (jugadores.length < 2) { caja.hidden = true; return; }
+  caja.hidden = false;
+
+  // Si el jugador elegido ya no existe (lo borraron), se quita el filtro
+  if (jugadorFiltro && !jugadores.some(j => j.id === jugadorFiltro)) jugadorFiltro = null;
+
+  pastillas.innerHTML = '';
+
+  const todos = el('button', 'pastilla-jugador' + (jugadorFiltro ? '' : ' activo'),
+    '<span class="pj-emoji">👥</span> Todos');
+  todos.type = 'button';
+  todos.setAttribute('aria-pressed', String(!jugadorFiltro));
+  todos.onclick = () => elegirJugadorFiltro(null);
+  pastillas.appendChild(todos);
+
+  jugadores.forEach(j => {
+    const b = el('button', 'pastilla-jugador' + (jugadorFiltro === j.id ? ' activo' : ''),
+      `<span class="pj-emoji">${j.emoji || '⚪'}</span> ${j.nombre}`);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(jugadorFiltro === j.id));
+    b.onclick = () => elegirJugadorFiltro(jugadorFiltro === j.id ? null : j.id);
+    pastillas.appendChild(b);
+  });
+}
+
+function elegirJugadorFiltro(id) {
+  jugadorFiltro = id;
+  pintarBuscadorJugadores();
+  pintarLista();
+}
+
 /* -------------------------------------------------------------- la lista */
 function pintarLista() {
   const caja = $('#lista-partidos');
@@ -143,13 +185,31 @@ function pintarLista() {
     amistosos = [];
   }
 
+  // El buscador por jugador se aplica ENCIMA del filtro de las pestañas
+  if (jugadorFiltro) {
+    const juega = p => p.localId === jugadorFiltro || p.visitanteId === jugadorFiltro;
+    liga = liga.filter(juega);
+    eliminatorias = eliminatorias.filter(juega);
+    amistosos = amistosos.filter(juega);
+  }
+
   $('#contador-partidos').textContent = (liga.length + eliminatorias.length + amistosos.length) + ' en pantalla';
 
   if (!liga.length && !eliminatorias.length && !amistosos.length) {
     const sinNada = !torneoActual.partidos.length;
-    caja.appendChild(el('div', 'vacio', sinNada
-      ? 'Este torneo aún no tiene partidos.<br>Pulsa <b>🎰 Ruleta</b> arriba para sortear el primero, o <b>+ Añadir partido</b> para montarlo a mano.'
-      : 'No hay partidos en esta vista 👀'));
+    const quien = jugadorFiltro
+      ? (torneoActual.jugadores.find(j => j.id === jugadorFiltro) || {}).nombre
+      : null;
+
+    let texto;
+    if (sinNada) {
+      texto = 'Este torneo aún no tiene partidos.<br>Pulsa <b>🎰 Ruleta</b> arriba para sortear el primero, o <b>+ Añadir partido</b> para montarlo a mano.';
+    } else if (quien) {
+      texto = `<b>${quien}</b> no tiene partidos en esta vista 👀<br>Prueba con otra pestaña o pulsa <b>👥 Todos</b> para quitar el filtro.`;
+    } else {
+      texto = 'No hay partidos en esta vista 👀';
+    }
+    caja.appendChild(el('div', 'vacio', texto));
     return;
   }
 

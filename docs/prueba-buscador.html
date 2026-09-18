@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: buscar partidos por jugador</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  .oculto { position:absolute; left:-9999px; width:1px; height:1px; border:0; }
+</style>
+</head>
+<body>
+<h1>Prueba: el buscador de partidos por jugador</h1>
+<p>Comprueba que las pastillas salen con los jugadores, que al pulsar una se ven solo sus
+   partidos, que se combina con las pestañas (pendientes + jugador), que se puede quitar
+   el filtro y que avisa cuando ese jugador no tiene partidos en la vista.</p>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const CLAVE = 'torneos-efootball-v1';
+
+function abrirPagina(url) {
+  return new Promise((resolver, rechazar) => {
+    const marco = document.createElement('iframe');
+    marco.className = 'oculto';
+    let n = 0;
+    marco.onload = () => {
+      const tic = setInterval(async () => {
+        let listo = false;
+        try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); await esperar(400); resolver(marco); }
+        else if (++n > 150) { clearInterval(tic); rechazar(new Error('la pantalla no arrancó')); }
+      }, 100);
+    };
+    marco.src = url;
+    document.body.appendChild(marco);
+  });
+}
+
+/* --- Torneo de prueba: 4 jugadores, 6 partidos de liga (3 jugados, 3 pendientes) --- */
+const ID = 't-prueba-buscador';
+const J = [
+  { id: 'b-a', nombre: 'Ana', emoji: '🟢', color: '#00E676' },
+  { id: 'b-b', nombre: 'Bruno', emoji: '🔵', color: '#4DA3FF' },
+  { id: 'b-c', nombre: 'Carla', emoji: '🟡', color: '#FFD54F' },
+  { id: 'b-d', nombre: 'Dani', emoji: '🔴', color: '#FF4D5E' }
+];
+const [A, B, C, D] = J.map(j => j.id);
+const P = (l, v, gl, gv, jor, jugado) => ({
+  id: 'bp' + jor + l + v, fase: 'liga', jornada: jor, localId: l, visitanteId: v,
+  golesLocal: gl, golesVisitante: gv, jugado: !!jugado, goles: [], stats: null, fecha: null
+});
+
+const torneo = {
+  id: ID, nombre: 'Prueba buscador', estado: 'en_curso',
+  config: { puntosVictoria: 3, puntosEmpate: 1, puntosDerrota: 0, vueltas: 1, clasificados: 2 },
+  jugadores: J,
+  partidos: [
+    P(A, B, 3, 0, 1, true),    // jugado
+    P(C, D, 1, 1, 1, true),    // jugado
+    P(A, C, 2, 1, 2, true),    // jugado
+    P(B, D, 0, 0, 2, false),   // pendiente
+    P(A, D, 0, 0, 3, false),   // pendiente
+    P(B, C, 0, 0, 3, false)    // pendiente
+  ]
+};
+
+(async function ejecutar() {
+  try {
+    const previos = JSON.parse(localStorage.getItem(CLAVE) || '[]').filter(x => x.id !== ID);
+    localStorage.setItem(CLAVE, JSON.stringify(previos.concat([torneo])));
+
+    const marco = await abrirPagina('../partidos.html?torneo=' + ID + '&local=1');
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    const pastillas = () => Array.from(d.querySelectorAll('#pastillas-jugador .pastilla-jugador'));
+    const filas = () => d.querySelectorAll('#lista-partidos .partido-fila').length;
+    const contador = () => d.getElementById('contador-partidos').textContent.trim();
+    const pulsar = async (texto) => {
+      const b = pastillas().find(x => x.textContent.includes(texto));
+      if (!b) throw new Error('no encuentro la pastilla ' + texto);
+      b.click();
+      await esperar(220);
+    };
+    const activa = () => {
+      const b = d.querySelector('#pastillas-jugador .pastilla-jugador.activo');
+      return b ? b.textContent.trim() : null;
+    };
+
+    /* --- 1. Las pastillas salen --- */
+    ok('el buscador aparece en la pantalla de Partidos',
+       d.getElementById('buscador-jugador').hidden === false, 'visible');
+    ok('salen las pastillas de los 4 jugadores y la de Todos',
+       pastillas().length === 5, pastillas().length + ' pastillas');
+    ok('de entrada está puesto "Todos"', /Todos/.test(activa() || ''), activa());
+
+    /* --- 2. Sin filtro se ven los 6 partidos --- */
+    ok('sin filtro se ven los 6 partidos', filas() === 6, filas() + ' partidos · ' + contador());
+
+    /* --- 3. Al pulsar un jugador, solo sus partidos --- */
+    await pulsar('Ana');
+    ok('al pulsar a Ana se marca su pastilla', /Ana/.test(activa() || ''), activa());
+    // Ana juega: A-B (1), A-C (2), A-D (3) = 3 partidos
+    ok('solo salen los 3 partidos de Ana', filas() === 3, filas() + ' partidos · ' + contador());
+    const textosAna = Array.from(d.querySelectorAll('#lista-partidos .partido-fila'))
+      .map(f => f.textContent).join(' | ');
+    ok('y en todos ellos aparece Ana', /Ana/.test(textosAna) &&
+       (textosAna.match(/Ana/g) || []).length === 3, 'Ana en los 3');
+
+    /* --- 4. Se combina con las pestañas: Ana + Pendientes --- */
+    const tabPend = Array.from(d.querySelectorAll('[data-filtro]')).find(t => t.dataset.filtro === 'pendientes');
+    tabPend.click();
+    await esperar(220);
+    ok('Ana + Pendientes = solo el partido de Ana que queda',
+       filas() === 1, filas() + ' partido · ' + contador());
+    ok('y ese partido es Ana contra Dani',
+       /Ana/.test(d.querySelector('#lista-partidos').textContent) &&
+       /Dani/.test(d.querySelector('#lista-partidos').textContent), 'Ana vs Dani');
+    ok('las pastillas siguen puestas al cambiar de pestaña',
+       /Ana/.test(activa() || ''), activa());
+
+    /* --- 5. Ana + Jugados --- */
+    const tabJug = Array.from(d.querySelectorAll('[data-filtro]')).find(t => t.dataset.filtro === 'jugados');
+    tabJug.click();
+    await esperar(220);
+    ok('Ana + Jugados = sus 2 partidos ya jugados', filas() === 2, filas() + ' partidos');
+
+    /* --- 6. Volver a pulsar el mismo jugador quita el filtro --- */
+    await pulsar('Ana');
+    ok('al volver a pulsar a Ana se quita el filtro', /Todos/.test(activa() || ''), activa());
+    ok('y salen los 3 partidos jugados del torneo (sin filtro de jugador)',
+       filas() === 3, filas() + ' partidos');
+
+    /* --- 7. El botón "Todos" quita el filtro --- */
+    const tabTodos = Array.from(d.querySelectorAll('[data-filtro]')).find(t => t.dataset.filtro === 'todos');
+    tabTodos.click();
+    await esperar(200);
+    await pulsar('Carla');
+    ok('Carla tiene 3 partidos (C-D, A-C, B-C)', filas() === 3, filas() + ' partidos');
+    await pulsar('Todos');
+    ok('el botón Todos quita el filtro y salen los 6', filas() === 6, filas() + ' partidos');
+
+    /* --- 8. Un jugador sin partidos en la vista avisa claro --- */
+    await pulsar('Dani');
+    await esperar(150);
+    const tabPend2 = Array.from(d.querySelectorAll('[data-filtro]')).find(t => t.dataset.filtro === 'pendientes');
+    tabPend2.click();
+    await esperar(220);
+    // Dani pendientes: B-D y A-D = 2
+    ok('Dani + Pendientes = sus 2 partidos pendientes', filas() === 2, filas() + ' partidos');
+
+    // Ahora una combinación imposible: Carla + Solo la jornada en curso (jornada 2, ya jugada)
+    const tabJor = Array.from(d.querySelectorAll('[data-filtro]')).find(t => t.dataset.filtro === 'proximos');
+    tabJor.click();
+    await esperar(220);
+    // La jornada en curso es la 3 (primera con pendientes). Carla juega B-C en la 3 → 1 partido
+    ok('Carla + jornada en curso = su partido de esa jornada', filas() === 1, filas() + ' partidos');
+
+    await pulsar('Dani');
+    await esperar(220);
+    // Dani en la jornada 3: A-D → 1
+    ok('Dani + jornada en curso = su partido pendiente', filas() === 1, filas() + ' partidos');
+
+    /* --- 9. Sin errores de JavaScript --- */
+    const js = (w.__erroresJS || []);
+    ok('la pantalla no ha dado ningún error de JavaScript', js.length === 0,
+       js.slice(0, 2).join(' | ') || 'sin errores');
+
+    marco.remove();
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  try {
+    const l = JSON.parse(localStorage.getItem(CLAVE) || '[]').filter(x => x.id !== ID);
+    localStorage.setItem(CLAVE, JSON.stringify(l));
+  } catch (e) {}
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+})();
+</script>
+</body>
+</html>
