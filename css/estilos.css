@@ -63,8 +63,18 @@
   --radio: 14px;
   --sombra-neon: 0 0 18px rgba(var(--acento-rgb), .25);
 
-  --fuente: 'Rajdhani', system-ui, sans-serif;
-  --fuente-numeros: 'Saira Condensed', 'Rajdhani', system-ui, sans-serif;
+  /* TIPOGRAFÍA POR ROLES: cada parte de la web puede tener su fuente.
+     Se cambian solo estas líneas y cambia toda la web a la vez.
+       · titulos   → títulos de panel, el logo, el nombre del torneo
+       · numeros   → las cifras destacadas (recuadros, marcadores, puntos)
+       · etiquetas → los textos pequeños en MAYÚSCULAS (PJ, G, JORNADA…)
+       · texto     → lo normal: nombres, párrafos, menú, formularios
+       · botones   → los botones y las pestañas */
+  --fuente-titulos:   'Saira Condensed', 'Rajdhani', system-ui, sans-serif;
+  --fuente-numeros:   'Saira Condensed', 'Rajdhani', system-ui, sans-serif;
+  --fuente-etiquetas: 'Rajdhani', system-ui, sans-serif;
+  --fuente-texto:     'Rajdhani', system-ui, sans-serif;
+  --fuente-botones:   'Saira Condensed', 'Rajdhani', system-ui, sans-serif;
 }
 
 /* ==========================================================================
@@ -313,8 +323,11 @@
 
   --sombra-neon: 0 0 22px rgba(var(--acento-rgb), .45);
 
-  --fuente:         'Rajdhani', system-ui, sans-serif;
-  --fuente-numeros: 'Orbitron', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-titulos:   'Orbitron', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-numeros:   'Orbitron', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-etiquetas: 'Rajdhani', system-ui, sans-serif;
+  --fuente-texto:     'Rajdhani', system-ui, sans-serif;
+  --fuente-botones:   'Orbitron', 'Saira Condensed', system-ui, sans-serif;
 }
 
 /* ==========================================================================
@@ -366,8 +379,11 @@
 
   --sombra-neon: 0 0 26px rgba(var(--acento-rgb), .4);
 
-  --fuente:         'Outfit', system-ui, sans-serif;
-  --fuente-numeros: 'Outfit', system-ui, sans-serif;
+  --fuente-titulos:   'Outfit', system-ui, sans-serif;
+  --fuente-numeros:   'Outfit', system-ui, sans-serif;
+  --fuente-etiquetas: 'Outfit', system-ui, sans-serif;
+  --fuente-texto:     'Outfit', system-ui, sans-serif;
+  --fuente-botones:   'Outfit', system-ui, sans-serif;
 }
 
 /* ==========================================================================
@@ -421,8 +437,11 @@
 
   --radio: 2px;   /* esquinas rectas: es lo que le da el aire de torneo */
 
-  --fuente:         'Barlow Semi Condensed', 'Rajdhani', system-ui, sans-serif;
-  --fuente-numeros: 'Barlow Condensed', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-titulos:   'Barlow Condensed', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-numeros:   'Barlow Condensed', 'Saira Condensed', system-ui, sans-serif;
+  --fuente-etiquetas: 'Barlow Semi Condensed', 'Rajdhani', system-ui, sans-serif;
+  --fuente-texto:     'Barlow Semi Condensed', 'Rajdhani', system-ui, sans-serif;
+  --fuente-botones:   'Barlow Condensed', 'Saira Condensed', system-ui, sans-serif;
 }
 
 /* ==========================================================================
@@ -615,7 +634,7 @@ body {
     radial-gradient(1000px 520px at 92% 112%, var(--brillo-fondo-2) 0%, transparent 65%),
     var(--bg);
   color: var(--texto);
-  font-family: var(--fuente);
+  font-family: var(--fuente-texto);
   font-size: 17px;
   min-height: 100vh;
 }
@@ -641,7 +660,7 @@ body {
 .marca:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
 .marca .balon { font-size: 25px; transition: transform .18s ease; }
 .marca h1 {
-  font-family: var(--fuente-numeros);
+  font-family: var(--fuente-titulos);
   font-size: 23px; margin: 0; letter-spacing: .5px; text-transform: uppercase;
   white-space: nowrap;
 }
@@ -657,7 +676,7 @@ body {
 }
 .selector-torneo {
   background: var(--panel); color: var(--texto); border: 1px solid var(--linea);
-  border-radius: 10px; padding: 9px 13px; font-family: var(--fuente);
+  border-radius: 10px; padding: 9px 13px; font-family: var(--fuente-texto);
   font-size: 16px; font-weight: 600; min-width: 240px; max-width: 340px;
 }
 .selector-torneo:focus { outline: none; border-color: var(--neon); }
@@ -723,7 +742,7 @@ body {
 }
 /* Títulos de los paneles: que se noten (barrita de acento, más grandes y en blanco) */
 .panel-titulo {
-  font-family: var(--fuente-numeros);
+  font-family: var(--fuente-titulos);
   font-size: 18px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--texto); font-weight: 800;
   margin: 0 0 16px; padding-bottom: 10px;
@@ -763,6 +782,7 @@ body {
   display: block; text-transform: uppercase; letter-spacing: .1em; font-size: 13px;
   color: var(--texto-2); font-weight: 700; margin-bottom: 5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--fuente-etiquetas);
 }
 .dato .valor {
   display: block;
@@ -785,6 +805,7 @@ body {
   text-align: center; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase;
   color: var(--texto-2); font-weight: 700; padding: 8px 3px;
   border-bottom: 1px solid var(--linea); white-space: nowrap;
+  font-family: var(--fuente-etiquetas);
 }
 .tabla th.nombre, .tabla td.nombre { text-align: left; }
 .tabla td {
@@ -858,7 +879,7 @@ body {
 .btn-mini-ir {
   background: transparent; color: var(--neon); border: 1px solid var(--neon);
   border-radius: 9px; padding: 6px 11px; cursor: pointer;
-  font-family: var(--fuente); font-weight: 700; font-size: 13.5px; white-space: nowrap;
+  font-family: var(--fuente-texto); font-weight: 700; font-size: 13.5px; white-space: nowrap;
 }
 .btn-mini-ir:hover { background: var(--neon-suave); }
 .cabecera-jornada {
@@ -873,6 +894,7 @@ body {
 .cabecera-jornada .etiqueta {
   text-transform: uppercase; letter-spacing: .14em; font-size: 13px;
   color: var(--texto-2); font-weight: 700;
+  font-family: var(--fuente-etiquetas);
 }
 .cabecera-jornada .estado {
   margin-left: auto; font-size: 11.5px; font-weight: 800; letter-spacing: .08em;
@@ -909,7 +931,7 @@ body {
 .equipo { text-align: center; }
 .equipo .avatar { font-size: 38px; display: block; line-height: 1; filter: drop-shadow(0 0 10px rgba(var(--acento-rgb),.35)); }
 .equipo .nombre {
-  font-family: var(--fuente-numeros); font-size: 21px; text-transform: uppercase;
+  font-family: var(--fuente-titulos); font-size: 21px; text-transform: uppercase;
   letter-spacing: .04em; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .equipo.local .nombre { border-bottom: 2px solid var(--neon); padding-bottom: 3px; }
@@ -933,7 +955,7 @@ body {
 /* ---------- Botones ---------- */
 .btn {
   cursor: pointer; border: none; border-radius: var(--radio);
-  font-family: var(--fuente-numeros); font-size: 19px; font-weight: 700;
+  font-family: var(--fuente-botones); font-size: 19px; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; padding: 14px 20px;
   transition: transform .08s ease, filter .15s ease;
 }
@@ -952,7 +974,7 @@ body {
 .tab {
   flex: 1; cursor: pointer; padding: 10px; border-radius: 11px; text-align: center;
   background: var(--panel); border: 1px solid var(--linea);
-  font-family: var(--fuente-numeros); font-size: 15px; letter-spacing: .06em;
+  font-family: var(--fuente-botones); font-size: 15px; letter-spacing: .06em;
   text-transform: uppercase; color: var(--tab-color, var(--texto-2)); font-weight: 700;
   opacity: .74;
   transition: opacity .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
@@ -1009,7 +1031,7 @@ html[data-candado="fuera"] .solo-edicion { display: none !important; }
 .btn-sesion {
   display: flex; align-items: center; gap: 8px;
   background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
-  font-family: var(--fuente); font-weight: 700; font-size: 14.5px;
+  font-family: var(--fuente-texto); font-weight: 700; font-size: 14.5px;
   padding: 9px 15px; border-radius: 11px; cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
@@ -1042,7 +1064,7 @@ html[data-candado="fuera"] .btn-sesion {
 .btn-actualizar {
   display: flex; align-items: center; gap: 8px;
   background: var(--panel-2); border: 1px solid var(--linea); color: var(--texto);
-  font-family: var(--fuente); font-weight: 700; font-size: 14.5px;
+  font-family: var(--fuente-texto); font-weight: 700; font-size: 14.5px;
   padding: 9px 15px; border-radius: 11px; cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
@@ -1103,7 +1125,7 @@ html[data-candado="fuera"] .btn-sesion {
   border-radius: 12px; padding: 14px 18px; margin-bottom: 6px;
 }
 .codigo-valor {
-  font-family: var(--fuente-numeros); font-size: 34px; font-weight: 800;
+  font-family: var(--fuente-titulos); font-size: 34px; font-weight: 800;
   letter-spacing: .18em; color: var(--pendiente); line-height: 1;
 }
 .codigo-botones { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -1150,7 +1172,7 @@ html[data-candado="fuera"] .btn-sesion {
 .tarjeta-torneo:hover { border-color: rgba(var(--acento-rgb),.5); transform: translateY(-2px); }
 .tarjeta-torneo.finalizado { opacity: .8; }
 .tarjeta-torneo h3 {
-  font-family: var(--fuente-numeros); font-size: 24px; font-weight: 800;
+  font-family: var(--fuente-titulos); font-size: 24px; font-weight: 800;
   letter-spacing: .03em; text-transform: uppercase; margin: 0 0 2px; color: var(--texto);
 }
 .tarjeta-torneo .datos { color: var(--texto-2); font-size: 15px; display: block; margin-bottom: 12px; }
@@ -1159,7 +1181,7 @@ html[data-candado="fuera"] .btn-sesion {
 
 /* Nombre del torneo en la barra de arriba */
 .nombre-torneo {
-  font-family: var(--fuente-numeros); font-size: 20px; font-weight: 700;
+  font-family: var(--fuente-titulos); font-size: 20px; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase; color: var(--texto);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px;
 }
@@ -1172,7 +1194,7 @@ html[data-candado="fuera"] .btn-sesion {
   gap: 8px; margin-bottom: 8px; padding: 0 2px;
 }
 .sidebar-titulo {
-  font-family: var(--fuente-numeros); font-size: 13px; font-weight: 700;
+  font-family: var(--fuente-etiquetas); font-size: 13px; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase; color: var(--texto-2);
 }
 .btn-plegar {
@@ -1312,7 +1334,7 @@ html[data-candado="fuera"] .btn-sesion {
 }
 .ronda { display: flex; flex-direction: column; gap: 10px; }
 .ronda-titulo {
-  margin: 0 0 2px; font-family: var(--fuente-numeros); font-size: 13px;
+  margin: 0 0 2px; font-family: var(--fuente-titulos); font-size: 13px;
   letter-spacing: .12em; text-transform: uppercase; color: var(--texto-2);
   font-weight: 800; padding-bottom: 7px;
   border-bottom: 1px solid var(--linea);
@@ -1353,7 +1375,7 @@ html[data-candado="fuera"] .btn-sesion {
   color: var(--texto-2); font-weight: 700;
 }
 .campeon-nombre {
-  font-family: var(--fuente-numeros); font-size: 27px; font-weight: 800;
+  font-family: var(--fuente-titulos); font-size: 27px; font-weight: 800;
   color: var(--neon); text-align: center;
 }
 
@@ -1391,7 +1413,7 @@ html[data-candado="fuera"] .btn-sesion {
   border: 1px solid var(--neon); border-radius: 9px;
   padding: 7px 11px; font-size: 13.5px; font-weight: 600; line-height: 1.35;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .55), var(--sombra-neon);
-  pointer-events: none; font-family: var(--fuente);
+  pointer-events: none; font-family: var(--fuente-texto);
   animation: aparece-ayuda .12s ease-out;
 }
 @keyframes aparece-ayuda { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; } }
@@ -1463,7 +1485,7 @@ input[type="range"] {
 }
 .select-ajuste {
   background: var(--panel); color: var(--texto); border: 1px solid var(--linea);
-  border-radius: 9px; padding: 8px 12px; font-family: var(--fuente);
+  border-radius: 9px; padding: 8px 12px; font-family: var(--fuente-texto);
   font-size: 15px; font-weight: 600;
 }
 .select-ajuste:focus { outline: none; border-color: var(--neon); }
@@ -1563,7 +1585,7 @@ input[type="range"] {
 /* Cabecera grande de una pantalla de formulario */
 .panel-cabecera { margin: -2px 0 6px; padding-bottom: 15px; }
 .panel-cabecera h2 {
-  font-family: var(--fuente-numeros); font-size: 33px; font-weight: 800;
+  font-family: var(--fuente-titulos); font-size: 33px; font-weight: 800;
   letter-spacing: .03em; text-transform: uppercase; margin: 0; color: var(--texto); line-height: 1;
 }
 .panel-cabecera h2 em { color: var(--neon); font-style: normal; }
@@ -1586,7 +1608,7 @@ input[type="range"] {
   border: 1px solid var(--muted); color: var(--muted);
   font-size: 12px; font-weight: 800; cursor: help;
   position: relative; flex-shrink: 0;
-  font-family: var(--fuente); line-height: 1;
+  font-family: var(--fuente-texto); line-height: 1;
 }
 .ayuda:hover { border-color: var(--neon); color: var(--neon); }
 .ayuda::after {
@@ -1611,7 +1633,7 @@ input[type="range"] {
   font-family: var(--fuente-numeros); font-weight: 800; font-size: 17px;
 }
 .bloque-titulo h3 {
-  font-family: var(--fuente-numeros); font-size: 21.5px; font-weight: 700; margin: 0;
+  font-family: var(--fuente-titulos); font-size: 21.5px; font-weight: 700; margin: 0;
   letter-spacing: .05em; text-transform: uppercase; color: var(--texto);
 }
 .fila-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -1620,7 +1642,7 @@ input[type="range"] {
 select, input[type="number"], input[type="text"], input[type="password"] {
   width: 100%; max-width: 100%; padding: 11px 12px; border-radius: 11px;
   background: var(--panel); color: var(--texto);
-  border: 1px solid var(--linea); font-family: var(--fuente); font-size: 16.5px;
+  border: 1px solid var(--linea); font-family: var(--fuente-texto); font-size: 16.5px;
 }
 select:focus, input:focus { outline: none; border-color: var(--neon); }
 input[type="number"] { text-align: center; font-family: var(--fuente-numeros); font-size: 19px; }
@@ -1689,7 +1711,7 @@ input[type="color"] {
   border-radius: var(--radio); padding: 15px 17px; margin-top: 8px;
 }
 .zona-peligro h4 {
-  margin: 0 0 6px; color: var(--peligro); font-family: var(--fuente-numeros);
+  margin: 0 0 6px; color: var(--peligro); font-family: var(--fuente-titulos);
   text-transform: uppercase; letter-spacing: .1em; font-size: 14px;
 }
 .btn-peligro { background: transparent; border: 1px solid var(--peligro); color: var(--peligro); }

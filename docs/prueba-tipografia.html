@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: la tipografía por roles</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  .oculto { position:absolute; left:-9999px; width:1px; height:1px; border:0; }
+</style>
+</head>
+<body>
+<h1>Prueba: la tipografía por roles</h1>
+<p>Comprueba que cada parte de la web usa SU variable de fuente y que cambiar una
+   variable cambia solo lo suyo (no todo). Así Leo puede elegir una fuente distinta
+   para los títulos, los números, las etiquetas, el texto y los botones.</p>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function abrirPagina(url) {
+  return new Promise((resolver, rechazar) => {
+    const marco = document.createElement('iframe');
+    marco.className = 'oculto';
+    let n = 0;
+    marco.onload = () => {
+      const tic = setInterval(async () => {
+        let listo = false;
+        try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); await esperar(400); resolver(marco); }
+        else if (++n > 150) { clearInterval(tic); rechazar(new Error('la pantalla no arrancó')); }
+      }, 100);
+    };
+    marco.src = url;
+    document.body.appendChild(marco);
+  });
+}
+
+/* La primera familia de la lista de fuentes de un elemento */
+const primeraFuente = (d, sel) => {
+  const n = d.querySelector(sel);
+  if (!n) return null;
+  const f = d.defaultView.getComputedStyle(n).fontFamily || '';
+  return f.split(',')[0].replace(/["']/g, '').trim();
+};
+
+/* El valor de una variable de rol en la página */
+const rol = (d, nombre) =>
+  d.defaultView.getComputedStyle(d.documentElement).getPropertyValue('--fuente-' + nombre).trim();
+
+(async function ejecutar() {
+  const marcos = [];
+  try {
+    const marco = await abrirPagina('../clasificacion.html?local=1');
+    marcos.push(marco);
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    /* --- 1. Las cinco variables de rol existen --- */
+    const ROLES = ['titulos', 'numeros', 'etiquetas', 'texto', 'botones'];
+    const valores = {};
+    ROLES.forEach(r => { valores[r] = rol(d, r); });
+    ok('existen los cinco roles de tipografía',
+       ROLES.every(r => valores[r].length > 0),
+       ROLES.map(r => r + '=' + (valores[r] ? 'sí' : 'NO')).join(' · '));
+
+    /* --- 2. Cada elemento usa SU rol --- */
+    const casos = [
+      ['los títulos de panel usan el rol de títulos', '.panel-titulo', 'titulos'],
+      ['el logo usa el rol de títulos', '.marca h1', 'titulos'],
+      ['el nombre del torneo usa el rol de títulos', '#nombre-torneo', 'titulos'],
+      ['las cifras de los recuadros usan el rol de números', '.dato .valor', 'numeros'],
+      ['los puntos de la tabla usan el rol de números', '.tabla td.pts', 'numeros'],
+      ['las etiquetas de los recuadros usan el rol de etiquetas', '.dato .etiqueta', 'etiquetas'],
+      ['las cabeceras de la tabla usan el rol de etiquetas', '.tabla th', 'etiquetas'],
+      ['el texto del cuerpo usa el rol de texto', 'body', 'texto'],
+      ['el menú lateral usa el rol de texto', '.nav-item', 'texto']
+    ];
+    casos.forEach(([titulo, sel, esperado]) => {
+      const real = primeraFuente(d, sel);
+      const quiero = valores[esperado].split(',')[0].replace(/["']/g, '').trim();
+      ok(titulo, real === quiero, sel + ' → ' + real + ' (esperado ' + quiero + ')');
+    });
+
+    /* --- 3. Cambiar un rol cambia SOLO lo suyo --- */
+    const antesTitulo = primeraFuente(d, '.panel-titulo');
+    const antesNumero = primeraFuente(d, '.dato .valor');
+    const antesTexto = primeraFuente(d, 'body');
+
+    // Se cambia a mano el rol de títulos, como haría yo al aplicar tu elección
+    d.documentElement.style.setProperty('--fuente-titulos', "'Courier New', monospace");
+    await esperar(150);
+
+    const ahoraTitulo = primeraFuente(d, '.panel-titulo');
+    const ahoraNumero = primeraFuente(d, '.dato .valor');
+    const ahoraTexto = primeraFuente(d, 'body');
+
+    ok('al cambiar el rol de títulos, los títulos cambian',
+       ahoraTitulo === 'Courier New' && antesTitulo !== ahoraTitulo,
+       antesTitulo + ' → ' + ahoraTitulo);
+    ok('y los números NO se tocan', ahoraNumero === antesNumero,
+       'números: ' + ahoraNumero);
+    ok('ni el texto normal', ahoraTexto === antesTexto, 'texto: ' + ahoraTexto);
+
+    /* --- 4. Y al revés: cambiar los números no toca los títulos --- */
+    d.documentElement.style.setProperty('--fuente-numeros', "'Georgia', serif");
+    await esperar(150);
+    ok('al cambiar el rol de números, las cifras cambian',
+       primeraFuente(d, '.dato .valor') === 'Georgia', primeraFuente(d, '.dato .valor'));
+    ok('y los títulos siguen con lo suyo',
+       primeraFuente(d, '.panel-titulo') === 'Courier New', primeraFuente(d, '.panel-titulo'));
+
+    /* --- 5. Los botones tienen su propio rol --- */
+    d.documentElement.style.setProperty('--fuente-botones', "'Courier New', monospace");
+    await esperar(150);
+    ok('al cambiar el rol de botones, los botones cambian',
+       primeraFuente(d, '.btn') === 'Courier New', primeraFuente(d, '.btn'));
+    ok('y el texto normal sigue igual', primeraFuente(d, 'body') === antesTexto,
+       'texto: ' + primeraFuente(d, 'body'));
+
+    /* --- 6. Nada de errores --- */
+    const js = (w.__erroresJS || []);
+    ok('la pantalla no ha dado ningún error de JavaScript', js.length === 0,
+       js.slice(0, 2).join(' | ') || 'sin errores');
+
+    /* --- 7. Cada tema mantiene sus fuentes propias --- */
+    marco.remove();
+    const marco2 = await abrirPagina('../index.html?local=1');
+    marcos.push(marco2);
+    const w2 = marco2.contentWindow;
+    const d2 = marco2.contentDocument;
+
+    w2.aplicarTema('synthwave');
+    await esperar(200);
+    ok('el tema Synthwave sigue con Orbitron en los números',
+       primeraFuente(d2, '.dato .valor') === 'Orbitron' || rol(d2, 'numeros').includes('Orbitron'),
+       rol(d2, 'numeros').split(',')[0]);
+
+    w2.aplicarTema('esports');
+    await esperar(200);
+    ok('el tema Esports sigue con Barlow',
+       rol(d2, 'numeros').includes('Barlow') && rol(d2, 'texto').includes('Barlow'),
+       rol(d2, 'numeros').split(',')[0] + ' / ' + rol(d2, 'texto').split(',')[0]);
+
+    w2.aplicarTema('verde');
+    await esperar(200);
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  marcos.forEach(m => m.remove());
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+})();
+</script>
+</body>
+</html>

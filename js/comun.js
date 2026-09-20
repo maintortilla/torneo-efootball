@@ -302,7 +302,7 @@ function avisar(texto, esError, duracionMs) {
     t.id = 'toast';
     t.style.cssText = `position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
       background:var(--panel-2);padding:12px 20px;border-radius:12px;font-weight:700;z-index:200;
-      max-width:80vw;text-align:center;box-shadow:0 0 22px rgba(0,0,0,.55);font-family:var(--fuente)`;
+      max-width:80vw;text-align:center;box-shadow:0 0 22px rgba(0,0,0,.55);font-family:var(--fuente-texto)`;
     document.body.appendChild(t);
   }
   t.textContent = texto;
