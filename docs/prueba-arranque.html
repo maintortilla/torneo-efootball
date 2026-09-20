@@ -85,13 +85,23 @@ const marco = document.getElementById('marco');
       ok(`«${p.nombre}» tiene el logo en la cabecera`, Boolean(marca),
          marca ? 'logo presente' : 'no está');
 
-      /* En la página principal no hay menú lateral: el botón de Ajustes va arriba */
+      /* En la página principal no hay menú lateral: el botón de Ajustes va abajo del todo */
       const ajustes = d.getElementById('btn-ajustes');
-      ok(`«${p.nombre}»: hay botón de Ajustes en la barra de arriba`, Boolean(ajustes),
-         ajustes ? 'presente' : 'no está');
+      const lista = d.getElementById('lista-torneos');
+      const enLaBarra = Boolean(d.querySelector('.topbar-derecha #btn-ajustes'));
+      const trasLaLista = Boolean(lista && ajustes &&
+        (lista.compareDocumentPosition(ajustes) & Node.DOCUMENT_POSITION_FOLLOWING));
+      ok(`«${p.nombre}»: el botón de Ajustes está abajo del todo (no en la barra)`,
+         Boolean(ajustes) && !enLaBarra && trasLaLista,
+         !ajustes ? 'no está' : enLaBarra ? 'está en la barra de arriba'
+           : trasLaLista ? 'abajo, después de la lista' : 'no está al final');
       ok(`«${p.nombre}»: el botón de Ajustes lleva a los ajustes`,
          Boolean(ajustes) && ajustes.getAttribute('href') === 'ajustes.html',
          ajustes ? 'href=' + ajustes.getAttribute('href') : '—');
+      const alineado = ajustes
+        ? d.defaultView.getComputedStyle(ajustes.parentElement).justifyContent : '';
+      ok(`«${p.nombre}»: el botón de Ajustes está alineado a la derecha`,
+         alineado === 'flex-end', 'justify-content: ' + alineado);
     } else {
       const enlace = d.querySelector('a.marca');
       const destino = enlace ? enlace.getAttribute('href') : null;
