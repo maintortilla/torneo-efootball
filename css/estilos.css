@@ -1625,7 +1625,11 @@ input[type="color"] {
 .flechas button:hover { border-color: var(--neon); color: var(--neon); }
 
 /* Zonas de acción */
-.zona-acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.zona-acciones {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  /* Un poco más de aire con la caja del código de debajo */
+  margin-top: 14px; margin-bottom: 18px;
+}
 .zona-peligro {
   border: 1px solid rgba(var(--peligro-rgb),.45); background: rgba(var(--peligro-rgb),.06);
   border-radius: var(--radio); padding: 15px 17px; margin-top: 8px;
