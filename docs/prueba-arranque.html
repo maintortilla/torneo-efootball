@@ -84,6 +84,14 @@ const marco = document.getElementById('marco');
     if (p.url.includes('index.html')) {
       ok(`«${p.nombre}» tiene el logo en la cabecera`, Boolean(marca),
          marca ? 'logo presente' : 'no está');
+
+      /* En la página principal no hay menú lateral: el botón de Ajustes va arriba */
+      const ajustes = d.getElementById('btn-ajustes');
+      ok(`«${p.nombre}»: hay botón de Ajustes en la barra de arriba`, Boolean(ajustes),
+         ajustes ? 'presente' : 'no está');
+      ok(`«${p.nombre}»: el botón de Ajustes lleva a los ajustes`,
+         Boolean(ajustes) && ajustes.getAttribute('href') === 'ajustes.html',
+         ajustes ? 'href=' + ajustes.getAttribute('href') : '—');
     } else {
       const enlace = d.querySelector('a.marca');
       const destino = enlace ? enlace.getAttribute('href') : null;
@@ -92,6 +100,11 @@ const marco = document.getElementById('marco');
          enlace ? 'href=' + destino : 'el logo no es un enlace');
       ok(`«${p.nombre}»: el logo no lleva el torneo en la dirección (va al menú limpio)`,
          Boolean(enlace) && destino.indexOf('?') === -1, 'href=' + destino);
+
+      /* Y en las interiores el menú lateral sigue teniendo su Ajustes */
+      const ajustesLateral = d.querySelector('.nav-item.nav-ajustes');
+      ok(`«${p.nombre}»: el menú lateral tiene Ajustes`, Boolean(ajustesLateral),
+         ajustesLateral ? ajustesLateral.textContent.trim() : 'no está');
     }
   }
 

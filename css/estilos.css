@@ -1052,6 +1052,12 @@ html[data-candado="fuera"] .btn-sesion {
 .btn-actualizar.girando .giro { display: inline-block; animation: girar .9s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 
+/* ---------- Botón de Ajustes de la barra de arriba (página "Mis torneos") ---------- */
+/* Reusa el estilo del botón de actualizar para que parezcan hermanos.
+   `order: 10` lo deja el último, a la derecha del todo (junto a 🔄 Actualizar). */
+#btn-ajustes { text-decoration: none; order: 10; }
+#btn-ajustes:hover { border-color: var(--neon); color: var(--neon); }
+
 /* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */
 /* ---------- Caja para entrar con un código de torneo ---------- */
 .caja-codigo {
