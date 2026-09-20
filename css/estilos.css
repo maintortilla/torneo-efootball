@@ -1053,11 +1053,20 @@ html[data-candado="fuera"] .btn-sesion {
 @keyframes girar { to { transform: rotate(360deg); } }
 
 /* ---------- Botón de Ajustes de "Mis torneos" (abajo del todo, a la derecha) ---------- */
-/* Reusa el estilo del botón de actualizar para que parezcan hermanos.
+/* Solo el símbolo, y un poco más grande que los demás botones de la barra.
    Ojo: hace falta el doble selector porque `.zona-acciones` (más abajo en el
    fichero) pisaría estos márgenes al tener la misma especificidad. */
 .zona-acciones.pie-ajustes { justify-content: flex-end; margin-top: 26px; margin-bottom: 6px; }
-#btn-ajustes { text-decoration: none; }
+#btn-ajustes {
+  text-decoration: none;
+  font-size: 27px;          /* el engranaje, más grande */
+  line-height: 1;
+  /* Cuadrado y con el símbolo centrado, para que quede como un botón redondo */
+  width: 54px; height: 54px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  border-radius: 14px;
+}
 #btn-ajustes:hover { border-color: var(--neon); color: var(--neon); }
 
 /* ---------- Tarjetas de torneos (página "Mis torneos") ---------- */

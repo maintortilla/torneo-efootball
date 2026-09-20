@@ -103,6 +103,19 @@ const marco = document.getElementById('marco');
         ? d.defaultView.getComputedStyle(ajustes.parentElement).justifyContent : '';
       ok(`«${p.nombre}»: el botón de Ajustes está alineado a la derecha`,
          alineado === 'flex-end', 'justify-content: ' + alineado);
+
+      /* Es un botón de solo el símbolo, y más grande que los normales */
+      const soloSimbolo = ajustes ? ajustes.textContent.trim() : '';
+      ok(`«${p.nombre}»: el botón de Ajustes es solo el engranaje (sin texto)`,
+         soloSimbolo === '⚙️', JSON.stringify(soloSimbolo));
+      ok(`«${p.nombre}»: y lleva su nombre para quien no lo ve (lectores de pantalla)`,
+         Boolean(ajustes && ajustes.getAttribute('aria-label')), 
+         ajustes ? 'aria-label=' + ajustes.getAttribute('aria-label') : '—');
+      if (ajustes) {
+        const caja = ajustes.getBoundingClientRect();
+        ok(`«${p.nombre}»: el botón de Ajustes es más grande de lo normal (${Math.round(caja.width)}x${Math.round(caja.height)})`,
+           caja.width >= 48 && caja.height >= 48, Math.round(caja.width) + 'x' + Math.round(caja.height) + ' px');
+      }
     } else {
       const enlace = d.querySelector('a.marca');
       const destino = enlace ? enlace.getAttribute('href') : null;
