@@ -77,6 +77,22 @@ const marco = document.getElementById('marco');
     const errores = (w.__erroresJS || []).filter(e => !/favicon/i.test(e));
     ok(`«${p.nombre}» no lanza errores de JavaScript`, errores.length === 0,
        errores.length ? errores.join(' · ') : 'ninguno');
+
+    /* El logo de arriba a la izquierda lleva al menú (en el propio menú no hace
+       falta, porque ya estás allí). */
+    const marca = d.querySelector('.marca');
+    if (p.url.includes('index.html')) {
+      ok(`«${p.nombre}» tiene el logo en la cabecera`, Boolean(marca),
+         marca ? 'logo presente' : 'no está');
+    } else {
+      const enlace = d.querySelector('a.marca');
+      const destino = enlace ? enlace.getAttribute('href') : null;
+      ok(`«${p.nombre}»: el logo lleva al menú al pulsarlo`,
+         Boolean(enlace) && destino === 'index.html',
+         enlace ? 'href=' + destino : 'el logo no es un enlace');
+      ok(`«${p.nombre}»: el logo no lleva el torneo en la dirección (va al menú limpio)`,
+         Boolean(enlace) && destino.indexOf('?') === -1, 'href=' + destino);
+    }
   }
 
   const fallos = salida.filter(l => l.startsWith('[FALLO')).length;
