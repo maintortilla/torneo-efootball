@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Comparativa de tipografías · Torneo eFootball</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<!-- Todas estas familias son de Google Fonts: gratis y de uso libre -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&family=Archivo:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Saira:wght@400;500;600;700;800&family=Inter+Tight:wght@400;500;600;700;800&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Página suelta para comparar: aquí sí manda su propio estilo */
+  :root {
+    --bg: #070B12; --panel: #0E1621; --panel-2: #14202F; --linea: #1E2E42;
+    --neon: #00E676; --texto: #E8F2FF; --texto-2: #9FB3C8; --muted: #7E93A8;
+    --jugado: #10B981; --pendiente: #F59E0B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 26px 30px 60px; background: var(--bg); color: var(--texto);
+    font-family: system-ui, sans-serif;
+    background-image: radial-gradient(1200px 500px at 50% -10%, #0C2536 0%, transparent 60%);
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .04em; text-transform: uppercase; }
+  h1 span { color: var(--neon); }
+  .intro { color: var(--texto-2); font-size: 15px; margin: 0 0 26px; max-width: 900px; line-height: 1.5; }
+  .intro b { color: var(--texto); }
+
+  .muestra {
+    background: var(--panel); border: 1px solid var(--linea); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px;
+  }
+  .cabecera-muestra {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; margin-bottom: 14px; border-bottom: 1px solid var(--linea);
+  }
+  .nombre-fuente { font-size: 19px; font-weight: 800; letter-spacing: .02em; }
+  .etiqueta-actual {
+    font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--neon); border: 1px solid var(--neon); border-radius: 999px; padding: 3px 10px;
+  }
+  .etiqueta-origen { font-size: 12.5px; color: var(--muted); }
+
+  /* Dentro de cada muestra se aplica SU tipografía */
+  .cuerpo { font-family: var(--f); }
+  .cuerpo .titulo-panel {
+    font-family: var(--f); font-size: 18px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 800; margin: 0 0 12px; display: flex; align-items: center; gap: 9px;
+  }
+  .cuerpo .titulo-panel::before {
+    content: ''; width: 5px; height: 19px; border-radius: 3px; background: var(--neon);
+    box-shadow: 0 0 10px rgba(0,230,118,.55);
+  }
+  .cuerpo .datos { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cuerpo .dato .et {
+    display: block; font-family: var(--f); font-size: 12.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--texto-2); margin-bottom: 3px;
+  }
+  .cuerpo .dato .va { font-family: var(--f); font-size: 30px; font-weight: 800; line-height: 1; color: var(--neon); }
+  .cuerpo .dato.ambar .va { color: var(--pendiente); }
+
+  .cuerpo table { border-collapse: collapse; width: 100%; max-width: 760px; margin-bottom: 14px; }
+  .cuerpo th {
+    font-family: var(--f); font-size: 12.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--texto-2); text-align: center; padding: 7px 4px;
+    border-bottom: 1px solid var(--linea);
+  }
+  .cuerpo th:first-child, .cuerpo td:first-child { text-align: left; }
+  .cuerpo td {
+    font-family: var(--f); font-size: 15.5px; text-align: center; padding: 9px 4px;
+    border-bottom: 1px solid var(--linea); color: var(--texto-2);
+  }
+  .cuerpo td.nombre { color: var(--texto); font-weight: 600; white-space: nowrap; }
+  .cuerpo td.pts { color: var(--neon); font-weight: 800; font-size: 18px; }
+
+  .cuerpo .texto { font-family: var(--f); font-size: 15.5px; color: var(--texto-2); line-height: 1.55; max-width: 760px; margin: 0 0 14px; }
+  .cuerpo .botones { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .cuerpo .btn {
+    font-family: var(--f); font-weight: 700; font-size: 14.5px; padding: 9px 16px;
+    border-radius: 11px; border: 1px solid var(--neon); color: var(--neon); background: transparent;
+  }
+  .cuerpo .btn.solido { background: var(--neon); color: #05170E; border-color: var(--neon); }
+
+  .pie { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--linea);
+         color: var(--texto-2); font-size: 14.5px; line-height: 1.6; max-width: 900px; }
+  .pie b { color: var(--texto); }
+</style>
+</head>
+<body>
+
+<h1>Tipografías para la <span>web</span></h1>
+<p class="intro">
+  La que usa <b>LaLiga Fantasy</b> es <b>“LALIGA Text”</b>, una fuente <b>de encargo de LaLiga</b>
+  (no es libre, no se puede usar). Aquí tienes <b>alternativas gratis</b> con aire parecido
+  (geométricas, modernas, deportivas), aplicadas a cosas reales de tu web para que las compares.
+  Arriba del todo está la que usas ahora, para que veas la diferencia.
+</p>
+
+<div id="muestras"></div>
+
+<p class="pie">
+  Dime <b>el número o el nombre</b> de la que más te guste y la aplico a toda la web.
+  Si te gusta una pero con los números de otra, también se puede mezclar.
+</p>
+
+<script>
+/* Cada candidata: nombre, de dónde es, y la pila de fuentes */
+const FUENTES = [
+  { nombre: 'Rajdhani',        origen: 'la que usas ahora',       pila: "'Rajdhani', system-ui, sans-serif", actual: true },
+  { nombre: 'Archivo',         origen: 'Google Fonts · libre',    pila: "'Archivo', system-ui, sans-serif" },
+  { nombre: 'Manrope',         origen: 'Google Fonts · libre',    pila: "'Manrope', system-ui, sans-serif" },
+  { nombre: 'Montserrat',      origen: 'Google Fonts · libre',    pila: "'Montserrat', system-ui, sans-serif" },
+  { nombre: 'Saira',           origen: 'Google Fonts · libre',    pila: "'Saira', system-ui, sans-serif" },
+  { nombre: 'Inter Tight',     origen: 'Google Fonts · libre',    pila: "'Inter Tight', system-ui, sans-serif" },
+  { nombre: 'Figtree',         origen: 'Google Fonts · libre',    pila: "'Figtree', system-ui, sans-serif" }
+];
+
+const caja = document.getElementById('muestras');
+
+FUENTES.forEach((f, i) => {
+  const s = document.createElement('section');
+  s.className = 'muestra';
+  s.style.setProperty('--f', f.pila);
+  s.innerHTML = `
+    <div class="cabecera-muestra">
+      <span class="nombre-fuente">${i + 1}. ${f.nombre}</span>
+      ${f.actual ? '<span class="etiqueta-actual">la de ahora</span>' : ''}
+      <span class="etiqueta-origen">${f.origen}</span>
+    </div>
+    <div class="cuerpo">
+      <p class="titulo-panel">Clasificación</p>
+      <div class="datos">
+        <div class="dato"><span class="et">Partidos jugados</span><span class="va">10/30</span></div>
+        <div class="dato ambar"><span class="et">Goles totales</span><span class="va">14</span></div>
+        <div class="dato"><span class="et">Jugadores</span><span class="va">6</span></div>
+      </div>
+      <table>
+        <tr><th>Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>PTS</th></tr>
+        <tr><td class="nombre">🟢 Leo</td><td>2</td><td>1</td><td>1</td><td>0</td><td>4</td><td>2</td><td class="pts">4</td></tr>
+        <tr><td class="nombre">🔴 Iker</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td class="pts">3</td></tr>
+      </table>
+      <p class="texto">Pulsa <b>Apuntar</b> en cualquier partido: se abre la ventanita con los dos
+        marcadores y se guarda en la nube. Los jugados se pueden editar.</p>
+      <div class="botones">
+        <span class="btn solido">Crear torneo nuevo</span>
+        <span class="btn">Apuntar resultado</span>
+      </div>
+    </div>`;
+  caja.appendChild(s);
+});
+</script>
+</body>
+</html>
