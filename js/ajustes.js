@@ -19,8 +19,6 @@ const COLORES = ['#00E676','#4DA3FF','#FFD54F','#FF4D5E','#B388FF','#FFA24D','#9
 
 /* ---------------------------------------------------------------- arranque */
 async function arrancarAjustes() {
-  pintarSelectorTema();      // el aspecto se puede cambiar aunque falle la conexión
-
   let torneosOk = false;
   try {
     await arrancarCandado(); // sin entrar, los ajustes se ven pero no se tocan
@@ -54,36 +52,6 @@ async function arrancarAjustes() {
     avisar('La página ha fallado al dibujarse: ' + e.message, true, 6000);
   }
   window.__listo = true;
-}
-
-/* ------------------------------------------------- aspecto de la web (temas) */
-function pintarSelectorTema() {
-  const caja = $('#selector-tema');
-  if (!caja) return;
-
-  caja.innerHTML = '';
-  const actual = temaActual();
-
-  Object.keys(TEMAS).forEach(clave => {
-    const t = TEMAS[clave];
-    const boton = el('button', 'tema-opcion' + (clave === actual ? ' activo' : ''));
-    boton.type = 'button';
-    boton.innerHTML =
-      `<span class="tema-bola ${clave}"></span>
-       <span class="tema-info">
-         <span class="tema-nombre">${t.emoji} ${t.nombre}</span>
-         <span class="tema-desc">${t.descripcion}</span>
-       </span>
-       <span class="tema-check">✓</span>`;
-
-    boton.onclick = () => {
-      if (temaActual() === clave) return;
-      aplicarTema(clave);
-      pintarSelectorTema();
-      avisar(`Aspecto cambiado a ${t.nombre} ${t.emoji}`);
-    };
-    caja.appendChild(boton);
-  });
 }
 
 /* ------------------------------------------ el código del torneo (invitar) */

@@ -272,81 +272,8 @@ async function guardarPartidoRuleta() {
   }
 }
 
-/* ==========================================================================
-   SONIDO (Web Audio: no hace falta ningún archivo de audio)
-   --------------------------------------------------------------------------
-   - Tics mientras gira: se calculan mirando el ángulo REAL de la rueda en cada
-     fotograma, así suenan clavados con lo que se ve y desaceleran solos.
-   - Fanfarria corta (do·mi·sol·do) cuando sale el jugador.
-   El navegador solo deja sonar después de que toques algo: el primer sonido
-   siempre va detrás del botón GIRAR, así que no hay problema.
-   ========================================================================== */
-let ctxAudio = null;
-let silencioRuleta = false;
-try { silencioRuleta = localStorage.getItem('ruleta-silencio') === '1'; } catch (e) {}
-
-function contextoAudio() {
-  if (silencioRuleta) return null;
-  try {
-    if (!ctxAudio) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      ctxAudio = new AC();
-    }
-    if (ctxAudio.state === 'suspended') ctxAudio.resume();
-    return ctxAudio;
-  } catch (e) { return null; }
-}
-
-/* Un "tac" cortito, como el de una ruleta de feria */
-function sonarTic(intensidad) {
-  const ctx = contextoAudio();
-  if (!ctx) return;
-  const t = ctx.currentTime;
-  const vol = Math.max(0.05, Math.min(0.28, 0.3 * (intensidad || 1)));
-
-  const osc = ctx.createOscillator();
-  const filtro = ctx.createBiquadFilter();
-  const gana = ctx.createGain();
-
-  filtro.type = 'bandpass';
-  filtro.frequency.value = 2300;
-  filtro.Q.value = 1.1;
-
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(2500, t);
-  osc.frequency.exponentialRampToValueAtTime(1000, t + 0.045);
-
-  gana.gain.setValueAtTime(0.0001, t);
-  gana.gain.exponentialRampToValueAtTime(vol, t + 0.003);
-  gana.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
-
-  osc.connect(filtro).connect(gana).connect(ctx.destination);
-  osc.start(t);
-  osc.stop(t + 0.075);
-}
-
-/* Fanfarria de cuatro notas al salir un jugador */
-function sonarElegido() {
-  const ctx = contextoAudio();
-  if (!ctx) return;
-  const t0 = ctx.currentTime + 0.02;
-  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {     // do · mi · sol · do
-    const t = t0 + i * 0.075;
-    const ultima = i === 3;
-    const osc = ctx.createOscillator();
-    const gana = ctx.createGain();
-    osc.type = ultima ? 'triangle' : 'sine';
-    osc.frequency.setValueAtTime(f, t);
-    gana.gain.setValueAtTime(0.0001, t);
-    gana.gain.exponentialRampToValueAtTime(ultima ? 0.26 : 0.18, t + 0.02);
-    gana.gain.exponentialRampToValueAtTime(0.0001, t + (ultima ? 0.55 : 0.28));
-    osc.connect(gana).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + 0.6);
-  });
-}
-
+/* El sonido (tics y fanfarria) vive en js/sonido.js: se usa desde aquí y desde
+   "Ajustes de la web". */
 /* Los tics: se mira el ángulo real de la rueda en cada fotograma */
 function seguirTics(torneo) {
   const rueda = $('#ruleta-rueda');
@@ -420,17 +347,18 @@ function engancharSonidoRuleta() {
   if (!boton) return;
 
   const pintar = () => {
-    boton.textContent = silencioRuleta ? '🔇' : '🔊';
-    boton.classList.toggle('apagado', silencioRuleta);
-    boton.title = silencioRuleta ? 'Activar el sonido' : 'Silenciar la ruleta';
+    const activo = sonidoActivo();
+    boton.textContent = activo ? '🔊' : '🔇';
+    boton.classList.toggle('apagado', !activo);
+    boton.title = activo ? 'Silenciar la web' : 'Activar el sonido';
   };
   pintar();
 
   boton.onclick = () => {
-    silencioRuleta = !silencioRuleta;
-    try { localStorage.setItem('ruleta-silencio', silencioRuleta ? '1' : '0'); } catch (e) {}
+    const activo = !sonidoActivo();
+    ponerSonido(activo);
     pintar();
-    if (!silencioRuleta) sonarTic(1);      // un tic para confirmar
+    if (activo) sonarTic(1);      // un tic para confirmar
   };
 }
 

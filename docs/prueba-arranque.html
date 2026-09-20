@@ -32,7 +32,8 @@ const PAGINAS = [
   { url: '../partidos.html',      nombre: 'Partidos' },
   { url: '../eliminatorias.html', nombre: 'Eliminatorias' },
   { url: '../estadisticas.html',  nombre: 'Estadísticas' },
-  { url: '../ajustes.html',       nombre: 'Ajustes' }
+  { url: '../ajustes.html',       nombre: 'Ajustes' },
+  { url: '../ajustes-web.html',   nombre: 'Ajustes de la web' }
 ];
 
 function esperarListo(marco, intentos = 250) {
@@ -95,8 +96,8 @@ const marco = document.getElementById('marco');
          Boolean(ajustes) && !enLaBarra && trasLaLista,
          !ajustes ? 'no está' : enLaBarra ? 'está en la barra de arriba'
            : trasLaLista ? 'abajo, después de la lista' : 'no está al final');
-      ok(`«${p.nombre}»: el botón de Ajustes lleva a los ajustes`,
-         Boolean(ajustes) && ajustes.getAttribute('href') === 'ajustes.html',
+      ok(`«${p.nombre}»: el botón de Ajustes lleva a los ajustes de la web`,
+         Boolean(ajustes) && ajustes.getAttribute('href') === 'ajustes-web.html',
          ajustes ? 'href=' + ajustes.getAttribute('href') : '—');
       const alineado = ajustes
         ? d.defaultView.getComputedStyle(ajustes.parentElement).justifyContent : '';
@@ -111,10 +112,13 @@ const marco = document.getElementById('marco');
       ok(`«${p.nombre}»: el logo no lleva el torneo en la dirección (va al menú limpio)`,
          Boolean(enlace) && destino.indexOf('?') === -1, 'href=' + destino);
 
-      /* Y en las interiores el menú lateral sigue teniendo su Ajustes */
-      const ajustesLateral = d.querySelector('.nav-item.nav-ajustes');
-      ok(`«${p.nombre}»: el menú lateral tiene Ajustes`, Boolean(ajustesLateral),
-         ajustesLateral ? ajustesLateral.textContent.trim() : 'no está');
+      /* Y en las interiores el menú lateral sigue teniendo su Ajustes
+         (las que tienen menú lateral: "Ajustes de la web" no lo lleva) */
+      if (d.querySelector('.sidebar')) {
+        const ajustesLateral = d.querySelector('.nav-item.nav-ajustes');
+        ok(`«${p.nombre}»: el menú lateral tiene Ajustes`, Boolean(ajustesLateral),
+           ajustesLateral ? ajustesLateral.textContent.trim() : 'no está');
+      }
     }
   }
 

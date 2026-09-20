@@ -11,8 +11,13 @@
 </head>
 <body>
 <pre id="resultado">ejecutando prueba...</pre>
+<script>
+/* Antes de que cargue la web se estrena el almacén de este navegador: así la
+   prueba siempre arranca con el torneo de ejemplo y no depende de lo que
+   hubiera dejado otra prueba anterior (si otra lo vació, aquí no habría nada). */
+try { localStorage.removeItem('torneos-efootball-v1'); } catch (e) {}
+</script>
 <iframe id="marco" src="../ajustes.html"></iframe>
-
 <script>
 /* Prueba de la pantalla de Ajustes:
    1. crea un torneo de mentira (y comprueba que lleva a la clasificación)
@@ -68,10 +73,16 @@ marcoEl.onload = async function ejecutarPrueba() {
     let d = marco.contentDocument;
     let w = marco.contentWindow;
 
-    // 1. La pantalla abre con el torneo que ya existe
-    ok('la pantalla de ajustes abre', d.getElementById('zona-editar').hidden === false);
+    /* La web NO se inventa torneos: si este navegador no tiene ninguno, la
+       pantalla abre directamente el formulario de crear. Esta prueba vale para
+       los dos casos, así no depende de lo que dejara otra prueba antes. */
+    const hayTorneo = w.Store.cache.length > 0;
+    ok('la pantalla de ajustes abre en el estado que toca',
+       hayTorneo ? d.getElementById('zona-editar').hidden === false
+                 : d.getElementById('zona-crear').hidden === false,
+       hayTorneo ? 'con ' + w.Store.cache.length + ' torneo(s) cargado(s)'
+                 : 'sin torneos: enseña el formulario de crear');
     const torneosAntes = w.Store.cache.length;
-    ok('hay torneos cargados', torneosAntes >= 1, torneosAntes + ' torneo(s)');
 
     // 2. Abrir el formulario de torneo nuevo (se entra por la dirección)
     await navegar(marco, '../ajustes.html?nuevo=1');

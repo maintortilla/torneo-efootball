@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajustes de la web · Torneo eFootball</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/tema.js"></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="marca" href="index.html" title="Ir al menú principal (Mis torneos)">
+      <span class="balon">⚽</span>
+      <h1>Torneo <span>eFootball</span></h1>
+    </a>
+
+    <div class="topbar-centro">
+      <span class="nombre-torneo">⚙️ Ajustes de la web</span>
+    </div>
+
+    <div class="topbar-derecha"></div>
+  </header>
+
+  <div class="layout layout-simple">
+    <main class="contenido">
+
+      <header class="panel-cabecera">
+        <h2>Ajustes de la <em>web</em></h2>
+        <p>Estos ajustes son <b>tuyos</b>: se guardan en este navegador, así que cada uno puede
+           tener los suyos sin molestar a los demás. Los del torneo (jugadores, puntos, calendario…)
+           están dentro de cada torneo, en su <b>⚙️ Ajustes</b>.</p>
+      </header>
+
+      <!-- ============ ASPECTO (los temas) ============ -->
+      <section class="panel" id="panel-tema">
+        <p class="panel-titulo verde">Aspecto de la web
+          <span class="ayuda" data-tip="Cambia los colores de toda la plataforma. Se guarda en este navegador, así que cada uno puede tener el suyo.">?</span>
+        </p>
+        <div class="temas-rejilla" id="selector-tema"></div>
+      </section>
+
+      <!-- ============ SONIDO ============ -->
+      <section class="panel" id="panel-sonido">
+        <p class="panel-titulo verde">Sonido
+          <span class="ayuda" data-tip="Los efectos que suenan en la web (los tics y la fanfarria de la ruleta). Se guarda en este navegador.">?</span>
+        </p>
+
+        <div class="ajuste-fila">
+          <label class="interruptor">
+            <input type="checkbox" id="chk-sonido">
+            <span>Sonido de la web</span>
+          </label>
+          <small id="pista-sonido">Los efectos de la ruleta.</small>
+        </div>
+
+        <div class="ajuste-fila" id="fila-volumen">
+          <label for="volumen">Volumen</label>
+          <input type="range" id="volumen" min="0" max="100" step="5" value="70"
+                 aria-label="Volumen del sonido">
+          <span class="ajuste-valor" id="volumen-valor">70%</span>
+          <button class="btn-mini-ir" id="btn-probar-sonido" title="Oír cómo suena con este volumen">Probar 🔊</button>
+        </div>
+      </section>
+
+      <!-- ============ ACTUALIZACIÓN AUTOMÁTICA ============ -->
+      <section class="panel" id="panel-auto">
+        <p class="panel-titulo verde">Actualización automática
+          <span class="ayuda" data-tip="Trae solo lo que hayan apuntado los demás, sin recargar la página ni perder nada de lo tuyo.">?</span>
+        </p>
+
+        <div class="ajuste-fila">
+          <label class="interruptor">
+            <input type="checkbox" id="chk-auto">
+            <span>Que la página se actualice sola</span>
+          </label>
+          <small id="pista-auto">Trae lo que apunten los demás sin pulsar 🔄.</small>
+        </div>
+
+        <div class="ajuste-fila" id="fila-segundos">
+          <label for="segundos">Cada</label>
+          <span class="ajuste-junto">
+            <select class="select-ajuste" id="segundos" aria-label="Cada cuántos segundos se actualiza"></select>
+            <small>segundos</small>
+          </span>
+        </div>
+
+        <p class="nota">Se aplica al cambiar de página. Y tranquilo: <b>mientras tienes una ventanita
+           abierta</b> (apuntando un resultado) no se actualiza, para no borrarte nada; y si dejas la
+           pestaña de fondo, tampoco gasta datos.</p>
+      </section>
+
+      <div class="zona-acciones pie-ajustes">
+        <a class="btn-actualizar" href="index.html">🏠 <span>Volver al menú</span></a>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/config-nube.js"></script>
+  <script src="js/modelo.js"></script>
+  <script src="js/datos-prueba.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/candado.js"></script>
+  <script src="js/preferencias.js"></script>
+  <script src="js/sonido.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/ajustes-web.js"></script>
+</body>
+</html>

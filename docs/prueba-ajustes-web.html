@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba: los ajustes de la web</title>
+<style>
+  body { background:#0A1017; color:#DFE8F2; font-family:system-ui,sans-serif; padding:20px; }
+  pre { background:#111A24; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:13px; }
+  .oculto { position:absolute; left:-9999px; width:1px; height:1px; border:0; }
+</style>
+</head>
+<body>
+<h1>Prueba: los ajustes de la web (aspecto, sonido y actualización)</h1>
+<p>Comprueba que la página nueva tiene los tres apartados, que cada ajuste se guarda
+   en el navegador, que las demás páginas los respetan (el refresco usa los segundos
+   elegidos) y que los ajustes del torneo ya NO tienen el bloque de temas.</p>
+<pre id="resultado">Ejecutando…</pre>
+
+<script>
+const salida = [];
+function ok(titulo, bien, extra) {
+  salida.push((bien ? '[OK] ' : '[FALLO] ') + titulo + (extra ? '  → ' + extra : ''));
+  document.getElementById('resultado').textContent = salida.join('\n') + '\n\nEjecutando…';
+}
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+/* Se crea un iframe nuevo por página (recargar el mismo hace cascar el navegador) */
+function abrirPagina(url) {
+  return new Promise((resolver, rechazar) => {
+    const marco = document.createElement('iframe');
+    marco.className = 'oculto';
+    let n = 0;
+    marco.onload = () => {
+      const tic = setInterval(async () => {
+        let listo = false;
+        try { listo = marco.contentWindow.__listo === true; } catch (e) {}
+        if (listo) { clearInterval(tic); await esperar(350); resolver(marco); }
+        else if (++n > 150) { clearInterval(tic); rechazar(new Error('la pantalla no arrancó')); }
+      }, 100);
+    };
+    marco.src = url;
+    document.body.appendChild(marco);
+  });
+}
+
+const CLAVES = ['sonido-web', 'volumen-web', 'auto-refresco', 'auto-refresco-segundos', 'tema-web'];
+
+(async function ejecutar() {
+  const marcos = [];
+  try {
+    /* ============ 1. La página nueva ============ */
+    const marco = await abrirPagina('../ajustes-web.html?local=1');
+    marcos.push(marco);
+    const w = marco.contentWindow;
+    const d = marco.contentDocument;
+
+    ok('la página de ajustes de la web carga y arranca', w.__listo === true, 'window.__listo');
+
+    const tiene = id => Boolean(d.getElementById(id));
+    ok('tiene el apartado de aspecto (temas)', tiene('selector-tema'), 'selector de temas');
+    ok('tiene el apartado de sonido', tiene('chk-sonido') && tiene('volumen'),
+       'interruptor + volumen');
+    ok('tiene el apartado de actualización automática', tiene('chk-auto') && tiene('segundos'),
+       'interruptor + segundos');
+
+    /* ============ 2. Aspecto: se elige y se recuerda ============ */
+    const bolas = d.querySelectorAll('#selector-tema .tema-opcion');
+    ok('salen todos los temas en el selector', bolas.length >= 8, bolas.length + ' temas');
+
+    const otra = Array.from(bolas).find(b => !b.classList.contains('activo'));
+    const claveOtra = (otra.querySelector('.tema-bola') || {}).className
+      .replace('tema-bola', '').trim();
+    otra.click();
+    await esperar(300);
+    ok('al pulsar un tema se aplica a toda la web',
+       w.document.documentElement.getAttribute('data-tema') === claveOtra,
+       'data-tema=' + w.document.documentElement.getAttribute('data-tema'));
+    ok('y se recuerda en el navegador',
+       w.localStorage.getItem('tema-web') === claveOtra,
+       'tema-web=' + w.localStorage.getItem('tema-web'));
+
+    /* ============ 3. Sonido: interruptor y volumen ============ */
+    const chk = d.getElementById('chk-sonido');
+    const vol = d.getElementById('volumen');
+    const valor = d.getElementById('volumen-valor');
+
+    ok('de entrada el sonido está encendido', chk.checked === true && w.sonidoActivo() === true,
+       'sonido activo');
+
+    chk.checked = false;
+    chk.dispatchEvent(new Event('change'));
+    await esperar(250);
+    ok('al apagarlo se guarda la preferencia',
+       w.localStorage.getItem('sonido-web') === '0' && w.sonidoActivo() === false,
+       'sonido-web=' + w.localStorage.getItem('sonido-web'));
+    ok('y la fila del volumen se ve más floja',
+       d.getElementById('fila-volumen').classList.contains('apagada'), 'fila atenuada');
+
+    chk.checked = true;
+    chk.dispatchEvent(new Event('change'));
+    await esperar(250);
+    ok('al volver a encenderlo también se guarda',
+       w.localStorage.getItem('sonido-web') === '1' && w.sonidoActivo() === true, 'encendido');
+
+    vol.value = '40';
+    vol.dispatchEvent(new Event('input'));
+    await esperar(150);
+    ok('la barra de volumen guarda el valor',
+       w.localStorage.getItem('volumen-web') === '40' && w.volumenWeb() === 0.4,
+       'volumen=' + w.localStorage.getItem('volumen-web') + ' (' + valor.textContent.trim() + ')');
+    ok('y se ve el número al lado', valor.textContent.trim() === '40%', valor.textContent.trim());
+
+    /* ============ 4. Actualización automática ============ */
+    const chkAuto = d.getElementById('chk-auto');
+    const sel = d.getElementById('segundos');
+
+    ok('de entrada la actualización automática está encendida', chkAuto.checked === true,
+       'encendida');
+    const opciones = Array.from(sel.options).map(o => o.value);
+    ok('se puede elegir cada cuántos segundos',
+       opciones.join(',') === '15,30,60,120', opciones.join(','));
+
+    sel.value = '60';
+    sel.dispatchEvent(new Event('change'));
+    await esperar(250);
+    ok('al elegir 60 segundos se guarda',
+       w.localStorage.getItem('auto-refresco-segundos') === '60' && w.segundosAutoRefresco() === 60,
+       'segundos=' + w.localStorage.getItem('auto-refresco-segundos'));
+
+    /* ============ 5. Las demás páginas respetan lo elegido ============ */
+    const marco2 = await abrirPagina('../clasificacion.html?local=1');
+    marcos.push(marco2);
+    const w2 = marco2.contentWindow;
+    ok('otra página usa los segundos elegidos (60, no 30)',
+       w2.eval('SEGUNDOS_REFRESCO') === 60, w2.eval('SEGUNDOS_REFRESCO') + ' s');
+    ok('y respeta el tema elegido',
+       w2.document.documentElement.getAttribute('data-tema') === claveOtra,
+       'data-tema=' + w2.document.documentElement.getAttribute('data-tema'));
+
+    /* ============ 6. Apagada: no se refresca sola ============ */
+    const marco3 = await abrirPagina('../ajustes-web.html?local=1');
+    marcos.push(marco3);
+    const w3 = marco3.contentWindow;
+    const chkAuto3 = marco3.contentDocument.getElementById('chk-auto');
+    chkAuto3.checked = false;
+    chkAuto3.dispatchEvent(new Event('change'));
+    await esperar(250);
+    ok('se puede apagar la actualización automática',
+       w3.localStorage.getItem('auto-refresco') === '0' && w3.autoRefrescoActivo() === false,
+       'auto-refresco=0');
+
+    /* ============ 7. Los ajustes del torneo ya no tienen los temas ============ */
+    const marco4 = await abrirPagina('../ajustes.html?local=1');
+    marcos.push(marco4);
+    const d4 = marco4.contentDocument;
+    ok('los ajustes del torneo ya NO tienen el bloque de temas',
+       !d4.getElementById('selector-tema') && !d4.getElementById('panel-tema'),
+       'sin selector de temas');
+    const enlace = d4.querySelector('a[href="ajustes-web.html"]');
+    ok('pero llevan a los ajustes de la web con un enlace', Boolean(enlace),
+       enlace ? 'enlace presente' : 'no hay enlace');
+    ok('y siguen teniendo lo suyo (jugadores, formato, calendario)',
+       Boolean(d4.getElementById('lista-jugadores')) || /Formato y puntuación/i.test(d4.body.textContent),
+       'ajustes del torneo intactos');
+
+  } catch (e) {
+    salida.push('[EXCEPCIÓN] ' + e.message);
+  }
+
+  // Se deja todo como estaba
+  marcos.forEach(m => m.remove());
+  try {
+    CLAVES.forEach(c => localStorage.removeItem(c));
+  } catch (e) {}
+
+  const fallos = salida.filter(l => l.startsWith('[FALLO') || l.startsWith('[EXCE')).length;
+  document.getElementById('resultado').textContent =
+    salida.join('\n') + '\n\n' + (fallos === 0 ? '✅ PRUEBA COMPLETA: TODO CORRECTO' : '❌ ' + fallos + ' fallos');
+  document.title = fallos === 0 ? 'PRUEBA-OK' : 'PRUEBA-FALLIDA';
+})();
+</script>
+</body>
+</html>

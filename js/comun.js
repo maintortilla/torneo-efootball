@@ -423,7 +423,9 @@ document.addEventListener('DOMContentLoaded', engancharAyudas);
      · no hace nada mientras estás escribiendo en un campo
    Las páginas que no lo quieren (Ajustes) lo apagan con `window.__sinAutoRefresco`. */
 
-const SEGUNDOS_REFRESCO = 30;
+/* Cada cuántos segundos se refresca sola la página. Se puede cambiar en
+   "Ajustes de la web" (js/preferencias.js); por defecto, cada 30. */
+const SEGUNDOS_REFRESCO = segundosAutoRefresco();
 
 let refrescarActual = null;      // la función de refresco de la página actual
 let refrescoOcupado = false;     // para no solapar dos refrescos
@@ -501,6 +503,7 @@ function engancharActualizar(alActualizar) {
 
   // --- refresco automático (Ajustes lo apaga: allí se está configurando) ---
   if (window.__sinAutoRefresco) return;
+  if (!autoRefrescoActivo()) return;     // lo apagó desde "Ajustes de la web"
   if (document.getElementById('marca-auto')) return;   // ya estaba puesto
 
   const marca = el('span', 'auto-refresco');

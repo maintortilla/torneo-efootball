@@ -15,7 +15,7 @@
 <p>Comprueba que cada paleta se aplica a toda la web, que se recuerda al cambiar de página,
    que el texto se LEE bien en todas (contraste) y que las paletas de siempre siguen
    intactas. Al terminar deja el tema como estaba.</p>
-<iframe id="marco" src="../ajustes.html"></iframe>
+<iframe id="marco" src="../ajustes-web.html"></iframe>
 <pre id="resultado">Ejecutando…</pre>
 
 <script>
@@ -200,7 +200,7 @@ marcoEl.onload = async function ejecutarPrueba() {
        'tema ' + ultima + ' · acento en Partidos: ' + acentoDe(d));
 
     // 5. Los DOS temas de siempre siguen igual que antes
-    await navegar(marco, '../ajustes.html');
+    await navegar(marco, '../ajustes-web.html');
     w = marco.contentWindow;
     d = marco.contentDocument;
 
@@ -240,7 +240,7 @@ marcoEl.onload = async function ejecutarPrueba() {
        recuadrosClas.join('  '));
 
     // 6. Volver al tema de siempre
-    await navegar(marco, '../ajustes.html');
+    await navegar(marco, '../ajustes-web.html');
     w = marco.contentWindow;
     d = marco.contentDocument;
     porClave('verde').click();

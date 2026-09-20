@@ -1428,6 +1428,43 @@ html[data-candado="fuera"] .btn-sesion {
 .tema-opcion .tema-check { color: var(--neon); font-weight: 800; opacity: 0; }
 .tema-opcion.activo .tema-check { opacity: 1; }
 
+/* ---------- Ajustes de la web: filas de ajuste ---------- */
+.ajuste-fila {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 13px 0; border-bottom: 1px solid var(--linea);
+}
+.ajuste-fila:last-of-type { border-bottom: none; }
+.ajuste-fila > label:not(.interruptor) { font-weight: 700; color: var(--texto); min-width: 84px; }
+.ajuste-fila small { color: var(--texto-2); font-size: 13.5px; }
+/* Cuando el ajuste está apagado, su fila se ve más floja (pero se puede tocar) */
+.ajuste-fila.apagada { opacity: .45; }
+
+.interruptor {
+  display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+  font-weight: 700; color: var(--texto); font-size: 16px;
+}
+.interruptor input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--neon); }
+.ajuste-valor {
+  font-family: var(--fuente-numeros); font-weight: 800; font-size: 16px;
+  color: var(--neon); min-width: 54px; text-align: right;
+}
+input[type="range"] {
+  flex: 1; min-width: 170px; max-width: 360px; height: 22px;
+  cursor: pointer; accent-color: var(--neon);
+}
+.select-ajuste {
+  background: var(--panel); color: var(--texto); border: 1px solid var(--linea);
+  border-radius: 9px; padding: 8px 12px; font-family: var(--fuente);
+  font-size: 15px; font-weight: 600;
+}
+.select-ajuste:focus { outline: none; border-color: var(--neon); }
+/* El desplegable y su texto, siempre juntos en la misma línea */
+.ajuste-junto { display: inline-flex; align-items: center; gap: 8px; }
+
+/* El aviso que lleva de los ajustes del torneo a los de la web */
+.ir-a-web { margin-top: 6px; }
+.ir-a-web a { color: var(--neon); font-weight: 700; }
+
 /* ---------- Insignias del podio en la clasificación (los dos temas) ---------- */
 /* En el 1º, 2º y 3º la medalla ocupa el sitio del número */
 .tabla td.pos .medalla {

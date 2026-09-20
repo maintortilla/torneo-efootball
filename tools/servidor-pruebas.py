@@ -23,6 +23,15 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=CARPETA, **kwargs)
 
+    def end_headers(self):
+        # NADA de caché. Sin esto, un navegador con perfil reutilizado se queda
+        # con versiones viejas de los ficheros y parece que los cambios no se
+        # aplican (pasó de verdad: una prueba fallaba por servir HTML cacheado).
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
     def log_message(self, *args):
         # Sin ruido: la ventana solo avisa de la dirección
         pass
